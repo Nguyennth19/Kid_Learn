@@ -1,0 +1,143 @@
+<script>
+/**
+ * ================================================================
+ * KIDLEARN V3 - UI DEV SWITCH CLIENT
+ * Step: 3I.5
+ * ================================================================
+ *
+ * File này dùng cho UI cũ DEV gọi DEV_SWITCH V3.
+ */
+
+window.KidlearnV3DevSwitch = (function() {
+  function dispatch(action, payload) {
+    return new Promise(function(resolve, reject) {
+      if (
+        !window.google ||
+        !google.script ||
+        !google.script.run
+      ) {
+        reject({
+          success: false,
+          message: 'google.script.run không khả dụng.'
+        });
+
+        return;
+      }
+
+      google.script.run
+        .withSuccessHandler(function(response) {
+          resolve(response);
+        })
+        .withFailureHandler(function(error) {
+          reject({
+            success: false,
+            message:
+              error && error.message
+                ? error.message
+                : String(error || 'Unknown error')
+          });
+        })
+        .kidlearnV3_uiApiDispatchV3({
+          action: action,
+          payload: payload || {}
+        });
+    });
+  }
+
+  function unwrap(response) {
+    if (!response) {
+      throw new Error('Response trống.');
+    }
+
+    if (response.success !== true) {
+      var message =
+        response.error && response.error.message
+          ? response.error.message
+          : 'Service trả về success=false.';
+
+      throw new Error(message);
+    }
+
+    return response.data;
+  }
+
+  function ping() {
+    return dispatch('PING', {});
+  }
+
+  function bootstrap(payload) {
+    return dispatch(
+      'BOOTSTRAP',
+      payload || {}
+    );
+  }
+
+  function dashboard(childId) {
+    return dispatch(
+      'DASHBOARD',
+      {
+        childId: childId || ''
+      }
+    );
+  }
+
+  function subjects() {
+    return dispatch(
+      'SUBJECTS',
+      {}
+    );
+  }
+
+  function children(userId) {
+    return dispatch(
+      'CHILDREN',
+      {
+        userId: userId || ''
+      }
+    );
+  }
+
+  function assignments(childId, limit) {
+    return dispatch(
+      'ASSIGNMENTS',
+      {
+        childId: childId || '',
+        limit: limit || 100
+      }
+    );
+  }
+
+  function config() {
+    return dispatch(
+      'CONFIG',
+      {}
+    );
+  }
+
+  function readCore(sheetName, options) {
+    var payload =
+      options || {};
+
+    payload.sheetName =
+      sheetName || '';
+
+    return dispatch(
+      'READ_CORE',
+      payload
+    );
+  }
+
+  return {
+    dispatch: dispatch,
+    unwrap: unwrap,
+    ping: ping,
+    bootstrap: bootstrap,
+    dashboard: dashboard,
+    subjects: subjects,
+    children: children,
+    assignments: assignments,
+    config: config,
+    readCore: readCore
+  };
+})();
+</script>

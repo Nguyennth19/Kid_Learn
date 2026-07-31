@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --good-bg: #dcfce7;
+      --good-text: #166534;
+      --warn-bg: #fef3c7;
+      --warn-text: #92400e;
+      --bad-bg: #fee2e2;
+      --bad-text: #991b1b;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+    }
+
+    .page {
+      padding: 20px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: flex-start;
+      margin-bottom: 16px;
+    }
+
+    .title {
+      font-size: 24px;
+      font-weight: 700;
+      margin: 0 0 6px;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      margin: 0;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #dbeafe;
+      color: var(--primary-dark);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .status {
+      padding: 12px 14px;
+      border-radius: 12px;
+      background: #e2e8f0;
+      color: #334155;
+      margin-bottom: 16px;
+      white-space: pre-wrap;
+    }
+
+    .status.good {
+      background: var(--good-bg);
+      color: var(--good-text);
+    }
+
+    .status.warn {
+      background: var(--warn-bg);
+      color: var(--warn-text);
+    }
+
+    .status.bad {
+      background: var(--bad-bg);
+      color: var(--bad-text);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      gap: 16px;
+    }
+
+    .sidebar {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px;
+      height: fit-content;
+    }
+
+    .nav {
+      width: 100%;
+      border: none;
+      border-radius: 10px;
+      padding: 10px;
+      background: #f1f5f9;
+      color: #0f172a;
+      text-align: left;
+      font-weight: 700;
+      cursor: pointer;
+      margin-bottom: 8px;
+    }
+
+    .nav.active {
+      background: var(--primary);
+      color: #ffffff;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+    }
+
+    .card-label {
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      margin-bottom: 8px;
+    }
+
+    .card-value {
+      font-size: 24px;
+      font-weight: 700;
+    }
+
+    .section {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      margin-bottom: 16px;
+      overflow: hidden;
+    }
+
+    .section-head {
+      padding: 14px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .section-title {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .section-body {
+      padding: 14px;
+    }
+
+    .list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .item {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      background: #ffffff;
+    }
+
+    .item-title {
+      font-weight: 700;
+      margin-bottom: 5px;
+    }
+
+    .small {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    pre {
+      margin: 0;
+      background: #0f172a;
+      color: #e2e8f0;
+      padding: 12px;
+      border-radius: 12px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: 260px;
+      overflow: auto;
+      font-size: 12px;
+    }
+
+    @media (max-width: 900px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .topbar {
+        display: block;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <?!= kidlearnV3_uiInclude_('UI_Legacy_Call_Adapter_V3'); ?>
+
+  <div class="page">
+    <div class="topbar">
+      <div>
+        <h1 class="title">KIDLEARN DEV App Router V3</h1>
+        <p class="subtitle">
+          UI DEV đã thay google.script.run cũ bằng Legacy Call Adapter V3.
+        </p>
+      </div>
+
+      <div>
+        <span class="badge" id="badge">3I.8 / DEV</span>
+      </div>
+    </div>
+
+    <div id="status" class="status">
+      Đang khởi tạo UI DEV...
+    </div>
+
+    <div class="layout">
+      <div class="sidebar">
+        <button id="navHome" class="nav active" onclick="KidlearnDevAppV3.loadHome()">
+          🏠 Home
+          <div class="small">Tổng quan học tập</div>
+        </button>
+
+        <button id="navSubjects" class="nav" onclick="KidlearnDevAppV3.loadSubjects()">
+          📚 Subjects
+          <div class="small">Môn học</div>
+        </button>
+
+        <button id="navChildren" class="nav" onclick="KidlearnDevAppV3.loadChildren()">
+          👧 Children
+          <div class="small">Trẻ em</div>
+        </button>
+
+        <button id="navAssignments" class="nav" onclick="KidlearnDevAppV3.loadAssignments()">
+          📝 Assignments
+          <div class="small">Nhiệm vụ học tập</div>
+        </button>
+      </div>
+
+      <div>
+        <div id="screen"></div>
+
+        <div class="section">
+          <div class="section-head">
+            <h3 class="section-title">Raw Response</h3>
+          </div>
+
+          <div class="section-body">
+            <pre id="raw">Chưa load.</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    window.KidlearnDevAppV3 = (function() {
+      var state = {
+        screen: 'HOME',
+        selectedChildId: '',
+        lastResponse: null
+      };
+
+      function init() {
+        loadHome();
+      }
+
+      function loadHome() {
+        setActive('HOME');
+        setStatus('Đang load HOME qua UI Router V3...', '');
+
+        KidlearnV3LegacyCalls.getHome(
+          function(data, response) {
+            state.lastResponse = response;
+
+            setRaw(response);
+            renderHome(data);
+
+            setStatus(
+              'HOME đã load thành công qua UI Router V3.',
+              'good'
+            );
+          },
+          handleError,
+          {
+            childId: state.selectedChildId || '',
+            limit: 100
+          }
+        );
+      }
+
+      function loadSubjects() {
+        setActive('SUBJECTS');
+        setStatus('Đang load SUBJECTS qua UI Router V3...', '');
+
+        KidlearnV3LegacyCalls.getSubjects(
+          function(data, response) {
+            state.lastResponse = response;
+
+            setRaw(response);
+            renderSubjects(data);
+
+            setStatus(
+              'SUBJECTS đã load thành công qua UI Router V3.',
+              'good'
+            );
+          },
+          handleError,
+          {}
+        );
+      }
+
+      function loadChildren() {
+        setActive('CHILDREN');
+        setStatus('Đang load CHILDREN qua UI Router V3...', '');
+
+        KidlearnV3LegacyCalls.getChildren(
+          function(data, response) {
+            state.lastResponse = response;
+
+            setRaw(response);
+            renderChildren(data);
+
+            setStatus(
+              'CHILDREN đã load thành công qua UI Router V3.',
+              'good'
+            );
+          },
+          handleError,
+          {}
+        );
+      }
+
+      function loadAssignments() {
+        setActive('ASSIGNMENTS');
+
+        setStatus(
+          'Đang load ASSIGNMENTS qua UI Router V3 cho childId=' +
+          (state.selectedChildId || ''),
+          ''
+        );
+
+        KidlearnV3LegacyCalls.getAssignments(
+          function(data, response) {
+            state.lastResponse = response;
+
+            setRaw(response);
+            renderAssignments(data);
+
+            setStatus(
+              'ASSIGNMENTS đã load thành công qua UI Router V3.',
+              'good'
+            );
+          },
+          handleError,
+          {
+            childId: state.selectedChildId || '',
+            limit: 100
+          }
+        );
+      }
+
+      function renderHome(data) {
+        var counts =
+          data.counts || {};
+
+        var child =
+          data.currentChild || null;
+
+        if (child && child.childId) {
+          state.selectedChildId =
+            child.childId;
+        }
+
+        var dashboard =
+          data.dashboard || {};
+
+        var html =
+          '<div class="grid">' +
+          card('Subjects', counts.subjects || 0) +
+          card('Users', counts.users || 0) +
+          card('Children', counts.children || 0) +
+          card('Assignments', counts.assignments || 0) +
+          '</div>' +
+
+          section(
+            'Current Child',
+            renderChild(child)
+          ) +
+
+          '<div class="grid">' +
+          card('Active', dashboard.activeAssignmentCount || 0) +
+          card('Completed', dashboard.completedAssignmentCount || 0) +
+          card('Overdue', dashboard.overdueAssignmentCount || 0) +
+          card('Completion %', dashboard.completionPercent || 0) +
+          '</div>' +
+
+          section(
+            'Subjects',
+            '<div class="list">' +
+            renderSubjectItems(data.subjects || []) +
+            '</div>'
+          ) +
+
+          section(
+            'Assignments',
+            '<div class="list">' +
+            renderAssignmentItems(data.assignments || []) +
+            '</div>'
+          );
+
+        setScreen(html);
+      }
+
+      function renderSubjects(data) {
+        var rows =
+          data.rows || [];
+
+        var html =
+          '<div class="grid">' +
+          card('Subjects', data.count || rows.length) +
+          card('Mode', 'V3') +
+          card('Screen', 'SUBJECTS') +
+          card('Status', 'OK') +
+          '</div>' +
+
+          section(
+            'Subjects',
+            '<div class="list">' +
+            renderSubjectItems(rows) +
+            '</div>'
+          );
+
+        setScreen(html);
+      }
+
+      function renderChildren(data) {
+        var rows =
+          data.rows || [];
+
+        var html =
+          '<div class="grid">' +
+          card('Children', data.count || rows.length) +
+          card('Selected', state.selectedChildId || '-') +
+          card('Screen', 'CHILDREN') +
+          card('Status', 'OK') +
+          '</div>' +
+
+          section(
+            'Children',
+            '<div class="list">' +
+            renderChildItems(rows) +
+            '</div>'
+          );
+
+        setScreen(html);
+      }
+
+      function renderAssignments(data) {
+        var rows =
+          data.rows || [];
+
+        var html =
+          '<div class="grid">' +
+          card('Assignments', data.count || rows.length) +
+          card('Child ID', data.childId || state.selectedChildId || '-') +
+          card('Screen', 'ASSIGNMENTS') +
+          card('Status', 'OK') +
+          '</div>' +
+
+          section(
+            'Assignments',
+            '<div class="list">' +
+            renderAssignmentItems(rows) +
+            '</div>'
+          );
+
+        setScreen(html);
+      }
+
+      function renderSubjectItems(rows) {
+        if (!rows || rows.length === 0) {
+          return '<span class="small">Chưa có dữ liệu Subjects.</span>';
+        }
+
+        var html = '';
+
+        for (var i = 0; i < rows.length; i++) {
+          html +=
+            '<div class="item">' +
+            '<div class="item-title">' +
+            escapeHtml(rows[i].icon || '') +
+            ' ' +
+            escapeHtml(rows[i].title || rows[i].name || '') +
+            '</div>' +
+            '<div class="small">id: ' +
+            escapeHtml(rows[i].id || '') +
+            ' | code: ' +
+            escapeHtml(rows[i].code || '') +
+            ' | theme: ' +
+            escapeHtml(rows[i].theme || '') +
+            ' | status: ' +
+            escapeHtml(rows[i].status || '') +
+            '</div>' +
+            '</div>';
+        }
+
+        return html;
+      }
+
+      function renderChildItems(rows) {
+        if (!rows || rows.length === 0) {
+          return '<span class="small">Chưa có dữ liệu Children.</span>';
+        }
+
+        var html = '';
+
+        for (var i = 0; i < rows.length; i++) {
+          html +=
+            renderChild(rows[i]);
+        }
+
+        return html;
+      }
+
+      function renderChild(child) {
+        if (!child) {
+          return '<span class="small">Chưa có child.</span>';
+        }
+
+        return (
+          '<div class="item">' +
+          '<div class="item-title">' +
+          escapeHtml(child.title || child.name || '') +
+          '</div>' +
+          '<div class="small">childId: ' +
+          escapeHtml(child.childId || child.id || '') +
+          ' | grade: ' +
+          escapeHtml(child.gradeLevel || '') +
+          ' | status: ' +
+          escapeHtml(child.status || '') +
+          '</div>' +
+          '</div>'
+        );
+      }
+
+      function renderAssignmentItems(rows) {
+        if (!rows || rows.length === 0) {
+          return '<span class="small">Chưa có Assignments hoặc chưa gắn với child hiện tại.</span>';
+        }
+
+        var html = '';
+
+        for (var i = 0; i < rows.length; i++) {
+          html +=
+            '<div class="item">' +
+            '<div class="item-title">' +
+            escapeHtml(rows[i].title || '') +
+            '</div>' +
+            '<div class="small">id: ' +
+            escapeHtml(rows[i].assignmentId || rows[i].id || '') +
+            ' | status: ' +
+            escapeHtml(rows[i].status || '') +
+            ' | priority: ' +
+            escapeHtml(rows[i].priority || '') +
+            ' | progress: ' +
+            escapeHtml(rows[i].progressPercent || rows[i].progress || 0) +
+            '%</div>' +
+            '</div>';
+        }
+
+        return html;
+      }
+
+      function card(label, value) {
+        return (
+          '<div class="card">' +
+          '<div class="card-label">' +
+          escapeHtml(label) +
+          '</div>' +
+          '<div class="card-value">' +
+          escapeHtml(value) +
+          '</div>' +
+          '</div>'
+        );
+      }
+
+      function section(title, body) {
+        return (
+          '<div class="section">' +
+          '<div class="section-head">' +
+          '<h3 class="section-title">' +
+          escapeHtml(title) +
+          '</h3>' +
+          '</div>' +
+          '<div class="section-body">' +
+          body +
+          '</div>' +
+          '</div>'
+        );
+      }
+
+      function setActive(screen) {
+        state.screen =
+          screen;
+
+        var map = {
+          HOME: 'navHome',
+          SUBJECTS: 'navSubjects',
+          CHILDREN: 'navChildren',
+          ASSIGNMENTS: 'navAssignments'
+        };
+
+        var keys =
+          Object.keys(map);
+
+        for (var i = 0; i < keys.length; i++) {
+          var element =
+            document.getElementById(map[keys[i]]);
+
+          if (!element) {
+            continue;
+          }
+
+          element.className =
+            keys[i] === screen
+              ? 'nav active'
+              : 'nav';
+        }
+
+        document.getElementById('badge').textContent =
+          screen + ' / V3';
+      }
+
+      function setStatus(message, type) {
+        var element =
+          document.getElementById('status');
+
+        element.className =
+          'status ' + (type || '');
+
+        element.textContent =
+          message;
+      }
+
+      function setScreen(html) {
+        document.getElementById('screen').innerHTML =
+          html;
+      }
+
+      function setRaw(response) {
+        document.getElementById('raw').textContent =
+          JSON.stringify(response, null, 2);
+      }
+
+      function handleError(error) {
+        setStatus(
+          'Lỗi: ' +
+          String(error.message || error),
+          'bad'
+        );
+      }
+
+      function escapeHtml(value) {
+        return String(value || '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+      }
+
+      return {
+        init: init,
+        loadHome: loadHome,
+        loadSubjects: loadSubjects,
+        loadChildren: loadChildren,
+        loadAssignments: loadAssignments
+      };
+    })();
+
+    document.addEventListener(
+      'DOMContentLoaded',
+      function() {
+        KidlearnDevAppV3.init();
+      }
+    );
+  </script>
+</body>
+</html>

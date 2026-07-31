@@ -1,0 +1,45 @@
+<style>
+  /* Tùy chỉnh thanh cuộn (Scrollbar) cho trải nghiệm giống Native App */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #cbd5e1; /* slate-300 */
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8; /* slate-400 */
+  }
+
+  /* Hiệu ứng Loading (Spinner) dùng chung cho các Component tĩnh */
+  .loader-spinner {
+    border: 3px solid #f3f4f6; /* gray-100 */
+    border-top: 3px solid #3b82f6; /* blue-500 */
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    animation: spin 1s linear infinite;
+    display: inline-block;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  /* Lớp che mờ tối ưu UI Lạc quan (Optimistic UI Loading) */
+  .ui-disabled {
+    opacity: 0.6;
+    pointer-events: none;
+    transition: opacity 0.2s ease-in-out;
+  }
+
+  /* Ẩn các phần tử chưa kích hoạt trong SPA */
+  .spa-hidden {
+    display: none !important;
+  }
+</style>

@@ -1,0 +1,533 @@
+<script>
+  /**
+   * KIDLEARN_LEARNING_PLAN_WRITE_CHILD_UI_4H3
+   * Phase 4H-3 — Controlled Write + Child Home Visibility
+   */
+
+  (function () {
+    var KIDLEARN_LEARNING_PLAN_WRITE_CHILD_UI_4H3 = {
+      phase: '4H-3',
+      marker: 'KIDLEARN_LEARNING_PLAN_WRITE_CHILD_UI_4H3',
+      gateStatus: null,
+      patchTimer: null,
+      childTimer: null
+    };
+
+    window.KIDLEARN_LEARNING_PLAN_WRITE_CHILD_UI_4H3 =
+      KIDLEARN_LEARNING_PLAN_WRITE_CHILD_UI_4H3;
+
+    function escapeHtml4H3(value) {
+      return String(value === null || value === undefined ? '' : value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function loadGateStatus4H3(callback) {
+      if (
+        typeof google === 'undefined' ||
+        !google.script ||
+        !google.script.run
+      ) {
+        if (callback) callback(null);
+        return;
+      }
+
+      google.script.run
+        .withSuccessHandler(function (status) {
+          KIDLEARN_LEARNING_PLAN_WRITE_CHILD_UI_4H3.gateStatus =
+            status || {};
+          if (callback) callback(status || {});
+        })
+        .withFailureHandler(function () {
+          if (callback) callback(null);
+        })
+        .kidlearnV3_getLearningPlanWriteChild4H3StatusV3();
+    }
+
+    function patchLearningPlanWriteButton4H3() {
+      var panel =
+        document.querySelector('.kl-learning-plan-panel-4h2');
+
+      if (!panel) return;
+
+      if (panel.querySelector('.kl-learning-plan-write-gate-4h3')) {
+        return;
+      }
+
+      loadGateStatus4H3(function (status) {
+        status =
+          status || {};
+
+        var actions =
+          panel.querySelector('.kl-learning-plan-actions-4h2');
+
+        if (!actions) return;
+
+        var gateMode =
+          status.gateMode || 'CLOSED_DRY_RUN_ONLY';
+
+        var wrapper =
+          document.createElement('div');
+
+        wrapper.className =
+          'kl-learning-plan-write-gate-4h3';
+
+        wrapper.innerHTML =
+          '<div class="kl-learning-plan-write-gate-badge-4h3">' +
+            '4H-3 Gate: ' + escapeHtml4H3(gateMode) +
+          '</div>' +
+          '<button type="button" class="kl-learning-plan-realwrite-button-4h3" data-action="submit-learning-plan-controlled-write-4h3">' +
+            (
+              gateMode === 'OPEN_DEV_CONTROLLED'
+                ? 'Lưu kế hoạch vào DEV'
+                : 'Dry-run qua gate đóng'
+            ) +
+          '</button>' +
+          '<div class="kl-learning-plan-write-note-4h3">' +
+            (
+              gateMode === 'OPEN_DEV_CONTROLLED'
+                ? 'Gate đang mở: bấm lưu sẽ ghi DATA_DailyGoals và DATA_Assignments.'
+                : 'Gate đang đóng: bấm nút này chỉ dry-run, chưa ghi Sheet.'
+            ) +
+          '</div>' +
+          '<div class="kl-learning-plan-write-result-4h3" aria-live="polite"></div>';
+
+        actions.parentNode.insertBefore(
+          wrapper,
+          actions.nextSibling
+        );
+      });
+    }
+
+    function collectLearningPlanPayloadForWrite4H3() {
+      if (typeof window.collectLearningPlanPayload4H2 === 'function') {
+        return window.collectLearningPlanPayload4H2();
+      }
+
+      var minutesInput =
+        document.querySelector('.kl-learning-plan-daily-minutes-input-4h2');
+
+      var subjectInput =
+        document.querySelector('.kl-learning-plan-subject-input-4h2');
+
+      var checked =
+        document.querySelectorAll('.kl-learning-plan-lesson-4h2 input[type="checkbox"]:checked');
+
+      var lessonIds = [];
+
+      for (var i = 0; i < checked.length; i++) {
+        lessonIds.push(checked[i].value);
+      }
+
+      return {
+        parentId:
+          'PARENT',
+        childId:
+          'CHD_V2_CHILD_DEFAULT',
+        dailyGoalMinutes:
+          minutesInput ? Number(minutesInput.value || 0) : 20,
+        prioritySubjectCode:
+          subjectInput ? subjectInput.value || '' : '',
+        selectedLessonIds:
+          lessonIds
+      };
+    }
+
+    function submitLearningPlanControlledWrite4H3() {
+      var resultBox =
+        document.querySelector('.kl-learning-plan-write-result-4h3');
+
+      if (resultBox) {
+        resultBox.className =
+          'kl-learning-plan-write-result-4h3 is-loading';
+        resultBox.innerHTML =
+          '<strong>Đang gửi kế hoạch...</strong>';
+      }
+
+      var payload =
+        collectLearningPlanPayloadForWrite4H3();
+
+      var gate =
+        KIDLEARN_LEARNING_PLAN_WRITE_CHILD_UI_4H3.gateStatus || {};
+
+      if (
+        gate.gateMode === 'OPEN_DEV_CONTROLLED'
+      ) {
+        var ok =
+          window.confirm(
+            'Gate đang mở. Kế hoạch sẽ được ghi vào DEV Sheet. Tiếp tục?'
+          );
+
+        if (!ok) {
+          if (resultBox) {
+            resultBox.className =
+              'kl-learning-plan-write-result-4h3 is-error';
+            resultBox.innerHTML =
+              '<strong>Đã hủy ghi DEV.</strong>';
+          }
+          return;
+        }
+      }
+
+      if (
+        typeof google === 'undefined' ||
+        !google.script ||
+        !google.script.run
+      ) {
+        renderWriteResultError4H3(
+          'Không gọi được Apps Script server.'
+        );
+        return;
+      }
+
+      google.script.run
+        .withSuccessHandler(function (result) {
+          renderWriteResult4H3(result || {});
+          refreshChildLearningPlanHome4H3();
+        })
+        .withFailureHandler(function (error) {
+          renderWriteResultError4H3(
+            error && error.message
+              ? error.message
+              : String(error || 'Submit failed.')
+          );
+        })
+        .kidlearnV3_submitLearningPlanFromUi4H3V3(payload);
+    }
+
+    function renderWriteResult4H3(result) {
+      var resultBox =
+        document.querySelector('.kl-learning-plan-write-result-4h3');
+
+      if (!resultBox) return;
+
+      var summary =
+        result.writeSummary || {};
+
+      var html =
+        '<strong>' +
+          (
+            result.dryRunOnly
+              ? 'Gate đang đóng — chỉ dry-run.'
+              : 'Đã lưu kế hoạch vào DEV.'
+          ) +
+        '</strong>';
+
+      if (result.dryRunOnly) {
+        html +=
+          '<p>Chưa ghi DATA_DailyGoals hoặc DATA_Assignments.</p>';
+      } else {
+        html +=
+          '<div class="kl-learning-plan-write-summary-4h3">' +
+            '<div><span>Daily Goal</span><b>' +
+              escapeHtml4H3(summary.dataDailyGoalsOperation || '') +
+            '</b></div>' +
+            '<div><span>Assignment tạo mới</span><b>' +
+              escapeHtml4H3(summary.dataAssignmentsCreatedCount || 0) +
+            '</b></div>' +
+            '<div><span>Assignment bỏ qua</span><b>' +
+              escapeHtml4H3(summary.dataAssignmentsSkippedCount || 0) +
+            '</b></div>' +
+          '</div>';
+      }
+
+      resultBox.className =
+        'kl-learning-plan-write-result-4h3 is-success';
+
+      resultBox.innerHTML =
+        html;
+    }
+
+    function renderWriteResultError4H3(message) {
+      var resultBox =
+        document.querySelector('.kl-learning-plan-write-result-4h3');
+
+      if (!resultBox) return;
+
+      resultBox.className =
+        'kl-learning-plan-write-result-4h3 is-error';
+
+      resultBox.innerHTML =
+        '<strong>Không submit được kế hoạch.</strong>' +
+        '<p>' + escapeHtml4H3(message || 'Vui lòng thử lại.') + '</p>';
+    }
+
+    function isLikelyChildView4H3() {
+      var bodyText =
+        document.body ? document.body.innerText || '' : '';
+
+      var upper =
+        bodyText.toUpperCase();
+
+      if (
+        upper.indexOf('PARENT') !== -1 ||
+        upper.indexOf('PHỤ HUYNH') !== -1 ||
+        document.querySelector('.kl-parent-dashboard-entry-4g2')
+      ) {
+        return false;
+      }
+
+      if (
+        upper.indexOf('LICH_KHE') !== -1 ||
+        upper.indexOf('BÉ') !== -1 ||
+        document.querySelector('.kl-child-retry-entry-4f4b') ||
+        document.querySelector('.kl-subject-card') ||
+        document.querySelector('.kl-course-card')
+      ) {
+        return true;
+      }
+
+      return false;
+    }
+
+    function refreshChildLearningPlanHome4H3() {
+      var existing =
+        document.querySelector('.kl-child-learning-plan-entry-4h3');
+
+      if (existing && existing.parentNode) {
+        existing.parentNode.removeChild(existing);
+      }
+
+      ensureChildLearningPlanHome4H3();
+    }
+
+    function ensureChildLearningPlanHome4H3() {
+      if (!isLikelyChildView4H3()) {
+        return;
+      }
+
+      if (
+        typeof google === 'undefined' ||
+        !google.script ||
+        !google.script.run
+      ) {
+        return;
+      }
+
+      google.script.run
+        .withSuccessHandler(function (context) {
+          renderChildLearningPlanHome4H3(context || {});
+        })
+        .withFailureHandler(function () {
+          // silent
+        })
+        .kidlearnV3_getChildLearningPlanContext4H3V3({
+          childId: 'CHD_V2_CHILD_DEFAULT'
+        });
+    }
+
+    function findChildHomeTarget4H3() {
+      var selectors = [
+        '.kl-child-home-grid',
+        '.kl-home-grid',
+        '.kl-dashboard-grid',
+        '.kl-course-grid',
+        '.kl-product-home',
+        '.kl-page-content',
+        '.kl-main-content',
+        'main',
+        '#app'
+      ];
+
+      for (var i = 0; i < selectors.length; i++) {
+        var el =
+          document.querySelector(selectors[i]);
+
+        if (el) return el;
+      }
+
+      return document.body;
+    }
+
+    function renderChildLearningPlanHome4H3(context) {
+      if (!context.success) return;
+
+      var plan =
+        context.childLearningPlan || {};
+
+      if (
+        plan.emptyState &&
+        plan.emptyState.show === true
+      ) {
+        return;
+      }
+
+      var target =
+        findChildHomeTarget4H3();
+
+      if (!target) return;
+
+      var existing =
+        document.querySelector('.kl-child-learning-plan-entry-4h3');
+
+      if (existing && existing.parentNode) {
+        existing.parentNode.removeChild(existing);
+      }
+
+      var goal =
+        plan.todayGoal || null;
+
+      var assignments =
+        plan.assignments && plan.assignments.items
+          ? plan.assignments.items
+          : [];
+
+      var html =
+        '<div class="kl-child-learning-plan-inner-4h3">' +
+          '<div class="kl-child-learning-plan-icon-4h3">🗓️</div>' +
+          '<div class="kl-child-learning-plan-content-4h3">' +
+            '<div class="kl-child-learning-plan-badge-4h3">Kế hoạch hôm nay</div>' +
+            '<h3>Kế hoạch học của con</h3>' +
+            (
+              goal
+                ? '<p>Mục tiêu: <strong>' + escapeHtml4H3(goal.targetMinutes || 0) + ' phút</strong></p>'
+                : '<p>Hoàn thành các bài được giao hôm nay nhé.</p>'
+            ) +
+            renderChildAssignments4H3(assignments) +
+          '</div>' +
+        '</div>';
+
+      var card =
+        document.createElement('section');
+
+      card.className =
+        'kl-child-learning-plan-entry-4h3';
+
+      card.setAttribute(
+        'data-phase',
+        '4H-3'
+      );
+
+      card.innerHTML =
+        html;
+
+      if (target.firstChild) {
+        target.insertBefore(card, target.firstChild);
+      } else {
+        target.appendChild(card);
+      }
+    }
+
+    function renderChildAssignments4H3(assignments) {
+      assignments =
+        assignments || [];
+
+      if (!assignments.length) {
+        return (
+          '<div class="kl-child-learning-plan-empty-4h3">' +
+            'Chưa có bài được giao.' +
+          '</div>'
+        );
+      }
+
+      var html =
+        '<div class="kl-child-learning-plan-list-4h3">';
+
+      for (var i = 0; i < assignments.length; i++) {
+        html +=
+          '<div class="kl-child-learning-plan-assignment-4h3">' +
+            '<span>📘</span>' +
+            '<div>' +
+              '<strong>' + escapeHtml4H3(assignments[i].lessonTitle || assignments[i].lessonId || 'Bài học') + '</strong>' +
+              '<p>Trạng thái: ' + escapeHtml4H3(assignments[i].status || 'ASSIGNED') + '</p>' +
+            '</div>' +
+          '</div>';
+      }
+
+      html += '</div>';
+
+      return html;
+    }
+
+    document.addEventListener(
+      'click',
+      function (event) {
+        var actionEl =
+          event.target.closest('[data-action]');
+
+        if (!actionEl) return;
+
+        var action =
+          actionEl.getAttribute('data-action');
+
+        if (action === 'submit-learning-plan-controlled-write-4h3') {
+          event.preventDefault();
+          event.stopPropagation();
+          submitLearningPlanControlledWrite4H3();
+          return;
+        }
+      },
+      true
+    );
+
+    function schedulePatch4H3() {
+      if (
+        KIDLEARN_LEARNING_PLAN_WRITE_CHILD_UI_4H3.patchTimer
+      ) {
+        return;
+      }
+
+      KIDLEARN_LEARNING_PLAN_WRITE_CHILD_UI_4H3.patchTimer =
+        setTimeout(function () {
+          KIDLEARN_LEARNING_PLAN_WRITE_CHILD_UI_4H3.patchTimer = null;
+          patchLearningPlanWriteButton4H3();
+        }, 700);
+    }
+
+    function scheduleChildHome4H3() {
+      if (
+        KIDLEARN_LEARNING_PLAN_WRITE_CHILD_UI_4H3.childTimer
+      ) {
+        return;
+      }
+
+      KIDLEARN_LEARNING_PLAN_WRITE_CHILD_UI_4H3.childTimer =
+        setTimeout(function () {
+          KIDLEARN_LEARNING_PLAN_WRITE_CHILD_UI_4H3.childTimer = null;
+          ensureChildLearningPlanHome4H3();
+        }, 900);
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener(
+        'DOMContentLoaded',
+        function () {
+          schedulePatch4H3();
+          scheduleChildHome4H3();
+        }
+      );
+    } else {
+      schedulePatch4H3();
+      scheduleChildHome4H3();
+    }
+
+    var observer4H3 =
+      new MutationObserver(function () {
+        schedulePatch4H3();
+        scheduleChildHome4H3();
+      });
+
+    observer4H3.observe(
+      document.documentElement,
+      {
+        childList: true,
+        subtree: true
+      }
+    );
+
+    window.patchLearningPlanWriteButton4H3 =
+      patchLearningPlanWriteButton4H3;
+
+    window.submitLearningPlanControlledWrite4H3 =
+      submitLearningPlanControlledWrite4H3;
+
+    window.renderChildLearningPlanHome4H3 =
+      renderChildLearningPlanHome4H3;
+
+    window.refreshChildLearningPlanHome4H3 =
+      refreshChildLearningPlanHome4H3;
+  })();
+</script>

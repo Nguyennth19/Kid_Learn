@@ -1,0 +1,198 @@
+<script>
+const DashboardController = {
+  /**
+   * Khởi tạo Dashboard, kéo dữ liệu từ API
+   */
+  init: async function() {
+    try {
+      const token = AuthService.getToken();
+      if (!token) return;
+      
+      // 1. Render nhanh profile từ LocalStorage (Không bắt người dùng chờ)
+      this.renderProfile();
+      
+      // 2. Fetch dữ liệu thật từ Server
+      const response = await NetworkService.call('api_getDashboardData', { token: token });
+      const data = response.data;
+      
+      // 3. Đổ dữ liệu vào UI Component
+      this.renderMetrics(data.stats);
+      this.renderTasks(data.tasks);
+      
+    } catch (err) {
+      console.error("[DashboardController] Lỗi khởi tạo:", err);
+      // Hiển thị thông báo lỗi trên UI thay vì để trắng
+      document.getElementById('dash-task-list').innerHTML = 
+        `<li class="text-center py-8 text-red-500 text-sm font-medium">Không thể tải dữ liệu: ${err.message}</li>`;
+    }
+  },
+
+  /**
+   * Render dữ liệu người dùng (Header)
+   */
+  renderProfile: function() {
+    const user = AuthService.getUser();
+    if(!user) return;
+    
+    document.getElementById('header-user-name').textContent = user.fullName || user.email;
+    if(document.getElementById('header-user-name-mobile')) {
+      document.getElementById('header-user-name-mobile').textContent = user.fullName || user.email;
+    }
+    
+    document.getElementById('header-user-role').textContent = user.role || 'Sinh viên';
+    
+    // Tạo Avatar chữ cái đầu
+    const initial = (user.fullName || user.email).charAt(0).toUpperCase();
+    document.getElementById('header-user-avatar').textContent = initial;
+  },
+
+  /**
+   * Render các chỉ số học tập (Metrics)
+   */
+  renderMetrics: function(stats) {
+    if(!stats) return;
+    
+    // Main Dashboard
+    document.getElementById('dash-gpa').textContent = stats.gpa + " / 4.0";
+    document.getElementById('dash-credits').textContent = stats.creditsAccumulated;
+    document.getElementById('dash-semester-credits').textContent = stats.creditsThisSemester;
+    
+    const percent = stats.percentComplete || 0;
+    setTimeout(() => { // Tạo hiệu ứng chạy thanh progress
+      document.getElementById('dash-progress-bar').style.width = percent + '%';
+    }, 100);
+    document.getElementById('dash-progress-text').textContent = `📚 Đã hoàn thành ${percent}% chương trình`;
+    
+    // Right Sidebar
+    document.getElementById('rs-gpa').textContent = stats.gpa;
+    
+    // Tính xếp loại động
+    let grade = 'Khá';
+    let numGpa = parseFloat(stats.gpa);
+    if(numGpa >= 3.6) grade = 'Xuất sắc';
+    else if(numGpa >= 3.2) grade = 'Giỏi';
+    else if(numGpa < 2.5) grade = 'Trung bình';
+    document.getElementById('rs-grade').textContent = grade;
+  },
+
+  /**
+   * Render danh sách bài tập (Tasks)
+   */
+  renderTasks: function(taskData) {
+    const upcoming = taskData.upcoming || [];
+    document.getElementById('sb-task-count').textContent = upcoming.length;
+    
+    const taskListEl = document.getElementById('dash-task-list');
+    taskListEl.innerHTML = '';
+    
+    if (upcoming.length === 0) {
+      taskListEl.innerHTML = `
+        <li class="flex flex-col items-center justify-center py-12">
+          <div class="w-16 h-16 bg-green-50 text-green-500 rounded-full flex items-center justify-center mb-4 text-3xl">🎉</div>
+          <p class="text-slate-500 font-medium text-sm text-center">Tuyệt vời! Bạn đã hoàn thành<br>tất cả bài tập.</p>
+        </li>`;
+      return;
+    }
+
+    // Render tối đa 5 tasks gần nhất
+    upcoming.slice(0, 5).forEach(task => {
+      const li = document.createElement('li');
+      li.className = 'flex items-start gap-4 p-4 bg-white border border-slate-200 rounded-xl group transition-all hover:border-primary hover:shadow-md';
+      li.id = 'task-item-' + task.id;
+      
+      li.innerHTML = `
+        <div class="mt-1">
+          <input type="checkbox" class="w-5 h-5 text-primary border-slate-300 rounded focus:ring-primary cursor-pointer transition-all" 
+                 onchange="DashboardController.markTaskDone(this, '${task.id}')">
+        </div>
+        <div class="flex-1">
+          <div class="flex items-start justify-between gap-2 mb-1">
+            <h4 class="text-sm font-bold text-slate-800 line-clamp-1 group-hover:text-primary transition-colors">${task.task}</h4>
+            <span class="shrink-0 text-xs px-2.5 py-1 bg-blue-50 text-blue-700 rounded-md font-semibold whitespace-nowrap hidden sm:block">${task.status}</span>
+          </div>
+          <div class="flex items-center text-xs text-slate-500 font-medium">
+            <span class="text-red-500 mr-2 flex items-center"><span class="mr-1">⏰</span> ${task.dueDate} ${task.dueTime}</span>
+            <span class="px-2 border-l border-slate-200">${task.category}</span>
+          </div>
+        </div>
+      `;
+      taskListEl.appendChild(li);
+    });
+  },
+
+  /**
+   * KIẾN TRÚC UI LẠC QUAN (Optimistic UI)
+   * Tuân thủ [FILE 3 - Pattern 04 & FILE 1 - Mục 3.3]
+   */
+  markTaskDone: async function(checkboxEl, taskId) {
+    const li = document.getElementById('task-item-' + taskId);
+    const originalHTML = li.innerHTML; // Lưu trạng thái để Rollback nếu lỗi
+    
+    // 1. Cập nhật UI ngay lập tức (Lạc quan) mà không đợi Server [cite: 322-333]
+    checkboxEl.disabled = true;
+    li.classList.add('ui-disabled', 'opacity-40', 'bg-slate-50', 'grayscale');
+    
+    // 2. Trừ bộ đếm bên Sidebar ngay lập tức
+    let countEl = document.getElementById('sb-task-count');
+    let currentCount = parseInt(countEl.textContent) || 0;
+    if(currentCount > 0) countEl.textContent = currentCount - 1;
+
+    try {
+      const token = AuthService.getToken();
+      
+      // 3. Gửi Request ngầm lên Server để ghi đè dữ liệu [cite: 42-44]
+      await NetworkService.call('api_updateTaskStatus', { 
+        token: token, 
+        taskId: taskId, 
+        newStatus: 'Hoàn thành' 
+      });
+      
+      // 4. Nếu Server xác nhận thành công, ẩn hẳn Element
+      setTimeout(() => {
+        li.style.height = li.offsetHeight + 'px'; // Fix height for animation
+        li.style.overflow = 'hidden';
+        li.style.transition = 'all 0.3s ease';
+        
+        requestAnimationFrame(() => {
+          li.style.opacity = '0';
+          li.style.height = '0px';
+          li.style.padding = '0px';
+          li.style.marginTop = '0px';
+          li.style.marginBottom = '0px';
+          li.style.borderWidth = '0px';
+        });
+        
+        setTimeout(() => li.remove(), 300);
+      }, 500);
+
+    } catch (err) {
+      // 5. ROLLBACK NẾU CÓ LỖI (Giật lùi State)
+      console.error("[Optimistic UI] Lỗi cập nhật, Rollback state:", err);
+      alert("Kết nối máy chủ thất bại, không thể cập nhật bài tập lúc này.");
+      
+      // Khôi phục lại UI như ban đầu
+      li.classList.remove('ui-disabled', 'opacity-40', 'bg-slate-50', 'grayscale');
+      li.innerHTML = originalHTML; 
+      countEl.textContent = currentCount; // Trả lại số đếm
+    }
+  },
+  
+  /**
+   * API giữ chỗ (Mock API) cho Right Sidebar
+   */
+  submitHomeworkOptimistic: async function() {
+    alert('Tính năng Nộp bài tập nhanh đang được kết nối với Google Drive. Sẽ có mặt trong bản cập nhật tới!');
+  }
+};
+
+// Ghi đè hàm Navigate của AppController để kích hoạt DashboardController khi đổi View
+if (typeof AppController !== 'undefined') {
+  const originalNavigateTo = AppController.navigateTo;
+  AppController.navigateTo = function(viewName) {
+    originalNavigateTo.call(this, viewName);
+    if (viewName === 'dashboard') {
+      DashboardController.init();
+    }
+  };
+}
+</script>

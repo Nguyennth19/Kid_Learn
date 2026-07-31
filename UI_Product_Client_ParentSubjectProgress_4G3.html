@@ -1,0 +1,470 @@
+<script>
+  /**
+   * KIDLEARN_PARENT_SUBJECT_PROGRESS_DETAIL_UI_4G3
+   * Phase 4G-3 — Subject Progress Detail for Parent
+   */
+
+  (function () {
+    var KIDLEARN_PARENT_SUBJECT_PROGRESS_DETAIL_UI_4G3 = {
+      phase: '4G-3',
+      marker: 'KIDLEARN_PARENT_SUBJECT_PROGRESS_DETAIL_UI_4G3',
+      patchTimer: null,
+      loading: {}
+    };
+
+    window.KIDLEARN_PARENT_SUBJECT_PROGRESS_DETAIL_UI_4G3 =
+      KIDLEARN_PARENT_SUBJECT_PROGRESS_DETAIL_UI_4G3;
+
+    function escapeHtml4G3(value) {
+      return String(value === null || value === undefined ? '' : value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function patchParentSubjectCardsForDetail4G3() {
+      var cards =
+        document.querySelectorAll('.kl-parent-dashboard-subject-4g2');
+
+      if (!cards || !cards.length) {
+        return;
+      }
+
+      for (var i = 0; i < cards.length; i++) {
+        var card =
+          cards[i];
+
+        var subjectCode =
+          card.getAttribute('data-subject-code') || '';
+
+        card.setAttribute(
+          'data-action',
+          'open-parent-subject-detail-4g3'
+        );
+
+        card.setAttribute(
+          'data-subject-code',
+          subjectCode
+        );
+
+        card.classList.add(
+          'kl-parent-subject-detail-clickable-4g3'
+        );
+
+        if (!card.querySelector('.kl-parent-subject-detail-hint-4g3')) {
+          var hint =
+            document.createElement('div');
+
+          hint.className =
+            'kl-parent-subject-detail-hint-4g3';
+
+          hint.textContent =
+            'Bấm để xem chi tiết';
+
+          card.appendChild(hint);
+        }
+      }
+    }
+
+    function openParentSubjectProgressDetail4G3(card) {
+      if (!card) return;
+
+      var subjectCode =
+        card.getAttribute('data-subject-code') || '';
+
+      if (!subjectCode) {
+        renderParentSubjectProgressError4G3(
+          'Không tìm thấy subjectCode trên thẻ môn học.'
+        );
+        return;
+      }
+
+      if (
+        KIDLEARN_PARENT_SUBJECT_PROGRESS_DETAIL_UI_4G3.loading[subjectCode]
+      ) {
+        return;
+      }
+
+      if (
+        typeof google === 'undefined' ||
+        !google.script ||
+        !google.script.run
+      ) {
+        renderParentSubjectProgressError4G3(
+          'Không gọi được Apps Script server.'
+        );
+        return;
+      }
+
+      KIDLEARN_PARENT_SUBJECT_PROGRESS_DETAIL_UI_4G3.loading[subjectCode] = true;
+
+      renderParentSubjectProgressLoading4G3(subjectCode);
+
+      google.script.run
+        .withSuccessHandler(function (result) {
+          KIDLEARN_PARENT_SUBJECT_PROGRESS_DETAIL_UI_4G3.loading[subjectCode] = false;
+          renderParentSubjectProgressPanel4G3(result || {});
+        })
+        .withFailureHandler(function (error) {
+          KIDLEARN_PARENT_SUBJECT_PROGRESS_DETAIL_UI_4G3.loading[subjectCode] = false;
+          renderParentSubjectProgressError4G3(
+            error && error.message
+              ? error.message
+              : String(error || 'Không mở được chi tiết môn học.')
+          );
+        })
+        .kidlearnV3_getParentSubjectProgressDetail4G3V3({
+          parentId: 'PARENT',
+          childId: 'CHD_V2_CHILD_DEFAULT',
+          subjectCode: subjectCode
+        });
+    }
+
+    function renderParentSubjectProgressLoading4G3(subjectCode) {
+      closeParentSubjectProgressPanel4G3();
+
+      var overlay =
+        document.createElement('div');
+
+      overlay.className =
+        'kl-parent-subject-detail-overlay-4g3';
+
+      overlay.innerHTML =
+        '<div class="kl-parent-subject-detail-panel-4g3">' +
+          '<div class="kl-parent-subject-detail-loading-4g3">' +
+            '<div class="kl-parent-subject-detail-spinner-4g3">📊</div>' +
+            '<h3>Đang mở chi tiết môn học...</h3>' +
+            '<p>' + escapeHtml4G3(subjectCode) + '</p>' +
+          '</div>' +
+        '</div>';
+
+      document.body.appendChild(overlay);
+    }
+
+    function renderParentSubjectProgressError4G3(message) {
+      closeParentSubjectProgressPanel4G3();
+
+      var overlay =
+        document.createElement('div');
+
+      overlay.className =
+        'kl-parent-subject-detail-overlay-4g3';
+
+      overlay.innerHTML =
+        '<div class="kl-parent-subject-detail-panel-4g3">' +
+          '<div class="kl-parent-subject-detail-head-4g3">' +
+            '<div>' +
+              '<div class="kl-parent-subject-detail-badge-4g3">4G-3</div>' +
+              '<h3>Không mở được chi tiết</h3>' +
+              '<p>' + escapeHtml4G3(message || 'Vui lòng thử lại sau.') + '</p>' +
+            '</div>' +
+            '<button type="button" class="kl-parent-subject-detail-close-4g3" data-action="close-parent-subject-detail-4g3">×</button>' +
+          '</div>' +
+        '</div>';
+
+      document.body.appendChild(overlay);
+    }
+
+    function renderParentSubjectProgressPanel4G3(result) {
+      closeParentSubjectProgressPanel4G3();
+
+      var detail =
+        result.subjectDetail || {};
+
+      var subject =
+        detail.subject || {};
+
+      var summary =
+        detail.summary || {};
+
+      var overlay =
+        document.createElement('div');
+
+      overlay.className =
+        'kl-parent-subject-detail-overlay-4g3';
+
+      overlay.setAttribute(
+        'data-phase',
+        '4G-3'
+      );
+
+      overlay.innerHTML =
+        '<div class="kl-parent-subject-detail-panel-4g3" role="dialog" aria-modal="true">' +
+          renderSubjectHeader4G3(subject) +
+          renderSubjectSummaryCards4G3(summary) +
+          renderSubjectLessons4G3(detail.lessons || {}) +
+          renderSubjectHandwriting4G3(detail.handwriting || {}) +
+          renderSubjectRecentActivities4G3(detail.recentActivities || {}) +
+        '</div>';
+
+      document.body.appendChild(overlay);
+    }
+
+    function renderSubjectHeader4G3(subject) {
+      return (
+        '<div class="kl-parent-subject-detail-head-4g3">' +
+          '<div>' +
+            '<div class="kl-parent-subject-detail-badge-4g3">Subject Detail • Read-only</div>' +
+            '<h3>' + escapeHtml4G3(subject.subjectName || subject.subjectCode || 'Môn học') + '</h3>' +
+            '<p>Chi tiết tiến độ học tập theo môn.</p>' +
+          '</div>' +
+          '<button type="button" class="kl-parent-subject-detail-close-4g3" data-action="close-parent-subject-detail-4g3">×</button>' +
+        '</div>'
+      );
+    }
+
+    function renderSubjectSummaryCards4G3(summary) {
+      summary =
+        summary || {};
+
+      return (
+        '<div class="kl-parent-subject-detail-grid-4g3">' +
+          renderMetricCard4G3('✅', 'Bài hoàn thành', summary.completedLessons || 0) +
+          renderMetricCard4G3('📘', 'Buổi học', summary.sessionCount || 0) +
+          renderMetricCard4G3('📝', 'Bài nộp', summary.responseCount || 0) +
+          renderMetricCard4G3('✍️', 'Bài viết tay', summary.handwritingCount || 0) +
+          renderMetricCard4G3('⏳', 'Chờ duyệt', summary.pendingReviewCount || 0) +
+          renderMetricCard4G3('🔁', 'Cần làm lại', summary.retryCount || 0) +
+        '</div>'
+      );
+    }
+
+    function renderMetricCard4G3(icon, label, value) {
+      return (
+        '<article class="kl-parent-subject-detail-card-4g3">' +
+          '<div class="kl-parent-subject-detail-card-icon-4g3">' + escapeHtml4G3(icon) + '</div>' +
+          '<strong>' + escapeHtml4G3(value) + '</strong>' +
+          '<span>' + escapeHtml4G3(label) + '</span>' +
+        '</article>'
+      );
+    }
+
+    function renderSubjectLessons4G3(lessons) {
+      lessons =
+        lessons || {};
+
+      var items =
+        lessons.items || [];
+
+      if (!items.length) {
+        return (
+          '<section class="kl-parent-subject-detail-section-4g3">' +
+            '<h4>Danh sách bài học</h4>' +
+            '<div class="kl-parent-subject-detail-empty-4g3">' +
+              '<h4>Chưa có dữ liệu bài học</h4>' +
+              '<p>Khi bé học môn này, danh sách bài học sẽ hiển thị ở đây.</p>' +
+            '</div>' +
+          '</section>'
+        );
+      }
+
+      return (
+        '<section class="kl-parent-subject-detail-section-4g3">' +
+          '<h4>Danh sách bài học</h4>' +
+          '<div class="kl-parent-subject-detail-lesson-list-4g3">' +
+            items.map(renderLessonItem4G3).join('') +
+          '</div>' +
+        '</section>'
+      );
+    }
+
+    function renderLessonItem4G3(item) {
+      item =
+        item || {};
+
+      var percent =
+        Number(item.progressPercent || 0);
+
+      if (isNaN(percent)) {
+        percent = 0;
+      }
+
+      return (
+        '<article class="kl-parent-subject-detail-lesson-4g3">' +
+          '<div>' +
+            '<strong>' + escapeHtml4G3(item.lessonTitle || item.lessonId || 'Bài học') + '</strong>' +
+            '<p>' +
+              'Buổi học: ' + escapeHtml4G3(item.sessionCount || 0) +
+              ' • Bài nộp: ' + escapeHtml4G3(item.responseCount || 0) +
+              ' • Viết tay: ' + escapeHtml4G3(item.handwritingCount || 0) +
+            '</p>' +
+          '</div>' +
+          '<div class="kl-parent-subject-detail-progress-wrap-4g3">' +
+            '<span>' + escapeHtml4G3(percent) + '%</span>' +
+            '<div class="kl-parent-subject-detail-progress-4g3">' +
+              '<i style="width:' + Math.max(0, Math.min(100, percent)) + '%"></i>' +
+            '</div>' +
+          '</div>' +
+        '</article>'
+      );
+    }
+
+    function renderSubjectHandwriting4G3(handwriting) {
+      handwriting =
+        handwriting || {};
+
+      return (
+        '<section class="kl-parent-subject-detail-section-4g3">' +
+          '<h4>Tình trạng bài viết tay</h4>' +
+          '<div class="kl-parent-subject-detail-handwriting-4g3">' +
+            '<span>Tổng: <strong>' + escapeHtml4G3(handwriting.total || 0) + '</strong></span>' +
+            '<span>Chờ duyệt: <strong>' + escapeHtml4G3(handwriting.pendingReviewCount || 0) + '</strong></span>' +
+            '<span>Đã chấp nhận: <strong>' + escapeHtml4G3(handwriting.acceptedCount || 0) + '</strong></span>' +
+            '<span>Cần làm lại: <strong>' + escapeHtml4G3(handwriting.retryCount || 0) + '</strong></span>' +
+          '</div>' +
+        '</section>'
+      );
+    }
+
+    function renderSubjectRecentActivities4G3(activities) {
+      activities =
+        activities || {};
+
+      var items =
+        activities.items || [];
+
+      if (!items.length) {
+        return (
+          '<section class="kl-parent-subject-detail-section-4g3">' +
+            '<h4>Hoạt động gần đây của môn này</h4>' +
+            '<div class="kl-parent-subject-detail-empty-4g3">' +
+              '<h4>Chưa có hoạt động gần đây</h4>' +
+              '<p>Khi bé học môn này, hoạt động sẽ hiển thị ở đây.</p>' +
+            '</div>' +
+          '</section>'
+        );
+      }
+
+      return (
+        '<section class="kl-parent-subject-detail-section-4g3">' +
+          '<h4>Hoạt động gần đây của môn này</h4>' +
+          '<div class="kl-parent-subject-detail-activity-list-4g3">' +
+            items.map(renderActivityItem4G3).join('') +
+          '</div>' +
+        '</section>'
+      );
+    }
+
+    function renderActivityItem4G3(item) {
+      item =
+        item || {};
+
+      return (
+        '<article class="kl-parent-subject-detail-activity-4g3">' +
+          '<div class="kl-parent-subject-detail-activity-icon-4g3">' +
+            escapeHtml4G3(item.icon || '📌') +
+          '</div>' +
+          '<div>' +
+            '<strong>' + escapeHtml4G3(item.title || 'Hoạt động') + '</strong>' +
+            '<p>' + escapeHtml4G3(item.subtitle || '') + '</p>' +
+          '</div>' +
+          '<small>' + escapeHtml4G3(formatDate4G3(item.at || '')) + '</small>' +
+        '</article>'
+      );
+    }
+
+    function formatDate4G3(value) {
+      if (!value) return '';
+
+      var date =
+        new Date(value);
+
+      if (isNaN(date.getTime())) {
+        return String(value).substring(0, 16);
+      }
+
+      return date.toLocaleDateString('vi-VN') +
+        ' ' +
+        date.toLocaleTimeString('vi-VN', {
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+    }
+
+    function closeParentSubjectProgressPanel4G3() {
+      var existing =
+        document.querySelector('.kl-parent-subject-detail-overlay-4g3');
+
+      if (existing && existing.parentNode) {
+        existing.parentNode.removeChild(existing);
+      }
+    }
+
+    document.addEventListener(
+      'click',
+      function (event) {
+        var actionEl =
+          event.target.closest('[data-action]');
+
+        if (!actionEl) return;
+
+        var action =
+          actionEl.getAttribute('data-action');
+
+        if (action === 'open-parent-subject-detail-4g3') {
+          event.preventDefault();
+          event.stopPropagation();
+
+          openParentSubjectProgressDetail4G3(actionEl);
+          return;
+        }
+
+        if (action === 'close-parent-subject-detail-4g3') {
+          event.preventDefault();
+          event.stopPropagation();
+
+          closeParentSubjectProgressPanel4G3();
+          return;
+        }
+      },
+      true
+    );
+
+    function schedulePatchParentSubjectCardsForDetail4G3() {
+      if (
+        KIDLEARN_PARENT_SUBJECT_PROGRESS_DETAIL_UI_4G3.patchTimer
+      ) {
+        return;
+      }
+
+      KIDLEARN_PARENT_SUBJECT_PROGRESS_DETAIL_UI_4G3.patchTimer =
+        setTimeout(function () {
+          KIDLEARN_PARENT_SUBJECT_PROGRESS_DETAIL_UI_4G3.patchTimer = null;
+          patchParentSubjectCardsForDetail4G3();
+        }, 650);
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener(
+        'DOMContentLoaded',
+        schedulePatchParentSubjectCardsForDetail4G3
+      );
+    } else {
+      schedulePatchParentSubjectCardsForDetail4G3();
+    }
+
+    var observer4G3 =
+      new MutationObserver(function () {
+        schedulePatchParentSubjectCardsForDetail4G3();
+      });
+
+    observer4G3.observe(
+      document.documentElement,
+      {
+        childList: true,
+        subtree: true
+      }
+    );
+
+    window.patchParentSubjectCardsForDetail4G3 =
+      patchParentSubjectCardsForDetail4G3;
+
+    window.openParentSubjectProgressDetail4G3 =
+      openParentSubjectProgressDetail4G3;
+
+    window.renderParentSubjectProgressPanel4G3 =
+      renderParentSubjectProgressPanel4G3;
+  })();
+</script>

@@ -1,0 +1,462 @@
+<script>
+  /**
+   * KIDLEARN_PARENT_REVIEW_UI_WRITE_GATE_4F3
+   * Phase 4F-3 — Controlled UI Write
+   * Connect Parent Review buttons to 4E-5C backend.
+   */
+
+  (function () {
+    var KIDLEARN_PARENT_REVIEW_UI_WRITE_GATE_4F3 = {
+      phase: '4F-3',
+      marker: 'KIDLEARN_PARENT_REVIEW_UI_WRITE_GATE_4F3',
+      gateStatusLoaded: false,
+      gateStatusLoading: false,
+      gateStatus: null,
+      patchTimer: null,
+      submitting: {}
+    };
+
+    window.KIDLEARN_PARENT_REVIEW_UI_WRITE_GATE_4F3 =
+      KIDLEARN_PARENT_REVIEW_UI_WRITE_GATE_4F3;
+
+    function escapeHtml4F3(value) {
+      return String(value === null || value === undefined ? '' : value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function isGateOpen4F3() {
+      var status =
+        KIDLEARN_PARENT_REVIEW_UI_WRITE_GATE_4F3.gateStatus || {};
+
+      return status.writeAllowedNow === true ||
+        status.gateMode === 'OPEN_DEV_CONTROLLED';
+    }
+
+    function getGateMode4F3() {
+      var status =
+        KIDLEARN_PARENT_REVIEW_UI_WRITE_GATE_4F3.gateStatus || {};
+
+      return status.gateMode || 'CLOSED_DRY_RUN_ONLY';
+    }
+
+    function loadParentReviewUiWriteGateStatus4F3(callback, force) {
+      if (
+        KIDLEARN_PARENT_REVIEW_UI_WRITE_GATE_4F3.gateStatusLoaded &&
+        !force
+      ) {
+        if (callback) callback();
+        return;
+      }
+
+      if (
+        KIDLEARN_PARENT_REVIEW_UI_WRITE_GATE_4F3.gateStatusLoading
+      ) {
+        if (callback) {
+          setTimeout(callback, 600);
+        }
+        return;
+      }
+
+      if (
+        typeof google === 'undefined' ||
+        !google.script ||
+        !google.script.run
+      ) {
+        KIDLEARN_PARENT_REVIEW_UI_WRITE_GATE_4F3.gateStatusLoaded = true;
+        KIDLEARN_PARENT_REVIEW_UI_WRITE_GATE_4F3.gateStatus = {
+          gateMode: 'CLOSED_DRY_RUN_ONLY',
+          writeAllowedNow: false
+        };
+
+        if (callback) callback();
+        return;
+      }
+
+      KIDLEARN_PARENT_REVIEW_UI_WRITE_GATE_4F3.gateStatusLoading = true;
+
+      google.script.run
+        .withSuccessHandler(function (status) {
+          KIDLEARN_PARENT_REVIEW_UI_WRITE_GATE_4F3.gateStatusLoading = false;
+          KIDLEARN_PARENT_REVIEW_UI_WRITE_GATE_4F3.gateStatusLoaded = true;
+          KIDLEARN_PARENT_REVIEW_UI_WRITE_GATE_4F3.gateStatus = status || {};
+
+          if (callback) callback();
+        })
+        .withFailureHandler(function () {
+          KIDLEARN_PARENT_REVIEW_UI_WRITE_GATE_4F3.gateStatusLoading = false;
+          KIDLEARN_PARENT_REVIEW_UI_WRITE_GATE_4F3.gateStatusLoaded = true;
+          KIDLEARN_PARENT_REVIEW_UI_WRITE_GATE_4F3.gateStatus = {
+            gateMode: 'CLOSED_DRY_RUN_ONLY',
+            writeAllowedNow: false
+          };
+
+          if (callback) callback();
+        })
+        .kidlearnV3_getParentReviewUiWriteGate4F3StatusV3();
+    }
+
+    function patchParentReviewActionButtonsForWrite4F3() {
+      loadParentReviewUiWriteGateStatus4F3(function () {
+        var cards =
+          document.querySelectorAll('.kl-parent-review-card-4e5b');
+
+        if (!cards || !cards.length) {
+          return;
+        }
+
+        for (var i = 0; i < cards.length; i++) {
+          patchCard4F3(cards[i]);
+        }
+      });
+    }
+
+    function patchCard4F3(card) {
+      if (!card) return;
+
+      var responseId =
+        card.getAttribute('data-response-id') || '';
+
+      var actions =
+        card.querySelector('.kl-parent-review-actions-4f2');
+
+      if (!actions) return;
+
+      actions.classList.add('kl-parent-review-write-gate-4f3');
+      actions.setAttribute('data-gate-mode-4f3', getGateMode4F3());
+
+      var badge =
+        actions.querySelector('.kl-parent-review-gate-badge-4f2');
+
+      if (badge) {
+        badge.classList.add('kl-parent-review-write-gate-badge-4f3');
+        badge.textContent =
+          getGateMode4F3() +
+          (isGateOpen4F3() ? ' / REAL DEV WRITE' : ' / DRY-RUN');
+      }
+
+      var acceptButton =
+        actions.querySelector('.kl-parent-review-accept-4f2');
+
+      var retryButton =
+        actions.querySelector('.kl-parent-review-retry-4f2');
+
+      if (acceptButton) {
+        acceptButton.setAttribute('data-action', 'parent-review-accept-4f3');
+        acceptButton.setAttribute('data-response-id', responseId);
+        acceptButton.classList.add('kl-parent-review-realwrite-4f3');
+        acceptButton.setAttribute(
+          'title',
+          isGateOpen4F3()
+            ? 'Ghi thật REVIEWED_ACCEPTED vào DEV'
+            : 'Dry-run only, chưa ghi Sheet'
+        );
+      }
+
+      if (retryButton) {
+        retryButton.setAttribute('data-action', 'parent-review-retry-4f3');
+        retryButton.setAttribute('data-response-id', responseId);
+        retryButton.classList.add('kl-parent-review-realwrite-4f3');
+        retryButton.setAttribute(
+          'title',
+          isGateOpen4F3()
+            ? 'Ghi thật REVIEWED_RETRY vào DEV'
+            : 'Dry-run only, chưa ghi Sheet'
+        );
+      }
+
+      var feedback =
+        actions.querySelector('.kl-parent-review-feedback-4f2');
+
+      if (feedback) {
+        feedback.classList.add('kl-parent-review-write-feedback-4f3');
+
+        if (!feedback.getAttribute('data-4f3-ready')) {
+          feedback.setAttribute('data-4f3-ready', 'true');
+          feedback.innerHTML =
+            isGateOpen4F3()
+              ? '4F-3: Gate đang mở. Bấm nút sẽ ghi thật vào DEV.'
+              : '4F-3: Gate đang đóng. Bấm nút chỉ dry-run.';
+        }
+      }
+    }
+
+    function submitParentReviewActionFromUi4F3(card, actionType) {
+      if (!card) return;
+
+      var responseId =
+        card.getAttribute('data-response-id') || '';
+
+      var actions =
+        card.querySelector('.kl-parent-review-actions-4f2');
+
+      var feedback =
+        card.querySelector('.kl-parent-review-write-feedback-4f3') ||
+        card.querySelector('.kl-parent-review-feedback-4f2');
+
+      if (!responseId) {
+        renderParentReviewWriteFeedback4F3(
+          feedback,
+          false,
+          'Thiếu responseId trên card UI.'
+        );
+        return;
+      }
+
+      if (
+        KIDLEARN_PARENT_REVIEW_UI_WRITE_GATE_4F3.submitting[responseId]
+      ) {
+        return;
+      }
+
+      var gateOpen =
+        isGateOpen4F3();
+
+      var label =
+        actionType === 'ACCEPT'
+          ? 'Chấp nhận bài viết'
+          : 'Yêu cầu bé làm lại';
+
+      if (gateOpen) {
+        var confirmed =
+          window.confirm(
+            label +
+            '\n\nThao tác này sẽ ghi thật vào DEV Sheet:\n' +
+            '- DATA_Responses.answerMetaJson\n' +
+            '- LOG_Audit\n\n' +
+            'Response ID: ' + responseId
+          );
+
+        if (!confirmed) {
+          return;
+        }
+      }
+
+      if (
+        typeof google === 'undefined' ||
+        !google.script ||
+        !google.script.run
+      ) {
+        renderParentReviewWriteFeedback4F3(
+          feedback,
+          false,
+          'Không gọi được Apps Script server.'
+        );
+        return;
+      }
+
+      KIDLEARN_PARENT_REVIEW_UI_WRITE_GATE_4F3.submitting[responseId] = true;
+
+      if (actions) {
+        actions.classList.add('is-submitting-4f3');
+      }
+
+      renderParentReviewWriteFeedback4F3(
+        feedback,
+        true,
+        gateOpen
+          ? 'Đang ghi thật vào DEV...'
+          : 'Đang chạy dry-run...'
+      );
+
+      google.script.run
+        .withSuccessHandler(function (result) {
+          KIDLEARN_PARENT_REVIEW_UI_WRITE_GATE_4F3.submitting[responseId] = false;
+
+          if (actions) {
+            actions.classList.remove('is-submitting-4f3');
+          }
+
+          var message = '';
+
+          if (result && result.dryRunOnly === true) {
+            message =
+              'Dry-run OK. Chưa ghi DATA_Responses / LOG_Audit.<br>' +
+              'Gate: ' + escapeHtml4F3(result.gateMode || '') + '<br>' +
+              'Action: ' + escapeHtml4F3(result.reviewAction || actionType) + '<br>' +
+              'Response ID: ' + escapeHtml4F3(result.responseId || responseId);
+          } else {
+            message =
+              'Ghi thật thành công.<br>' +
+              'Status: ' + escapeHtml4F3(result.targetReviewStatus || '') + '<br>' +
+              'Response ID: ' + escapeHtml4F3(result.responseId || responseId) + '<br>' +
+              'Audit ID: ' + escapeHtml4F3(result.auditId || '');
+
+            markCardReviewed4F3(card, result);
+          }
+
+          renderParentReviewWriteFeedback4F3(
+            feedback,
+            true,
+            message
+          );
+
+          if (result && result.dryRunOnly !== true) {
+            setTimeout(function () {
+              try {
+                if (typeof window.openParentReviewQueue4E5B === 'function') {
+                  window.openParentReviewQueue4E5B();
+                }
+              } catch (error) {
+                // ignore refresh error
+              }
+            }, 1300);
+          }
+        })
+        .withFailureHandler(function (error) {
+          KIDLEARN_PARENT_REVIEW_UI_WRITE_GATE_4F3.submitting[responseId] = false;
+
+          if (actions) {
+            actions.classList.remove('is-submitting-4f3');
+          }
+
+          renderParentReviewWriteFeedback4F3(
+            feedback,
+            false,
+            error && error.message
+              ? error.message
+              : String(error || 'Unknown error')
+          );
+        })
+        .kidlearnV3_submitParentReviewActionFromUi4F3V3({
+          responseId: responseId,
+          actionType: actionType,
+          reviewerId: 'PARENT_UI_4F3',
+          reviewerNote:
+            actionType === 'ACCEPT'
+              ? 'Phụ huynh chấp nhận bài viết tay từ UI 4F-3.'
+              : 'Phụ huynh yêu cầu bé làm lại từ UI 4F-3.',
+          source: 'PARENT_REVIEW_QUEUE_UI_4F3'
+        });
+    }
+
+    function renderParentReviewWriteFeedback4F3(feedback, success, message) {
+      if (!feedback) return;
+
+      feedback.classList.add('kl-parent-review-write-feedback-4f3');
+      feedback.classList.remove('is-success', 'is-error');
+
+      if (success) {
+        feedback.classList.add('is-success');
+      } else {
+        feedback.classList.add('is-error');
+      }
+
+      feedback.innerHTML =
+        '<strong>4F-3</strong><br>' +
+        String(message || '');
+    }
+
+    function markCardReviewed4F3(card, result) {
+      if (!card) return;
+
+      card.classList.add('is-reviewed-4f3');
+
+      var status =
+        card.querySelector('.kl-parent-review-status-4e5b');
+
+      if (status && result && result.targetReviewStatus) {
+        status.textContent = result.targetReviewStatus;
+      }
+
+      var buttons =
+        card.querySelectorAll('.kl-parent-review-realwrite-4f3');
+
+      for (var i = 0; i < buttons.length; i++) {
+        buttons[i].disabled = true;
+      }
+    }
+
+    document.addEventListener(
+      'click',
+      function (event) {
+        var actionEl =
+          event.target.closest('[data-action]');
+
+        if (!actionEl) return;
+
+        var action =
+          actionEl.getAttribute('data-action');
+
+        if (
+          action !== 'parent-review-accept-4f3' &&
+          action !== 'parent-review-retry-4f3'
+        ) {
+          return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        var card =
+          actionEl.closest('.kl-parent-review-card-4e5b');
+
+        var actionType =
+          action === 'parent-review-accept-4f3'
+            ? 'ACCEPT'
+            : 'RETRY';
+
+        submitParentReviewActionFromUi4F3(
+          card,
+          actionType
+        );
+      },
+      true
+    );
+
+    function schedulePatchParentReviewActionButtonsForWrite4F3(forceStatus) {
+      if (forceStatus) {
+        KIDLEARN_PARENT_REVIEW_UI_WRITE_GATE_4F3.gateStatusLoaded = false;
+      }
+
+      if (
+        KIDLEARN_PARENT_REVIEW_UI_WRITE_GATE_4F3.patchTimer
+      ) {
+        return;
+      }
+
+      KIDLEARN_PARENT_REVIEW_UI_WRITE_GATE_4F3.patchTimer =
+        setTimeout(function () {
+          KIDLEARN_PARENT_REVIEW_UI_WRITE_GATE_4F3.patchTimer = null;
+          patchParentReviewActionButtonsForWrite4F3();
+        }, 600);
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener(
+        'DOMContentLoaded',
+        function () {
+          schedulePatchParentReviewActionButtonsForWrite4F3(false);
+        }
+      );
+    } else {
+      schedulePatchParentReviewActionButtonsForWrite4F3(false);
+    }
+
+    var observer4F3 =
+      new MutationObserver(function () {
+        schedulePatchParentReviewActionButtonsForWrite4F3(false);
+      });
+
+    observer4F3.observe(
+      document.documentElement,
+      {
+        childList: true,
+        subtree: true
+      }
+    );
+
+    window.patchParentReviewActionButtonsForWrite4F3 =
+      patchParentReviewActionButtonsForWrite4F3;
+
+    window.submitParentReviewActionFromUi4F3 =
+      submitParentReviewActionFromUi4F3;
+
+    window.refreshParentReviewUiWriteGate4F3 = function () {
+      schedulePatchParentReviewActionButtonsForWrite4F3(true);
+    };
+  })();
+</script>

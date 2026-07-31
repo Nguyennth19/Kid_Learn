@@ -1,0 +1,293 @@
+<script>
+  /**
+   * KIDLEARN_SUBJECT_DASHBOARD_PATCH_4C2P
+   * Phase 4C-2P — Subject Dashboard Routing + Theme Patch
+   *
+   * Purpose:
+   * - Recolor subject cards on Home and Courses.
+   * - Force subject card clicks to open real 4C-2 Subject Dashboard.
+   * - Prevent old 4B placeholder screen from showing.
+   */
+
+  (function () {
+    var PATCH_MARKER =
+      'KIDLEARN_SUBJECT_DASHBOARD_PATCH_4C2P';
+
+    var SUBJECT_THEME_CLASS_4C2P = {
+      MATH: 'subject-blue',
+      VIETNAMESE: 'subject-orange',
+      ENGLISH: 'subject-green',
+      SCIENCE: 'subject-red',
+      DEFAULT: 'subject-blue'
+    };
+
+    function normalizeText4C2P(value) {
+      return String(value || '')
+        .trim()
+        .toUpperCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/\s+/g, '')
+        .replace(/-/g, '_');
+    }
+
+    function resolveSubjectKey4C2P(code, name) {
+      var text =
+        normalizeText4C2P(code) + ' ' + normalizeText4C2P(name);
+
+      if (
+        text.indexOf('MATH') >= 0 ||
+        text.indexOf('TOAN') >= 0 ||
+        text.indexOf('SUB_T') >= 0
+      ) {
+        return 'MATH';
+      }
+
+      if (
+        text.indexOf('VIET') >= 0 ||
+        text.indexOf('TIENGVIET') >= 0 ||
+        text.indexOf('SUB_TV') >= 0
+      ) {
+        return 'VIETNAMESE';
+      }
+
+      if (
+        text.indexOf('ENGLISH') >= 0 ||
+        text.indexOf('TIENGANH') >= 0 ||
+        text.indexOf('SUB_E') >= 0
+      ) {
+        return 'ENGLISH';
+      }
+
+      if (
+        text.indexOf('SCIENCE') >= 0 ||
+        text.indexOf('KHOAHOC') >= 0 ||
+        text.indexOf('SUB_K') >= 0 ||
+        text.indexOf('SUB_S') >= 0
+      ) {
+        return 'SCIENCE';
+      }
+
+      return 'DEFAULT';
+    }
+
+    function getCardSubjectKey4C2P(card) {
+      if (!card) return 'DEFAULT';
+
+      var code =
+        card.getAttribute('data-subject-code') ||
+        card.getAttribute('data-code') ||
+        card.getAttribute('data-subject-key') ||
+        '';
+
+      var titleEl =
+        card.querySelector('h3, h4, strong');
+
+      var title =
+        titleEl ? titleEl.textContent || '' : card.textContent || '';
+
+      return resolveSubjectKey4C2P(code, title);
+    }
+
+    function applySubjectThemeToCard4C2P(card) {
+      if (!card) return;
+
+      var key =
+        getCardSubjectKey4C2P(card);
+
+      card.classList.remove(
+        'subject-blue',
+        'subject-purple',
+        'subject-pink',
+        'subject-green',
+        'subject-orange',
+        'subject-red'
+      );
+
+      card.classList.add(
+        SUBJECT_THEME_CLASS_4C2P[key] ||
+        SUBJECT_THEME_CLASS_4C2P.DEFAULT
+      );
+
+      card.setAttribute('data-subject-card', '1');
+      card.setAttribute('data-subject-code', key);
+
+      var buttons =
+        card.querySelectorAll('button, a, [role="button"]');
+
+      for (var i = 0; i < buttons.length; i++) {
+        buttons[i].setAttribute(
+          'data-kidlearn-open-subject-4c2p',
+          key
+        );
+      }
+    }
+
+    function applySubjectThemeToAllCards4C2P() {
+      var cards =
+        Array.prototype.slice.call(
+          document.querySelectorAll(
+            '.kl-subject-card-4b, [data-subject-card]'
+          )
+        );
+
+      for (var i = 0; i < cards.length; i++) {
+        applySubjectThemeToCard4C2P(cards[i]);
+      }
+    }
+
+    function prepareSubjectDetailScreen4C2P() {
+      var screen =
+        document.getElementById('subjectDetailScreen');
+
+      if (!screen) return;
+
+      screen.classList.add('kl-4c2p-real-dashboard-active');
+
+      /**
+       * Xóa placeholder cũ 4B để dashboard 4C-2 hiện sạch.
+       */
+      screen.innerHTML =
+        '<div id="subjectDashboard4C2Root" class="kl-subject-dashboard-root-4c2"></div>';
+    }
+
+    function routeSubjectClick4C2P(subjectKey) {
+      subjectKey =
+        subjectKey || 'MATH';
+
+      prepareSubjectDetailScreen4C2P();
+
+      if (typeof window.openSubjectDashboard4C2 === 'function') {
+        window.openSubjectDashboard4C2(subjectKey);
+        return;
+      }
+
+      console.warn(
+        PATCH_MARKER +
+        ': missing window.openSubjectDashboard4C2'
+      );
+    }
+
+    function interceptSubjectCardClick4C2P(event) {
+      var target =
+        event.target.closest(
+          '[data-kidlearn-open-subject-4c2p], .kl-subject-card-4b, [data-subject-card]'
+        );
+
+      if (!target) return;
+
+      /**
+       * Không chặn click bên trong Subject Dashboard,
+       * vì trong đó còn lesson cards và review buttons.
+       */
+      if (target.closest('#subjectDashboard4C2Root')) {
+        return;
+      }
+
+      var card =
+        target.closest('.kl-subject-card-4b, [data-subject-card]') ||
+        target;
+
+      var key =
+        target.getAttribute('data-kidlearn-open-subject-4c2p') ||
+        getCardSubjectKey4C2P(card);
+
+      if (!key || key === 'DEFAULT') {
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      if (event.stopImmediatePropagation) {
+        event.stopImmediatePropagation();
+      }
+
+      routeSubjectClick4C2P(key);
+    }
+
+    /**
+     * Override function cũ nếu UI 4B gọi trực tiếp function này.
+     */
+    window.openSubjectDetail4B = function (subjectInput) {
+      var key = 'MATH';
+
+      if (typeof subjectInput === 'string') {
+        key =
+          resolveSubjectKey4C2P(subjectInput, '');
+      } else if (subjectInput) {
+        key =
+          resolveSubjectKey4C2P(
+            subjectInput.subjectCode ||
+              subjectInput.subjectKey ||
+              subjectInput.subjectId ||
+              subjectInput.code ||
+              '',
+            subjectInput.subjectName ||
+              subjectInput.name ||
+              subjectInput.title ||
+              ''
+          );
+      }
+
+      routeSubjectClick4C2P(key);
+    };
+
+    document.addEventListener(
+      'click',
+      interceptSubjectCardClick4C2P,
+      true
+    );
+
+    function startSubjectCardObserver4C2P() {
+      var app =
+        document.getElementById('kidlearnApp') ||
+        document.body;
+
+      if (!app || typeof MutationObserver === 'undefined') {
+        return;
+      }
+
+      var scheduled = false;
+
+      var observer =
+        new MutationObserver(function () {
+          if (scheduled) return;
+
+          scheduled = true;
+
+          setTimeout(function () {
+            scheduled = false;
+            applySubjectThemeToAllCards4C2P();
+          }, 80);
+        });
+
+      observer.observe(app, {
+        childList: true,
+        subtree: true,
+        characterData: true
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      applySubjectThemeToAllCards4C2P();
+      startSubjectCardObserver4C2P();
+
+      setTimeout(applySubjectThemeToAllCards4C2P, 250);
+      setTimeout(applySubjectThemeToAllCards4C2P, 800);
+      setTimeout(applySubjectThemeToAllCards4C2P, 1500);
+    });
+
+    document.addEventListener('click', function () {
+      setTimeout(applySubjectThemeToAllCards4C2P, 120);
+    }, true);
+
+    window.KIDLEARN_SUBJECT_DASHBOARD_PATCH_4C2P = {
+      marker: PATCH_MARKER,
+      phase: '4C-2P',
+      routeSubjectClick4C2P: routeSubjectClick4C2P,
+      applySubjectThemeToAllCards4C2P:
+        applySubjectThemeToAllCards4C2P
+    };
+  })();
+</script>

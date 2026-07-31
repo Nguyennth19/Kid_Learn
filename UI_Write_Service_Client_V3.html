@@ -1,0 +1,196 @@
+<script>
+/**
+ * ================================================================
+ * KIDLEARN V3 - WRITE SERVICE CLIENT
+ * Step: 3J.2
+ * ================================================================
+ *
+ * Client JS cho UI DEV gọi Write Service Facade V3.
+ */
+
+window.KidlearnV3WriteService = (function() {
+  var SERVER = {
+    status: 'kidlearnV3_writeServiceGetStatusV3',
+    sampleContext: 'kidlearnV3_writeServiceGetSampleContextV3',
+    dispatch: 'kidlearnV3_writeServiceDispatchV3',
+    dryRun: 'kidlearnV3_writeServiceDryRunV3',
+    auditLog: 'kidlearnV3_writeServiceAuditLogV3',
+    startStudySession: 'kidlearnV3_writeServiceStartStudySessionV3',
+    finishStudySession: 'kidlearnV3_writeServiceFinishStudySessionV3',
+    upsertLessonProgress: 'kidlearnV3_writeServiceUpsertLessonProgressV3',
+    updateAssignmentStatus: 'kidlearnV3_writeServiceUpdateAssignmentStatusV3',
+    upsertDailyGoal: 'kidlearnV3_writeServiceUpsertDailyGoalV3'
+  };
+
+  function callServer(functionName, request) {
+    return new Promise(function(resolve, reject) {
+      if (
+        !window.google ||
+        !google.script ||
+        !google.script.run
+      ) {
+        reject({
+          success: false,
+          message: 'google.script.run không khả dụng.'
+        });
+
+        return;
+      }
+
+      var runner =
+        google.script.run
+          .withSuccessHandler(function(response) {
+            resolve(response);
+          })
+          .withFailureHandler(function(error) {
+            reject({
+              success: false,
+              message:
+                error && error.message
+                  ? error.message
+                  : String(error || 'Unknown error')
+            });
+          });
+
+      runner[functionName](request || {});
+    });
+  }
+
+  function unwrap(response) {
+    if (!response) {
+      throw new Error('Write Service response trống.');
+    }
+
+    if (response.success !== true) {
+      var message =
+        response.error && response.error.message
+          ? response.error.message
+          : 'Write Service trả về success=false.';
+
+      throw new Error(message);
+    }
+
+    return response.data || {};
+  }
+
+  function getStatus() {
+    return callServer(
+      SERVER.status,
+      {}
+    );
+  }
+
+  function getSampleContext() {
+    return callServer(
+      SERVER.sampleContext,
+      {}
+    );
+  }
+
+  function dispatch(action, payload, options) {
+    var request =
+      options || {};
+
+    request.action =
+      action || '';
+
+    request.payload =
+      payload || {};
+
+    if (request.dryRun === undefined) {
+      request.dryRun = true;
+    }
+
+    return callServer(
+      SERVER.dispatch,
+      request
+    );
+  }
+
+  function dryRun(operation, payload) {
+    return callServer(
+      SERVER.dryRun,
+      {
+        operation: operation || '',
+        payload: payload || {},
+        dryRun: true
+      }
+    );
+  }
+
+  function auditLog(payload) {
+    return callServer(
+      SERVER.auditLog,
+      {
+        payload: payload || {},
+        dryRun: true
+      }
+    );
+  }
+
+  function startStudySession(payload) {
+    return callServer(
+      SERVER.startStudySession,
+      {
+        payload: payload || {},
+        dryRun: true
+      }
+    );
+  }
+
+  function finishStudySession(payload) {
+    return callServer(
+      SERVER.finishStudySession,
+      {
+        payload: payload || {},
+        dryRun: true
+      }
+    );
+  }
+
+  function upsertLessonProgress(payload) {
+    return callServer(
+      SERVER.upsertLessonProgress,
+      {
+        payload: payload || {},
+        dryRun: true
+      }
+    );
+  }
+
+  function updateAssignmentStatus(payload) {
+    return callServer(
+      SERVER.updateAssignmentStatus,
+      {
+        payload: payload || {},
+        dryRun: true
+      }
+    );
+  }
+
+  function upsertDailyGoal(payload) {
+    return callServer(
+      SERVER.upsertDailyGoal,
+      {
+        payload: payload || {},
+        dryRun: true
+      }
+    );
+  }
+
+  return {
+    callServer: callServer,
+    unwrap: unwrap,
+    getStatus: getStatus,
+    getSampleContext: getSampleContext,
+    dispatch: dispatch,
+    dryRun: dryRun,
+    auditLog: auditLog,
+    startStudySession: startStudySession,
+    finishStudySession: finishStudySession,
+    upsertLessonProgress: upsertLessonProgress,
+    updateAssignmentStatus: updateAssignmentStatus,
+    upsertDailyGoal: upsertDailyGoal
+  };
+})();
+</script>

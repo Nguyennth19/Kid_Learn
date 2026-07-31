@@ -1,0 +1,198 @@
+<script>
+/**
+ * ================================================================
+ * KIDLEARN V3 - WRITE ROUTER CLIENT
+ * Step: 3J.3
+ * ================================================================
+ *
+ * Client JS cho UI DEV gọi Write Router V3.
+ */
+
+window.KidlearnV3WriteRouter = (function() {
+  var SERVER = {
+    status: 'kidlearnV3_writeRouterGetStatusV3',
+    sampleContext: 'kidlearnV3_writeRouterGetSampleContextV3',
+    dispatch: 'kidlearnV3_writeRouterDispatchV3',
+    auditEvent: 'kidlearnV3_writeRouterAuditEventV3',
+    studyStart: 'kidlearnV3_writeRouterStudyStartV3',
+    studyFinish: 'kidlearnV3_writeRouterStudyFinishV3',
+    lessonProgressSave: 'kidlearnV3_writeRouterLessonProgressSaveV3',
+    assignmentStart: 'kidlearnV3_writeRouterAssignmentStartV3',
+    assignmentProgress: 'kidlearnV3_writeRouterAssignmentProgressV3',
+    assignmentComplete: 'kidlearnV3_writeRouterAssignmentCompleteV3',
+    dailyGoalSave: 'kidlearnV3_writeRouterDailyGoalSaveV3'
+  };
+
+  function callServer(functionName, request) {
+    return new Promise(function(resolve, reject) {
+      if (
+        !window.google ||
+        !google.script ||
+        !google.script.run
+      ) {
+        reject({
+          success: false,
+          message: 'google.script.run không khả dụng.'
+        });
+
+        return;
+      }
+
+      var runner =
+        google.script.run
+          .withSuccessHandler(function(response) {
+            resolve(response);
+          })
+          .withFailureHandler(function(error) {
+            reject({
+              success: false,
+              message:
+                error && error.message
+                  ? error.message
+                  : String(error || 'Unknown error')
+            });
+          });
+
+      runner[functionName](request || {});
+    });
+  }
+
+  function unwrap(response) {
+    if (!response) {
+      throw new Error('Write Router response trống.');
+    }
+
+    if (response.success !== true) {
+      var message =
+        response.error && response.error.message
+          ? response.error.message
+          : 'Write Router trả về success=false.';
+
+      throw new Error(message);
+    }
+
+    return response.data || {};
+  }
+
+  function getStatus() {
+    return callServer(
+      SERVER.status,
+      {}
+    );
+  }
+
+  function getSampleContext() {
+    return callServer(
+      SERVER.sampleContext,
+      {}
+    );
+  }
+
+  function dispatch(action, payload) {
+    return callServer(
+      SERVER.dispatch,
+      {
+        action: action || '',
+        payload: payload || {},
+        dryRun: true
+      }
+    );
+  }
+
+  function auditEvent(payload) {
+    return callServer(
+      SERVER.auditEvent,
+      {
+        payload: payload || {},
+        dryRun: true
+      }
+    );
+  }
+
+  function studyStart(payload) {
+    return callServer(
+      SERVER.studyStart,
+      {
+        payload: payload || {},
+        dryRun: true
+      }
+    );
+  }
+
+  function studyFinish(payload) {
+    return callServer(
+      SERVER.studyFinish,
+      {
+        payload: payload || {},
+        dryRun: true
+      }
+    );
+  }
+
+  function lessonProgressSave(payload) {
+    return callServer(
+      SERVER.lessonProgressSave,
+      {
+        payload: payload || {},
+        dryRun: true
+      }
+    );
+  }
+
+  function assignmentStart(payload) {
+    return callServer(
+      SERVER.assignmentStart,
+      {
+        payload: payload || {},
+        dryRun: true
+      }
+    );
+  }
+
+  function assignmentProgress(payload) {
+    return callServer(
+      SERVER.assignmentProgress,
+      {
+        payload: payload || {},
+        dryRun: true
+      }
+    );
+  }
+
+  function assignmentComplete(payload) {
+    return callServer(
+      SERVER.assignmentComplete,
+      {
+        payload: payload || {},
+        dryRun: true
+      }
+    );
+  }
+
+  function dailyGoalSave(payload) {
+    return callServer(
+      SERVER.dailyGoalSave,
+      {
+        payload: payload || {},
+        dryRun: true
+      }
+    );
+  }
+
+  return {
+    callServer: callServer,
+    unwrap: unwrap,
+    getStatus: getStatus,
+    getSampleContext: getSampleContext,
+    dispatch: dispatch,
+    auditEvent: auditEvent,
+    studyStart: studyStart,
+    studyFinish: studyFinish,
+    lessonProgressSave: lessonProgressSave,
+    assignmentStart: assignmentStart,
+    assignmentProgress: assignmentProgress,
+    assignmentComplete: assignmentComplete,
+    dailyGoalSave: dailyGoalSave
+  };
+})();
+</script>

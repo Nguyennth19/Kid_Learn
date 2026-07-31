@@ -1,0 +1,486 @@
+<script>
+  /**
+   * KIDLEARN_PARENT_ACTIVITY_TIMELINE_UI_4G4
+   * Phase 4G-4 — Recent Activity Timeline
+   */
+
+  (function () {
+    var KIDLEARN_PARENT_ACTIVITY_TIMELINE_UI_4G4 = {
+      phase: '4G-4',
+      marker: 'KIDLEARN_PARENT_ACTIVITY_TIMELINE_UI_4G4',
+      patchTimer: null,
+      loading: false,
+      context: null,
+      currentFilter: 'ALL'
+    };
+
+    window.KIDLEARN_PARENT_ACTIVITY_TIMELINE_UI_4G4 =
+      KIDLEARN_PARENT_ACTIVITY_TIMELINE_UI_4G4;
+
+    function escapeHtml4G4(value) {
+      return String(value === null || value === undefined ? '' : value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function patchParentDashboardActivityTimeline4G4() {
+      var dashboardPanel =
+        document.querySelector('.kl-parent-dashboard-panel-4g2');
+
+      if (!dashboardPanel) {
+        return;
+      }
+
+      var sectionTitles =
+        dashboardPanel.querySelectorAll('.kl-parent-dashboard-section-4g2 h4');
+
+      for (var i = 0; i < sectionTitles.length; i++) {
+        var title =
+          sectionTitles[i];
+
+        if (
+          String(title.textContent || '').trim().toLowerCase() ===
+          'hoạt động gần đây'
+        ) {
+          var section =
+            title.closest('.kl-parent-dashboard-section-4g2');
+
+          if (section && !section.querySelector('.kl-parent-activity-timeline-open-4g4')) {
+            var button =
+              document.createElement('button');
+
+            button.type =
+              'button';
+
+            button.className =
+              'kl-parent-activity-timeline-open-4g4';
+
+            button.setAttribute(
+              'data-action',
+              'open-parent-activity-timeline-4g4'
+            );
+
+            button.textContent =
+              'Xem toàn bộ timeline';
+
+            title.parentNode.insertBefore(
+              button,
+              title.nextSibling
+            );
+          }
+        }
+      }
+    }
+
+    function openParentActivityTimeline4G4() {
+      if (
+        KIDLEARN_PARENT_ACTIVITY_TIMELINE_UI_4G4.loading
+      ) {
+        return;
+      }
+
+      if (
+        typeof google === 'undefined' ||
+        !google.script ||
+        !google.script.run
+      ) {
+        renderParentActivityTimelineError4G4(
+          'Không gọi được Apps Script server.'
+        );
+        return;
+      }
+
+      KIDLEARN_PARENT_ACTIVITY_TIMELINE_UI_4G4.loading = true;
+
+      renderParentActivityTimelineLoading4G4();
+
+      google.script.run
+        .withSuccessHandler(function (result) {
+          KIDLEARN_PARENT_ACTIVITY_TIMELINE_UI_4G4.loading = false;
+          KIDLEARN_PARENT_ACTIVITY_TIMELINE_UI_4G4.context = result || {};
+          KIDLEARN_PARENT_ACTIVITY_TIMELINE_UI_4G4.currentFilter = 'ALL';
+
+          renderParentActivityTimelinePanel4G4(result || {});
+        })
+        .withFailureHandler(function (error) {
+          KIDLEARN_PARENT_ACTIVITY_TIMELINE_UI_4G4.loading = false;
+
+          renderParentActivityTimelineError4G4(
+            error && error.message
+              ? error.message
+              : String(error || 'Không mở được timeline hoạt động.')
+          );
+        })
+        .kidlearnV3_getParentActivityTimeline4G4V3({
+          parentId: 'PARENT',
+          childId: 'CHD_V2_CHILD_DEFAULT',
+          limit: 60
+        });
+    }
+
+    function renderParentActivityTimelineLoading4G4() {
+      closeParentActivityTimelinePanel4G4();
+
+      var overlay =
+        document.createElement('div');
+
+      overlay.className =
+        'kl-parent-activity-timeline-overlay-4g4';
+
+      overlay.innerHTML =
+        '<div class="kl-parent-activity-timeline-panel-4g4">' +
+          '<div class="kl-parent-activity-timeline-loading-4g4">' +
+            '<div class="kl-parent-activity-timeline-spinner-4g4">🕘</div>' +
+            '<h3>Đang mở timeline...</h3>' +
+            '<p>Vui lòng chờ trong giây lát.</p>' +
+          '</div>' +
+        '</div>';
+
+      document.body.appendChild(overlay);
+    }
+
+    function renderParentActivityTimelineError4G4(message) {
+      closeParentActivityTimelinePanel4G4();
+
+      var overlay =
+        document.createElement('div');
+
+      overlay.className =
+        'kl-parent-activity-timeline-overlay-4g4';
+
+      overlay.innerHTML =
+        '<div class="kl-parent-activity-timeline-panel-4g4">' +
+          '<div class="kl-parent-activity-timeline-head-4g4">' +
+            '<div>' +
+              '<div class="kl-parent-activity-timeline-badge-4g4">4G-4</div>' +
+              '<h3>Không mở được timeline</h3>' +
+              '<p>' + escapeHtml4G4(message || 'Vui lòng thử lại sau.') + '</p>' +
+            '</div>' +
+            '<button type="button" class="kl-parent-activity-timeline-close-4g4" data-action="close-parent-activity-timeline-4g4">×</button>' +
+          '</div>' +
+        '</div>';
+
+      document.body.appendChild(overlay);
+    }
+
+    function renderParentActivityTimelinePanel4G4(context) {
+      closeParentActivityTimelinePanel4G4();
+
+      var overlay =
+        document.createElement('div');
+
+      overlay.className =
+        'kl-parent-activity-timeline-overlay-4g4';
+
+      overlay.setAttribute(
+        'data-phase',
+        '4G-4'
+      );
+
+      var timeline =
+        context.timeline || {};
+
+      overlay.innerHTML =
+        '<div class="kl-parent-activity-timeline-panel-4g4" role="dialog" aria-modal="true">' +
+          renderTimelineHeader4G4(context) +
+          renderTimelineFilters4G4(timeline.typeSummary || {}) +
+          '<div class="kl-parent-activity-timeline-body-4g4">' +
+            renderTimelineGroups4G4(timeline.groupedByDate || {}) +
+          '</div>' +
+        '</div>';
+
+      document.body.appendChild(overlay);
+    }
+
+    function renderTimelineHeader4G4(context) {
+      context =
+        context || {};
+
+      var child =
+        context.child || {};
+
+      var summary =
+        context.timelineSummary || {};
+
+      return (
+        '<div class="kl-parent-activity-timeline-head-4g4">' +
+          '<div>' +
+            '<div class="kl-parent-activity-timeline-badge-4g4">Timeline • Read-only</div>' +
+            '<h3>Dòng thời gian hoạt động</h3>' +
+            '<p>Theo dõi hoạt động học tập gần đây của ' +
+              escapeHtml4G4(child.displayName || child.name || 'bé') +
+            '</p>' +
+            '<div class="kl-parent-activity-timeline-summary-4g4">' +
+              '<span>' + escapeHtml4G4(summary.itemCount || 0) + ' hoạt động</span>' +
+              '<span>' + escapeHtml4G4(summary.groupCount || 0) + ' ngày</span>' +
+              '<span>' + escapeHtml4G4(summary.typeCount || 0) + ' loại</span>' +
+            '</div>' +
+          '</div>' +
+          '<button type="button" class="kl-parent-activity-timeline-close-4g4" data-action="close-parent-activity-timeline-4g4">×</button>' +
+        '</div>'
+      );
+    }
+
+    function renderTimelineFilters4G4(typeSummary) {
+      typeSummary =
+        typeSummary || {};
+
+      var types =
+        typeSummary.types || [];
+
+      var html =
+        '<div class="kl-parent-activity-timeline-filters-4g4">' +
+          '<button type="button" class="kl-parent-activity-timeline-filter-4g4 is-active" data-action="filter-parent-activity-timeline-4g4" data-type="ALL">' +
+            'Tất cả' +
+          '</button>';
+
+      for (var i = 0; i < types.length; i++) {
+        html +=
+          '<button type="button" class="kl-parent-activity-timeline-filter-4g4" data-action="filter-parent-activity-timeline-4g4" data-type="' +
+            escapeHtml4G4(types[i].type || '') +
+          '">' +
+            escapeHtml4G4(types[i].typeLabel || types[i].type || 'Hoạt động') +
+            ' (' + escapeHtml4G4(types[i].count || 0) + ')' +
+          '</button>';
+      }
+
+      html += '</div>';
+
+      return html;
+    }
+
+    function renderTimelineGroups4G4(grouped) {
+      grouped =
+        grouped || {};
+
+      var groups =
+        grouped.groups || [];
+
+      if (!groups.length) {
+        return (
+          '<div class="kl-parent-activity-timeline-empty-4g4">' +
+            '<h4>Chưa có hoạt động học tập</h4>' +
+            '<p>Khi bé học bài, nộp bài hoặc đạt thành tích, hoạt động sẽ hiển thị ở đây.</p>' +
+          '</div>'
+        );
+      }
+
+      return groups.map(renderTimelineGroup4G4).join('');
+    }
+
+    function renderTimelineGroup4G4(group) {
+      group =
+        group || {};
+
+      var items =
+        group.items || [];
+
+      return (
+        '<section class="kl-parent-activity-timeline-group-4g4">' +
+          '<h4>' + escapeHtml4G4(group.dateLabel || group.dateKey || 'Không rõ ngày') + '</h4>' +
+          '<div class="kl-parent-activity-timeline-list-4g4">' +
+            items.map(renderTimelineItem4G4).join('') +
+          '</div>' +
+        '</section>'
+      );
+    }
+
+    function renderTimelineItem4G4(item) {
+      item =
+        item || {};
+
+      return (
+        '<article class="kl-parent-activity-timeline-item-4g4" data-type="' +
+          escapeHtml4G4(item.type || 'ACTIVITY') +
+        '">' +
+          '<div class="kl-parent-activity-timeline-dot-4g4">' +
+            escapeHtml4G4(item.icon || '📌') +
+          '</div>' +
+          '<div class="kl-parent-activity-timeline-content-4g4">' +
+            '<div class="kl-parent-activity-timeline-item-head-4g4">' +
+              '<strong>' + escapeHtml4G4(item.title || 'Hoạt động') + '</strong>' +
+              '<span>' + escapeHtml4G4(item.typeLabel || item.type || '') + '</span>' +
+            '</div>' +
+            '<p>' + escapeHtml4G4(item.subtitle || '') + '</p>' +
+            '<small>' + escapeHtml4G4(item.displayTime || '') + '</small>' +
+          '</div>' +
+        '</article>'
+      );
+    }
+
+    function filterTimeline4G4(type) {
+      type =
+        String(type || 'ALL').trim();
+
+      KIDLEARN_PARENT_ACTIVITY_TIMELINE_UI_4G4.currentFilter =
+        type;
+
+      var overlay =
+        document.querySelector('.kl-parent-activity-timeline-overlay-4g4');
+
+      if (!overlay) return;
+
+      var buttons =
+        overlay.querySelectorAll('.kl-parent-activity-timeline-filter-4g4');
+
+      for (var i = 0; i < buttons.length; i++) {
+        buttons[i].classList.toggle(
+          'is-active',
+          buttons[i].getAttribute('data-type') === type
+        );
+      }
+
+      var items =
+        overlay.querySelectorAll('.kl-parent-activity-timeline-item-4g4');
+
+      var visibleCount = 0;
+
+      for (var j = 0; j < items.length; j++) {
+        var itemType =
+          items[j].getAttribute('data-type') || '';
+
+        var visible =
+          type === 'ALL' || itemType === type;
+
+        items[j].style.display =
+          visible ? '' : 'none';
+
+        if (visible) {
+          visibleCount++;
+        }
+      }
+
+      var groups =
+        overlay.querySelectorAll('.kl-parent-activity-timeline-group-4g4');
+
+      for (var k = 0; k < groups.length; k++) {
+        var visibleItems =
+          groups[k].querySelectorAll('.kl-parent-activity-timeline-item-4g4:not([style*="display: none"])');
+
+        groups[k].style.display =
+          visibleItems.length > 0 ? '' : 'none';
+      }
+
+      var body =
+        overlay.querySelector('.kl-parent-activity-timeline-body-4g4');
+
+      var existingEmpty =
+        overlay.querySelector('.kl-parent-activity-timeline-filter-empty-4g4');
+
+      if (existingEmpty && existingEmpty.parentNode) {
+        existingEmpty.parentNode.removeChild(existingEmpty);
+      }
+
+      if (visibleCount === 0 && body) {
+        var empty =
+          document.createElement('div');
+
+        empty.className =
+          'kl-parent-activity-timeline-empty-4g4 kl-parent-activity-timeline-filter-empty-4g4';
+
+        empty.innerHTML =
+          '<h4>Không có hoạt động phù hợp</h4>' +
+          '<p>Không có hoạt động nào thuộc bộ lọc đang chọn.</p>';
+
+        body.appendChild(empty);
+      }
+    }
+
+    function closeParentActivityTimelinePanel4G4() {
+      var existing =
+        document.querySelector('.kl-parent-activity-timeline-overlay-4g4');
+
+      if (existing && existing.parentNode) {
+        existing.parentNode.removeChild(existing);
+      }
+    }
+
+    document.addEventListener(
+      'click',
+      function (event) {
+        var actionEl =
+          event.target.closest('[data-action]');
+
+        if (!actionEl) return;
+
+        var action =
+          actionEl.getAttribute('data-action');
+
+        if (action === 'open-parent-activity-timeline-4g4') {
+          event.preventDefault();
+          event.stopPropagation();
+
+          openParentActivityTimeline4G4();
+          return;
+        }
+
+        if (action === 'close-parent-activity-timeline-4g4') {
+          event.preventDefault();
+          event.stopPropagation();
+
+          closeParentActivityTimelinePanel4G4();
+          return;
+        }
+
+        if (action === 'filter-parent-activity-timeline-4g4') {
+          event.preventDefault();
+          event.stopPropagation();
+
+          filterTimeline4G4(
+            actionEl.getAttribute('data-type') || 'ALL'
+          );
+          return;
+        }
+      },
+      true
+    );
+
+    function schedulePatchParentDashboardActivityTimeline4G4() {
+      if (
+        KIDLEARN_PARENT_ACTIVITY_TIMELINE_UI_4G4.patchTimer
+      ) {
+        return;
+      }
+
+      KIDLEARN_PARENT_ACTIVITY_TIMELINE_UI_4G4.patchTimer =
+        setTimeout(function () {
+          KIDLEARN_PARENT_ACTIVITY_TIMELINE_UI_4G4.patchTimer = null;
+          patchParentDashboardActivityTimeline4G4();
+        }, 650);
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener(
+        'DOMContentLoaded',
+        schedulePatchParentDashboardActivityTimeline4G4
+      );
+    } else {
+      schedulePatchParentDashboardActivityTimeline4G4();
+    }
+
+    var observer4G4 =
+      new MutationObserver(function () {
+        schedulePatchParentDashboardActivityTimeline4G4();
+      });
+
+    observer4G4.observe(
+      document.documentElement,
+      {
+        childList: true,
+        subtree: true
+      }
+    );
+
+    window.patchParentDashboardActivityTimeline4G4 =
+      patchParentDashboardActivityTimeline4G4;
+
+    window.openParentActivityTimeline4G4 =
+      openParentActivityTimeline4G4;
+
+    window.renderParentActivityTimelinePanel4G4 =
+      renderParentActivityTimelinePanel4G4;
+  })();
+</script>

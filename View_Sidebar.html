@@ -1,0 +1,113 @@
+<!-- 
+  File: View_Sidebar.html
+  Mô tả: Component Menu điều hướng bên trái.
+  Bản cập nhật: Tái cấu trúc 100% UI theo bản vẽ "thanh điều hướng bên trái.png".
+  Sử dụng Phosphor Icons và Typography Be Vietnam Pro.
+-->
+<div class="flex flex-col h-full bg-white text-slate-700 w-full overflow-hidden">
+  
+  <!-- LOGO AREA -->
+  <div class="pt-8 pb-6 px-6 flex items-center gap-3">
+    <!-- Cậu bé Tốt nghiệp (Dùng Emoji HD làm Avatar Logo) -->
+    <div class="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center text-3xl shadow-sm border border-slate-100 shrink-0">
+      👨‍🎓
+    </div>
+    <div class="flex flex-col">
+      <!-- Logo Chữ nhiều màu sắc -->
+      <h2 class="font-display font-extrabold text-xl tracking-tight leading-tight">
+        <span class="text-red-500">K</span><span class="text-blue-500">I</span><span class="text-green-500">D</span>
+        <span class="text-yellow-400">L</span><span class="text-green-500">E</span><span class="text-blue-500">A</span><span class="text-red-500">R</span><span class="text-indigo-500">N</span>
+      </h2>
+      <p class="text-[10px] text-slate-500 font-sans font-medium mt-0.5">Học vui - Tiến bộ mỗi ngày</p>
+    </div>
+  </div>
+
+  <!-- MENU ĐIỀU HƯỚNG -->
+  <nav class="flex-1 overflow-y-auto px-4 py-2 no-scrollbar">
+    <ul class="space-y-1.5">
+      <li>
+        <a id="nav-item-dashboard" onclick="AppController.navigateTo('dashboard')" class="sidebar-nav-item flex items-center px-4 py-3 text-slate-600 hover:text-indigo-600 rounded-2xl font-sans font-semibold transition-all duration-200 cursor-pointer group">
+          <i class="ph ph-house text-xl mr-3 group-hover:scale-110 transition-transform"></i> Trang chủ
+        </a>
+      </li>
+      <li>
+        <a id="nav-item-calendar" class="sidebar-nav-item flex items-center px-4 py-3 text-slate-600 hover:text-indigo-600 rounded-2xl font-sans font-semibold transition-all duration-200 cursor-pointer group">
+          <i class="ph ph-calendar-blank text-xl mr-3 group-hover:scale-110 transition-transform"></i> Lịch học
+        </a>
+      </li>
+      <li>
+        <a id="nav-item-courses" onclick="AppController.navigateTo('courses')" class="sidebar-nav-item flex items-center px-4 py-3 text-slate-600 hover:text-indigo-600 rounded-2xl font-sans font-semibold transition-all duration-200 cursor-pointer group">
+          <i class="ph ph-book-open text-xl mr-3 group-hover:scale-110 transition-transform"></i> Khóa học
+        </a>
+      </li>
+      <li>
+        <a id="nav-item-tasks" class="sidebar-nav-item flex items-center px-4 py-3 text-slate-600 hover:text-indigo-600 rounded-2xl font-sans font-semibold transition-all duration-200 cursor-pointer group">
+          <i class="ph ph-note-pencil text-xl mr-3 group-hover:scale-110 transition-transform"></i> Bài tập
+        </a>
+      </li>
+      <li>
+        <a id="nav-item-notifications" class="sidebar-nav-item flex items-center px-4 py-3 text-slate-600 hover:text-indigo-600 rounded-2xl font-sans font-semibold transition-all duration-200 cursor-pointer group justify-between">
+          <div class="flex items-center">
+            <i class="ph ph-bell text-xl mr-3 group-hover:scale-110 transition-transform"></i> Thông báo
+          </div>
+          <span class="bg-red-500 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full font-display font-extrabold shadow-sm">3</span>
+        </a>
+      </li>
+      
+      <!-- BẢNG ĐIỂM -->
+      <li>
+        <a id="nav-item-gradebook" onclick="AppController.navigateTo('gradebook')" class="sidebar-nav-item flex items-center px-4 py-3 text-slate-600 hover:text-indigo-600 rounded-2xl font-sans font-semibold transition-all duration-200 cursor-pointer group">
+          <i class="ph ph-trophy text-xl mr-3 group-hover:scale-110 transition-transform"></i> Bảng điểm
+        </a>
+      </li>
+      
+      <li>
+        <a id="nav-item-progress" class="sidebar-nav-item flex items-center px-4 py-3 text-slate-600 hover:text-indigo-600 rounded-2xl font-sans font-semibold transition-all duration-200 cursor-pointer group">
+          <i class="ph ph-chart-line-up text-xl mr-3 group-hover:scale-110 transition-transform"></i> Tiến độ học tập
+        </a>
+      </li>
+      <li>
+        <a id="nav-item-library" class="sidebar-nav-item flex items-center px-4 py-3 text-slate-600 hover:text-indigo-600 rounded-2xl font-sans font-semibold transition-all duration-200 cursor-pointer group">
+          <i class="ph ph-books text-xl mr-3 group-hover:scale-110 transition-transform"></i> Thư viện
+        </a>
+      </li>
+      <li>
+        <a id="nav-item-achievements" class="sidebar-nav-item flex items-center px-4 py-3 text-slate-600 hover:text-indigo-600 rounded-2xl font-sans font-semibold transition-all duration-200 cursor-pointer group">
+          <i class="ph ph-medal text-xl mr-3 group-hover:scale-110 transition-transform"></i> Thành tích
+        </a>
+      </li>
+      <li>
+        <a id="nav-item-settings" class="sidebar-nav-item flex items-center px-4 py-3 text-slate-600 hover:text-indigo-600 rounded-2xl font-sans font-semibold transition-all duration-200 cursor-pointer group">
+          <i class="ph ph-gear text-xl mr-3 group-hover:scale-110 transition-transform"></i> Cài đặt
+        </a>
+      </li>
+    </ul>
+  </nav>
+
+  <!-- KHỐI NHẮC NHỞ HỌC TẬP (WIDGET CỐ GẮNG LÊN BÉ) -->
+  <div class="p-5 pb-8">
+    <div class="bg-white p-5 rounded-3xl border border-indigo-50 shadow-[0_4px_20px_rgba(79,70,229,0.08)] relative overflow-hidden flex flex-col items-center text-center">
+       
+       <!-- Icon Ngôi Sao Vàng (Mô phỏng 3D style) -->
+       <div class="w-14 h-14 mb-3 relative">
+         <div class="absolute inset-0 bg-yellow-400 rounded-full blur-md opacity-40"></div>
+         <span class="text-5xl relative z-10 drop-shadow-md">🌟</span>
+       </div>
+       
+       <!-- Nội dung -->
+       <h4 class="font-display font-extrabold text-indigo-800 text-sm mb-1.5">Cố gắng lên bé!</h4>
+       <p class="text-xs font-sans font-medium text-slate-500 mb-4">Bạn đang tiến bộ rất tốt!</p>
+       
+       <!-- Progress Bar Tím -->
+       <div class="w-full bg-indigo-50 rounded-full h-1.5 mb-1.5 overflow-hidden">
+         <div class="bg-gradient-to-r from-indigo-400 to-indigo-600 h-1.5 rounded-full w-[78%]"></div>
+       </div>
+       <span class="text-[10px] font-display font-extrabold text-indigo-700 self-end mb-4">78%</span>
+       
+       <!-- Nút Bấm -->
+       <button class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-display font-semibold py-2.5 rounded-xl text-xs transition-colors shadow-sm focus:ring-2 focus:ring-indigo-300 outline-none">
+         Xem chi tiết
+       </button>
+    </div>
+  </div>
+</div>

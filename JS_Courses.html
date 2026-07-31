@@ -1,0 +1,132 @@
+<!-- 
+  File: JS_Courses.html
+  Mô tả: Controller xử lý render danh sách các thẻ khóa học động từ API.
+  Bản cập nhật: Đã mở khóa tính năng chuyển trang sang Chi Tiết Môn Học.
+-->
+<script>
+const CoursesController = {
+  
+  init: function() {
+    this.fetchData();
+  },
+
+  fetchData: async function() {
+    const token = AuthService.getToken();
+    if (!token) return;
+
+    try {
+      const payload = { token: token };
+      const response = await NetworkService.call('api_getMyCourses', payload);
+      
+      const data = response.data;
+      this.renderStats(data.stats);
+      this.renderCourseGrid(data.courses);
+      
+    } catch (err) {
+      console.error("[CoursesController] Fetch Error:", err);
+      document.getElementById('vc-course-grid').innerHTML = `
+        <div class="col-span-full py-10 text-center text-red-500 font-medium bg-red-50 rounded-2xl border border-red-100">
+           Lỗi tải danh sách khóa học: ${err.message}
+        </div>`;
+    }
+  },
+
+  renderStats: function(stats) {
+    if(!stats) return;
+    document.getElementById('vc-stat-total-courses').textContent = stats.totalCourses || 0;
+    document.getElementById('vc-stat-completed').textContent = stats.totalCompletedLessons || 0;
+    document.getElementById('vc-stat-avg').textContent = stats.averageScore || "0.0";
+    document.getElementById('vc-stat-time').innerHTML = `${stats.studyTimeHours || 0}h ${stats.studyTimeMins || 0}m <span class="text-xs font-medium text-slate-400">tuần này</span>`;
+  },
+
+  renderCourseGrid: function(courses) {
+    const gridEl = document.getElementById('vc-course-grid');
+    gridEl.innerHTML = '';
+
+    if (!courses || courses.length === 0) {
+      gridEl.innerHTML = `<div class="col-span-full text-center text-slate-500 py-10">Chưa có môn học nào được đăng ký.</div>`;
+      return;
+    }
+
+    courses.forEach(course => {
+      // 1. Tạo Div Thẻ Môn Học
+      const card = document.createElement('div');
+      card.className = "bg-white rounded-[2rem] border border-slate-200 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden flex flex-col group cursor-pointer";
+      
+      // Bắt sự kiện chuyển hướng vào trang Chi tiết Môn học
+      card.onclick = () => this.goToSubjectDetail(course.id, course.name);
+
+      // 2. Cấu trúc HTML của Thẻ theo đúng bản vẽ Mockup
+      card.innerHTML = `
+        <!-- Phần hình ảnh minh họa (Dùng màu nền gradient và Emoji lớn thay thế ảnh thật) -->
+        <div class="${course.theme.bg} h-48 relative overflow-hidden flex items-center justify-center border-b border-white/50 group-hover:scale-105 transition-transform duration-500">
+           <!-- Badge Tên Môn Mặc định ở góc trái -->
+           <div class="absolute top-4 left-4 ${course.theme.badge} text-white text-xs font-extrabold px-3 py-1.5 rounded-xl shadow-sm z-10">
+             ${course.name}
+           </div>
+           
+           <!-- Hình minh họa Emoji lớn -->
+           <div class="text-[5rem] drop-shadow-md z-0 transition-transform duration-300 group-hover:-translate-y-2 group-hover:rotate-6">
+             ${course.theme.emoji}
+           </div>
+           
+           <!-- Hiệu ứng decor (Các vòng tròn làm nền) -->
+           <div class="absolute -bottom-8 -right-8 w-32 h-32 bg-white/30 rounded-full blur-xl"></div>
+           <div class="absolute -top-8 -left-8 w-24 h-24 bg-white/40 rounded-full blur-lg"></div>
+        </div>
+
+        <!-- Phần Thông tin chi tiết -->
+        <div class="p-5 flex flex-col flex-1">
+           <h3 class="font-extrabold text-slate-800 text-lg mb-1 group-hover:${course.theme.text} transition-colors">Khám phá ${course.name}</h3>
+           <p class="text-xs font-medium text-slate-500 mb-4 h-8">${course.description}</p>
+           
+           <!-- Progress Bar -->
+           <div class="mb-4">
+             <div class="flex justify-between items-end mb-1.5">
+               <span class="text-xs font-bold text-slate-600">Tiến độ học tập</span>
+               <span class="text-sm font-extrabold ${course.theme.text}">${course.progress}%</span>
+             </div>
+             <div class="w-full bg-slate-100 rounded-full h-2">
+               <div class="${course.theme.bar} h-2 rounded-full" style="width: ${course.progress}%"></div>
+             </div>
+           </div>
+           
+           <!-- Chỉ số Bài học -->
+           <div class="flex justify-between items-center bg-slate-50 rounded-xl p-3 mb-5 border border-slate-100">
+             <div class="flex flex-col items-center">
+                <span class="text-[10px] font-semibold text-slate-400 mb-0.5 flex items-center gap-1">📋 Bài học</span>
+                <span class="text-sm font-bold text-slate-700">${course.totalLessons}</span>
+             </div>
+             <div class="w-px h-6 bg-slate-200"></div>
+             <div class="flex flex-col items-center">
+                <span class="text-[10px] font-semibold text-slate-400 mb-0.5 flex items-center gap-1">✅ Đã học</span>
+                <span class="text-sm font-bold text-slate-700">${course.completedLessons}</span>
+             </div>
+           </div>
+           
+           <!-- Nút Hành Động -->
+           <button class="mt-auto w-full ${course.theme.button} text-white font-bold py-3 rounded-xl transition-colors shadow flex items-center justify-center gap-2">
+              Bắt đầu học <span>→</span>
+           </button>
+        </div>
+      `;
+
+      gridEl.appendChild(card);
+    });
+  },
+
+  /**
+   * Chuyển hướng sang giao diện Bộ khung chung (View_SubjectDetail)
+   */
+  goToSubjectDetail: function(subjectId, subjectName) {
+    // 1. Lưu thông tin môn đang chọn vào biến toàn cục hoặc LocalStorage
+    localStorage.setItem('current_active_subject', subjectId);
+    
+    // 2. Ra lệnh cho AppController chuyển trang
+    AppController.navigateTo('subject_detail');
+    
+    // Ghi log để theo dõi tiến trình
+    console.log("Đã click chọn Môn:", subjectName, "| Đang load module Chi tiết Môn học.");
+  }
+};
+</script>

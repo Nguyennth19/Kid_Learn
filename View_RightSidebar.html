@@ -1,0 +1,77 @@
+<!-- 
+  File: View_RightSidebar.html
+  Mô tả: Component Sidebar bên phải chứa các Widget (Mục tiêu, Lịch sắp tới, Mẹo học tập).
+  Bản cập nhật: Đồng bộ Typography (Be Vietnam Pro & Nunito Sans), giao diện thẻ Card bo góc mềm mại sát với Mockup.
+-->
+<div class="flex flex-col gap-5 h-full pb-4">
+
+  <!-- Widget: Mục tiêu hôm nay -->
+  <div class="bg-white rounded-[1.5rem] border border-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)] p-5">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="font-display font-bold text-slate-800 text-base">Mục tiêu hôm nay</h3>
+      <i class="ph-fill ph-target text-3xl text-blue-500 drop-shadow-sm"></i>
+    </div>
+    <ul class="space-y-3 font-sans text-sm font-semibold text-slate-600">
+      <li class="flex items-start gap-3 cursor-pointer group">
+        <span class="text-green-500 mt-0.5 group-hover:scale-110 transition-transform"><i class="ph-fill ph-check-circle text-xl"></i></span>
+        <span class="line-through text-slate-400">Học 1 bài mới</span>
+      </li>
+      <li class="flex items-start gap-3 cursor-pointer group">
+        <span class="text-green-500 mt-0.5 group-hover:scale-110 transition-transform"><i class="ph-fill ph-check-circle text-xl"></i></span>
+        <span class="line-through text-slate-400">Làm bài tập cuối ngày</span>
+      </li>
+      <li class="flex items-start gap-3 cursor-pointer group">
+        <span class="text-slate-200 mt-0.5 group-hover:text-indigo-400 transition-colors"><i class="ph-fill ph-circle text-xl"></i></span>
+        <span class="group-hover:text-indigo-600 transition-colors">Luyện nói 10 phút</span>
+      </li>
+      <li class="flex items-start gap-3 cursor-pointer group">
+        <span class="text-slate-200 mt-0.5 group-hover:text-indigo-400 transition-colors"><i class="ph-fill ph-circle text-xl"></i></span>
+        <span class="group-hover:text-indigo-600 transition-colors">Đọc 1 đoạn văn ngắn</span>
+      </li>
+    </ul>
+  </div>
+
+  <!-- Widget: Sắp tới -->
+  <div class="bg-white rounded-[1.5rem] border border-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)] p-5">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="font-display font-bold text-slate-800 text-base">Sắp tới</h3>
+    </div>
+    <ul class="space-y-4 font-sans">
+      <li class="flex gap-3 items-center cursor-pointer group">
+        <div class="w-11 h-11 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 group-hover:bg-blue-600 group-hover:text-white transition-all shadow-sm">
+          <i class="ph-fill ph-calendar-check text-2xl"></i>
+        </div>
+        <div>
+          <h4 class="text-sm font-bold text-slate-700 group-hover:text-blue-600 transition-colors">Bài kiểm tra chủ đề 2</h4>
+          <p class="text-xs text-slate-500 font-medium mt-0.5">Ngày mai, 19:30</p>
+        </div>
+        <i class="ph ph-caret-right ml-auto text-slate-300 group-hover:text-blue-500 transition-colors"></i>
+      </li>
+      <li class="flex gap-3 items-center cursor-pointer group">
+        <div class="w-11 h-11 rounded-2xl bg-orange-50 text-orange-600 flex items-center justify-center shrink-0 group-hover:bg-orange-600 group-hover:text-white transition-all shadow-sm">
+          <i class="ph-fill ph-video-camera text-2xl"></i>
+        </div>
+        <div>
+          <h4 class="text-sm font-bold text-slate-700 group-hover:text-orange-600 transition-colors">Ôn tập giữa kỳ 2</h4>
+          <p class="text-xs text-slate-500 font-medium mt-0.5">Thứ 6, 20:00</p>
+        </div>
+        <i class="ph ph-caret-right ml-auto text-slate-300 group-hover:text-orange-500 transition-colors"></i>
+      </li>
+    </ul>
+  </div>
+
+  <!-- Widget: Mẹo học tập -->
+  <div class="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-[1.5rem] border border-indigo-100 shadow-sm p-5 mt-auto relative overflow-hidden flex flex-col justify-center min-h-[140px]">
+    <h3 class="font-display font-bold text-indigo-800 text-sm flex items-center gap-2 mb-2 relative z-10">
+      <i class="ph-fill ph-lightbulb text-xl text-yellow-500"></i> Mẹo học tập
+    </h3>
+    <p class="text-[13px] font-sans font-semibold text-indigo-700/80 leading-relaxed relative z-10 pr-6">
+      Chia nhỏ thời gian học thành các khoảng 25 phút sẽ giúp bạn tập trung và nhớ lâu hơn đấy!
+    </p>
+    <!-- Decor Icon (Mô phỏng thỏ con như trong thiết kế) -->
+    <div class="absolute -bottom-4 -right-3 text-[5rem] opacity-70 z-0 drop-shadow-sm filter sepia-[0.2] hue-rotate-[280deg]">
+      🐰
+    </div>
+  </div>
+
+</div>

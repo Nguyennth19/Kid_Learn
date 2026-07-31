@@ -1,0 +1,704 @@
+<script>
+  /**
+   * KIDLEARN_ASSIGNMENT_LEARNING_UI_DRY_RUN_4I2
+   * Phase 4I-2 — Child Assignment Learning UI Dry-run
+   *
+   * PATCH 4I-2P1:
+   * - Fix mixed Parent/Child Home detection.
+   * - Home có thể vừa có card phụ huynh, vừa có khu học tập của bé.
+   * - Không chặn inject chỉ vì thấy chữ "PHỤ HUYNH".
+   */
+
+  (function () {
+    var KIDLEARN_ASSIGNMENT_LEARNING_UI_DRY_RUN_4I2 = {
+      phase: '4I-2',
+      marker: 'KIDLEARN_ASSIGNMENT_LEARNING_UI_DRY_RUN_4I2',
+      patch: '4I-2P1',
+      context: null,
+      loading: false,
+      injectTimer: null,
+      retryCount: 0,
+      maxRetry: 12
+    };
+
+    window.KIDLEARN_ASSIGNMENT_LEARNING_UI_DRY_RUN_4I2 =
+      KIDLEARN_ASSIGNMENT_LEARNING_UI_DRY_RUN_4I2;
+
+    function escapeHtml4I2(value) {
+      return String(value === null || value === undefined ? '' : value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function isLikelyChildView4I2() {
+      var bodyText =
+        document.body ? document.body.innerText || '' : '';
+
+      var upper =
+        bodyText.toUpperCase();
+
+      var hasChildLearningArea =
+        upper.indexOf('KHU HỌC TẬP CỦA BÉ') !== -1 ||
+        upper.indexOf('HÔM NAY BÉ') !== -1 ||
+        upper.indexOf('4 MÔN HỌC CHÍNH') !== -1 ||
+        upper.indexOf('BÀI HỌC TIẾP THEO') !== -1 ||
+        document.querySelector('.kl-subject-card') ||
+        document.querySelector('.kl-course-card') ||
+        document.querySelector('.kl-child-learning-plan-entry-4h3') ||
+        document.querySelector('.kl-child-retry-entry-4f4b') ||
+        document.querySelector('[class*="subject"]') ||
+        document.querySelector('[class*="course"]');
+
+      var isLoginScreen =
+        upper.indexOf('ĐĂNG NHẬP') !== -1 ||
+        (
+          upper.indexOf('PIN') !== -1 &&
+          upper.indexOf('TRANG CHỦ') === -1
+        );
+
+      if (isLoginScreen) {
+        return false;
+      }
+
+      return hasChildLearningArea ? true : false;
+    }
+
+    function loadAssignmentLearningContext4I2(callback, force) {
+      if (
+        KIDLEARN_ASSIGNMENT_LEARNING_UI_DRY_RUN_4I2.context &&
+        !force
+      ) {
+        if (callback) {
+          callback(
+            KIDLEARN_ASSIGNMENT_LEARNING_UI_DRY_RUN_4I2.context
+          );
+        }
+        return;
+      }
+
+      if (
+        KIDLEARN_ASSIGNMENT_LEARNING_UI_DRY_RUN_4I2.loading
+      ) {
+        return;
+      }
+
+      if (
+        typeof google === 'undefined' ||
+        !google.script ||
+        !google.script.run
+      ) {
+        var fallback = {
+          success: false,
+          errorMessage: 'Không gọi được Apps Script server.'
+        };
+
+        KIDLEARN_ASSIGNMENT_LEARNING_UI_DRY_RUN_4I2.context =
+          fallback;
+
+        if (callback) {
+          callback(fallback);
+        }
+        return;
+      }
+
+      KIDLEARN_ASSIGNMENT_LEARNING_UI_DRY_RUN_4I2.loading = true;
+
+      google.script.run
+        .withSuccessHandler(function (result) {
+          KIDLEARN_ASSIGNMENT_LEARNING_UI_DRY_RUN_4I2.loading = false;
+          KIDLEARN_ASSIGNMENT_LEARNING_UI_DRY_RUN_4I2.context = result || {};
+          if (callback) {
+            callback(result || {});
+          }
+        })
+        .withFailureHandler(function (error) {
+          KIDLEARN_ASSIGNMENT_LEARNING_UI_DRY_RUN_4I2.loading = false;
+          var result = {
+            success: false,
+            errorMessage:
+              error && error.message
+                ? error.message
+                : String(
+                    error ||
+                    'Không đọc được Assignment Learning Context.'
+                  )
+          };
+          KIDLEARN_ASSIGNMENT_LEARNING_UI_DRY_RUN_4I2.context = result;
+          if (callback) {
+            callback(result);
+          }
+        })
+        .kidlearnV3_getAssignmentLearningContext4I1V3({
+          childId: 'CHD_V2_CHILD_DEFAULT',
+          parentId: 'PARENT'
+        });
+    }
+
+    function ensureAssignmentLearningHome4I2() {
+      if (!isLikelyChildView4I2()) {
+        return;
+      }
+
+      if (
+        document.querySelector(
+          '.kl-assignment-learning-entry-4i2'
+        )
+      ) {
+        return;
+      }
+
+      loadAssignmentLearningContext4I2(function (context) {
+        renderAssignmentLearningHomeEntry4I2(context || {});
+      }, false);
+    }
+
+    function removeAssignmentLearningEntry4I2() {
+      var existing =
+        document.querySelector(
+          '.kl-assignment-learning-entry-4i2'
+        );
+
+      if (existing && existing.parentNode) {
+        existing.parentNode.removeChild(existing);
+      }
+    }
+
+    function findAssignmentLearningHomeTarget4I2() {
+      var childPlan =
+        document.querySelector(
+          '.kl-child-learning-plan-entry-4h3'
+        );
+
+      if (childPlan && childPlan.parentNode) {
+        return childPlan.parentNode;
+      }
+
+      var childHomeAnchor =
+        kidlearnV3_findChildHomeAnchorForAssignment4I2P1_();
+
+      if (childHomeAnchor && childHomeAnchor.parentNode) {
+        return childHomeAnchor.parentNode;
+      }
+
+      var subjectCard =
+        document.querySelector(
+          '.kl-subject-card, .kl-course-card'
+        );
+
+      if (subjectCard) {
+        var parent = subjectCard.parentElement;
+
+        while (
+          parent &&
+          parent !== document.body &&
+          parent.children &&
+          parent.children.length < 2
+        ) {
+          parent = parent.parentElement;
+        }
+
+        if (parent && parent !== document.body) {
+          return parent.parentElement || parent;
+        }
+      }
+
+      var allSections =
+        Array.prototype.slice.call(
+          document.querySelectorAll('section, main, div')
+        );
+
+      for (var i = allSections.length - 1; i >= 0; i--) {
+        var text =
+          String(allSections[i].innerText || '').toUpperCase();
+
+        if (
+          text.indexOf('KHU HỌC TẬP CỦA BÉ') !== -1 ||
+          text.indexOf('HÔM NAY BÉ') !== -1 ||
+          text.indexOf('4 MÔN HỌC CHÍNH') !== -1 ||
+          text.indexOf('BÀI HỌC TIẾP THEO') !== -1
+        ) {
+          return allSections[i];
+        }
+      }
+
+      var selectors = [
+        '.kl-child-home-grid',
+        '.kl-home-grid',
+        '.kl-dashboard-grid',
+        '.kl-course-grid',
+        '.kl-product-home',
+        '.kl-page-content',
+        '.kl-main-content',
+        'main',
+        '#app'
+      ];
+
+      for (var j = 0; j < selectors.length; j++) {
+        var el = document.querySelector(selectors[j]);
+        if (el) {
+          return el;
+        }
+      }
+
+      return document.body;
+    }
+
+    function renderAssignmentLearningHomeEntry4I2(context) {
+      if (!isLikelyChildView4I2()) {
+        return;
+      }
+
+      var target = findAssignmentLearningHomeTarget4I2();
+      if (!target) {
+        return;
+      }
+
+      var existing =
+        document.querySelector(
+          '.kl-assignment-learning-entry-4i2'
+        );
+
+      if (existing && existing.parentNode) {
+        existing.parentNode.removeChild(existing);
+      }
+
+      var learning = context.assignmentLearningContext || {};
+      var summary = context.contextSummary || {};
+      var todayGoal = context.todayGoal || null;
+      var primary = learning.primaryAssignment || null;
+
+      var assignmentText =
+        summary.assignmentCount
+          ? summary.assignmentCount + ' bài được giao'
+          : 'Chưa có bài được giao';
+
+      var goalText =
+        todayGoal && todayGoal.targetMinutes
+          ? 'Mục tiêu hôm nay: ' + todayGoal.targetMinutes + ' phút'
+          : 'Học theo kế hoạch hôm nay';
+
+      var primaryHtml = primary
+        ? '<div class="kl-assignment-learning-primary-4i2">' +
+            '<span>Ưu tiên</span>' +
+            '<strong>' +
+              escapeHtml4I2(
+                primary.lessonTitle ||
+                primary.lessonId ||
+                'Bài học'
+              ) +
+            '</strong>' +
+            '<p>' +
+              escapeHtml4I2(
+                primary.subjectName ||
+                primary.subjectCode ||
+                ''
+              ) +
+            '</p>' +
+          '</div>'
+        : '<div class="kl-assignment-learning-empty-mini-4i2">' +
+            'Phụ huynh chưa giao bài cụ thể.' +
+          '</div>';
+
+      var card = document.createElement('section');
+      card.className = 'kl-assignment-learning-entry-4i2';
+      card.setAttribute('data-phase', '4I-2');
+      card.setAttribute('data-patch', '4I-2P1');
+
+      card.innerHTML =
+        '<div class="kl-assignment-learning-entry-inner-4i2">' +
+          '<div class="kl-assignment-learning-entry-icon-4i2">🎯</div>' +
+          '<div class="kl-assignment-learning-entry-content-4i2">' +
+            '<div class="kl-assignment-learning-badge-4i2">4I-2 Dry-run</div>' +
+            '<h3>Bài học được giao</h3>' +
+            '<p>' +
+              escapeHtml4I2(goalText) +
+              ' • ' +
+              escapeHtml4I2(assignmentText) +
+            '</p>' +
+            primaryHtml +
+          '</div>' +
+          '<button type="button" class="kl-assignment-learning-open-4i2" data-action="open-assignment-learning-4i2">' +
+            'Xem bài học' +
+          '</button>' +
+        '</div>';
+
+      var childPlan = document.querySelector('.kl-child-learning-plan-entry-4h3');
+      if (childPlan && childPlan.parentNode) {
+        childPlan.parentNode.insertBefore(card, childPlan.nextSibling);
+        return;
+      }
+
+      var childHomeAnchor = kidlearnV3_findChildHomeAnchorForAssignment4I2P1_();
+      if (childHomeAnchor && childHomeAnchor.parentNode) {
+        childHomeAnchor.parentNode.insertBefore(card, childHomeAnchor);
+        return;
+      }
+
+      if (target.firstChild) {
+        target.insertBefore(card, target.firstChild);
+      } else {
+        target.appendChild(card);
+      }
+    }
+
+    function openAssignmentLearningPanel4I2() {
+      closeAssignmentLearningPanel4I2();
+      renderAssignmentLearningLoading4I2();
+      loadAssignmentLearningContext4I2(function (context) {
+        renderAssignmentLearningPanel4I2(context || {});
+      }, true);
+    }
+
+    function renderAssignmentLearningLoading4I2() {
+      closeAssignmentLearningPanel4I2();
+
+      var overlay = document.createElement('div');
+      overlay.className = 'kl-assignment-learning-overlay-4i2';
+      overlay.innerHTML =
+        '<div class="kl-assignment-learning-panel-4i2">' +
+          '<div class="kl-assignment-learning-empty-4i2">' +
+            '<h4>Đang mở bài học được giao...</h4>' +
+            '<p>Vui lòng chờ trong giây lát.</p>' +
+          '</div>' +
+        '</div>';
+
+      document.body.appendChild(overlay);
+    }
+
+    function renderAssignmentLearningPanel4I2(context) {
+      closeAssignmentLearningPanel4I2();
+
+      var overlay = document.createElement('div');
+      overlay.className = 'kl-assignment-learning-overlay-4i2';
+      overlay.setAttribute('data-phase', '4I-2');
+
+      if (!context.success) {
+        overlay.innerHTML =
+          '<div class="kl-assignment-learning-panel-4i2">' +
+            renderAssignmentLearningHeader4I2({}) +
+            '<div class="kl-assignment-learning-empty-4i2">' +
+              '<h4>Chưa mở được bài học được giao</h4>' +
+              '<p>' +
+                escapeHtml4I2(context.errorMessage || 'Vui lòng thử lại sau.') +
+              '</p>' +
+            '</div>' +
+          '</div>';
+        document.body.appendChild(overlay);
+        return;
+      }
+
+      var learning = context.assignmentLearningContext || {};
+
+      overlay.innerHTML =
+        '<div class="kl-assignment-learning-panel-4i2" role="dialog" aria-modal="true">' +
+          renderAssignmentLearningHeader4I2(context) +
+          renderAssignmentLearningSummary4I2(context) +
+          renderAssignmentLearningCards4I2(learning.cards || []) +
+          '<div class="kl-assignment-learning-route-result-4i2" aria-live="polite"></div>' +
+        '</div>';
+
+      document.body.appendChild(overlay);
+    }
+
+    function renderAssignmentLearningHeader4I2(context) {
+      var child = context.child || {};
+      return (
+        '<div class="kl-assignment-learning-head-4i2">' +
+          '<div>' +
+            '<div class="kl-assignment-learning-badge-4i2">Assignment Learning • Dry-run</div>' +
+            '<h3>Bài học được giao</h3>' +
+            '<p>' +
+              escapeHtml4I2(child.displayName || 'Bé') +
+              ' học theo kế hoạch phụ huynh đã lập.' +
+            '</p>' +
+          '</div>' +
+          '<button type="button" class="kl-assignment-learning-close-4i2" data-action="close-assignment-learning-4i2">×</button>' +
+        '</div>'
+      );
+    }
+
+    function renderAssignmentLearningSummary4I2(context) {
+      var summary = context.contextSummary || {};
+      var goal = context.todayGoal || {};
+
+      return (
+        '<div class="kl-assignment-learning-summary-4i2">' +
+          '<div><span>Mục tiêu</span><strong>' + escapeHtml4I2(goal.targetMinutes || 0) + ' phút</strong></div>' +
+          '<div><span>Bài được giao</span><strong>' + escapeHtml4I2(summary.assignmentCount || 0) + '</strong></div>' +
+          '<div><span>Đang học</span><strong>' + escapeHtml4I2(summary.inProgressCount || 0) + '</strong></div>' +
+          '<div><span>Đã xong</span><strong>' + escapeHtml4I2(summary.completedCount || 0) + '</strong></div>' +
+        '</div>'
+      );
+    }
+
+    function renderAssignmentLearningCards4I2(cards) {
+      cards = cards || [];
+
+      if (!cards.length) {
+        return (
+          '<div class="kl-assignment-learning-empty-4i2">' +
+            '<h4>Chưa có bài học được giao</h4>' +
+            '<p>Khi phụ huynh chọn bài trong kế hoạch học, bài học sẽ xuất hiện ở đây.</p>' +
+            '<div class="kl-assignment-learning-empty-note-4i2">4I-2 vẫn pass vì UI đã hỗ trợ empty state an toàn.</div>' +
+          '</div>'
+        );
+      }
+
+      var html = '<div class="kl-assignment-learning-list-4i2">';
+      for (var i = 0; i < cards.length; i++) {
+        html += renderAssignmentLearningCard4I2(cards[i]);
+      }
+      html += '</div>';
+
+      return html;
+    }
+
+    function renderAssignmentLearningCard4I2(card) {
+      var disabled = card.isCompleted ? ' disabled' : '';
+
+      return (
+        '<article class="kl-assignment-learning-card-4i2" data-assignment-id="' +
+          escapeHtml4I2(card.assignmentId || '') +
+        '" data-lesson-id="' +
+          escapeHtml4I2(card.lessonId || '') +
+        '">' +
+          '<div class="kl-assignment-learning-card-top-4i2">' +
+            '<div class="kl-assignment-learning-card-icon-4i2">📘</div>' +
+            '<div>' +
+              '<div class="kl-assignment-learning-card-mode-4i2">' + escapeHtml4I2(card.mode || 'START') + '</div>' +
+              '<h4>' + escapeHtml4I2(card.lessonTitle || card.lessonId || 'Bài học') + '</h4>' +
+              '<p>' + escapeHtml4I2(card.subjectName || card.subjectCode || '') + '</p>' +
+            '</div>' +
+          '</div>' +
+          '<div class="kl-assignment-learning-progress-4i2">' +
+            '<div class="kl-assignment-learning-progress-bar-4i2">' +
+              '<span style="width:' +
+                escapeHtml4I2(Math.min(100, Number(card.progressPercent || 0))) +
+              '%"></span>' +
+            '</div>' +
+            '<small>Tiến độ: ' + escapeHtml4I2(card.progressPercent || 0) + '%</small>' +
+          '</div>' +
+          '<button type="button" class="kl-assignment-learning-action-4i2" data-action="preview-assignment-route-4i2"' +
+            ' data-assignment-id="' + escapeHtml4I2(card.assignmentId || '') + '"' +
+            ' data-lesson-id="' + escapeHtml4I2(card.lessonId || '') + '"' +
+            disabled +
+          '>' +
+            escapeHtml4I2(card.actionLabel || 'Bắt đầu học') +
+          '</button>' +
+        '</article>'
+      );
+    }
+
+    function previewAssignmentRoute4I2(button) {
+      var assignmentId = button.getAttribute('data-assignment-id') || '';
+      var lessonId = button.getAttribute('data-lesson-id') || '';
+      var resultBox = document.querySelector('.kl-assignment-learning-route-result-4i2');
+
+      if (resultBox) {
+        resultBox.className = 'kl-assignment-learning-route-result-4i2 is-loading';
+        resultBox.innerHTML = '<strong>Đang kiểm tra đường dẫn bài học...</strong>';
+      }
+
+      if (typeof google === 'undefined' || !google.script || !google.script.run) {
+        renderAssignmentRouteError4I2('Không gọi được Apps Script server.');
+        return;
+      }
+
+      google.script.run
+        .withSuccessHandler(function (result) {
+          renderAssignmentRouteResult4I2(result || {});
+        })
+        .withFailureHandler(function (error) {
+          renderAssignmentRouteError4I2(
+            error && error.message ? error.message : String(error || 'Route preview failed.')
+          );
+        })
+        .kidlearnV3_previewAssignmentLessonRouting4I2V3({
+          childId: 'CHD_V2_CHILD_DEFAULT',
+          assignmentId: assignmentId,
+          lessonId: lessonId
+        });
+    }
+
+    function renderAssignmentRouteResult4I2(result) {
+      var resultBox = document.querySelector('.kl-assignment-learning-route-result-4i2');
+      if (!resultBox) { return; }
+
+      var route = result.routePreview || {};
+
+      if (!route.canRoute) {
+        resultBox.className = 'kl-assignment-learning-route-result-4i2 is-error';
+        resultBox.innerHTML =
+          '<strong>Chưa có bài để mở.</strong>' +
+          '<p>Phụ huynh cần giao bài trước.</p>';
+        return;
+      }
+
+      resultBox.className = 'kl-assignment-learning-route-result-4i2 is-success';
+      resultBox.innerHTML =
+        '<strong>Đã preview route — chưa ghi trạng thái Assignment.</strong>' +
+        '<p>Lesson: ' + escapeHtml4I2(route.lessonId || '') + '</p>' +
+        '<p>4I-3 mới xử lý ghi IN_PROGRESS / COMPLETED.</p>';
+
+      openExistingLessonPlayerFromAssignment4I2(route.lessonId);
+    }
+
+    function renderAssignmentRouteError4I2(message) {
+      var resultBox = document.querySelector('.kl-assignment-learning-route-result-4i2');
+      if (!resultBox) { return; }
+
+      resultBox.className = 'kl-assignment-learning-route-result-4i2 is-error';
+      resultBox.innerHTML =
+        '<strong>Không mở được bài học.</strong>' +
+        '<p>' + escapeHtml4I2(message || 'Vui lòng thử lại.') + '</p>';
+    }
+
+    function openExistingLessonPlayerFromAssignment4I2(lessonId) {
+      lessonId = String(lessonId || '').trim();
+      if (!lessonId) { return; }
+
+      var candidates = [
+        'openLessonFromSubjectDashboard4C2',
+        'openLessonPlayer4C',
+        'openLesson4C',
+        'openProductLesson4C',
+        'kidlearnOpenLesson4C'
+      ];
+
+      for (var i = 0; i < candidates.length; i++) {
+        var fn = window[candidates[i]];
+        if (typeof fn === 'function') {
+          try {
+            fn(lessonId, { source: 'ASSIGNMENT_LEARNING_4I2', dryRunOnly: true });
+            return;
+          } catch (error) {
+            // Try next candidate
+          }
+        }
+      }
+
+      var resultBox = document.querySelector('.kl-assignment-learning-route-result-4i2');
+      if (resultBox) {
+        resultBox.innerHTML +=
+          '<p class="kl-assignment-learning-route-note-4i2">' +
+            'Đã xác nhận route. Chưa tìm thấy function mở Lesson Player 4C trên UI hiện tại.' +
+          '</p>';
+      }
+    }
+
+    function closeAssignmentLearningPanel4I2() {
+      var existing = document.querySelector('.kl-assignment-learning-overlay-4i2');
+      if (existing && existing.parentNode) {
+        existing.parentNode.removeChild(existing);
+      }
+    }
+
+    // ĐÃ SỬA LỖI Ở HÀM NÀY
+    function kidlearnV3_findChildHomeAnchorForAssignment4I2P1_() {
+      var elements = Array.prototype.slice.call(
+        document.querySelectorAll('section, article, div, h1, h2, h3, h4')
+      );
+
+      for (var i = elements.length - 1; i >= 0; i--) {
+        var text = String(elements[i].innerText || '').toUpperCase();
+        if (text.indexOf('HÔM NAY BÉ') !== -1 || text.indexOf('BÀI HỌC TIẾP THEO') !== -1) {
+          return elements[i];
+        }
+      }
+
+      for (var j = elements.length - 1; j >= 0; j--) {
+        var text2 = String(elements[j].innerText || '').toUpperCase();
+        if (text2.indexOf('4 MÔN HỌC CHÍNH') !== -1 || text2.indexOf('KHU HỌC TẬP CỦA BÉ') !== -1) {
+          return elements[j];
+        }
+      }
+
+      var subjectCard = document.querySelector('.kl-subject-card, .kl-course-card');
+      if (subjectCard) {
+        return subjectCard;
+      }
+
+      return null;
+    } // <-- Đây là dấu đóng hàm đã được thêm vào đúng chỗ.
+
+    // ĐÃ SỬA LỖI Ở SỰ KIỆN NÀY
+    document.addEventListener(
+      'click',
+      function (event) {
+        var actionEl = event.target.closest
+          ? event.target.closest('[data-action]')
+          : null;
+
+        if (!actionEl) {
+          return;
+        }
+
+        var action = actionEl.getAttribute('data-action');
+
+        if (action === 'open-assignment-learning-4i2') {
+          event.preventDefault();
+          event.stopPropagation();
+          openAssignmentLearningPanel4I2();
+          return;
+        }
+
+        if (action === 'close-assignment-learning-4i2') {
+          event.preventDefault();
+          event.stopPropagation();
+          closeAssignmentLearningPanel4I2();
+          return;
+        }
+
+        if (action === 'preview-assignment-route-4i2') {
+          event.preventDefault();
+          event.stopPropagation();
+          previewAssignmentRoute4I2(actionEl);
+          return;
+        }
+      },
+      true
+    );
+
+    function scheduleEnsureAssignmentLearningHome4I2() {
+      if (KIDLEARN_ASSIGNMENT_LEARNING_UI_DRY_RUN_4I2.injectTimer) {
+        return;
+      }
+
+      KIDLEARN_ASSIGNMENT_LEARNING_UI_DRY_RUN_4I2.injectTimer = setTimeout(function () {
+        KIDLEARN_ASSIGNMENT_LEARNING_UI_DRY_RUN_4I2.injectTimer = null;
+        ensureAssignmentLearningHome4I2();
+
+        if (
+          !document.querySelector('.kl-assignment-learning-entry-4i2') &&
+          KIDLEARN_ASSIGNMENT_LEARNING_UI_DRY_RUN_4I2.retryCount < KIDLEARN_ASSIGNMENT_LEARNING_UI_DRY_RUN_4I2.maxRetry
+        ) {
+          KIDLEARN_ASSIGNMENT_LEARNING_UI_DRY_RUN_4I2.retryCount += 1;
+          scheduleEnsureAssignmentLearningHome4I2();
+        }
+      }, 800);
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', scheduleEnsureAssignmentLearningHome4I2);
+    } else {
+      scheduleEnsureAssignmentLearningHome4I2();
+    }
+
+    var observer4I2 = new MutationObserver(function () {
+      scheduleEnsureAssignmentLearningHome4I2();
+    });
+
+    observer4I2.observe(document.documentElement, {
+      childList: true,
+      subtree: true
+    });
+
+    window.ensureAssignmentLearningHome4I2 = ensureAssignmentLearningHome4I2;
+    window.openAssignmentLearningPanel4I2 = openAssignmentLearningPanel4I2;
+    window.renderAssignmentLearningPanel4I2 = renderAssignmentLearningPanel4I2;
+    window.previewAssignmentRoute4I2 = previewAssignmentRoute4I2;
+  })();
+</script>

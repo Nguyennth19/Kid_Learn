@@ -1,0 +1,59 @@
+<script>
+  window.KidlearnV3LearningInteraction3LC = {
+    getPayload: function(request) {
+      return runServer3LC_(
+        'kidlearnV3_uiLearningInteraction3LCGetPayloadV3',
+        request || {}
+      );
+    },
+
+    runAction: function(request) {
+      return runServer3LC_(
+        'kidlearnV3_uiLearningInteraction3LCRunActionV3',
+        request || {}
+      );
+    },
+
+    preview: function() {
+      return runServer3LC_(
+        'kidlearnV3_previewLearningInteraction3LCV3'
+      );
+    },
+
+    status: function() {
+      return runServer3LC_(
+        'kidlearnV3_getLearningInteraction3LCStatusV3'
+      );
+    },
+
+    runAll: function() {
+      return runServer3LC_(
+        'kidlearnV3_runAllLearningInteractionsDryRunUltraLite3LCV3'
+      );
+    },
+
+    markReady: function() {
+      return runServer3LC_(
+        'kidlearnV3_markLearningInteraction3LCReadyV3'
+      );
+    }
+  };
+
+
+  function runServer3LC_(functionName, payload) {
+    return new Promise(function(resolve, reject) {
+      var runner =
+        google.script.run
+          .withSuccessHandler(resolve)
+          .withFailureHandler(function(error) {
+            reject(error);
+          });
+
+      if (typeof payload === 'undefined') {
+        runner[functionName]();
+      } else {
+        runner[functionName](payload);
+      }
+    });
+  }
+</script>

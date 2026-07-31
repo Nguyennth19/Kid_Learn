@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f4f6fb;
+      color: #111827;
+    }
+
+    .shell {
+      display: grid;
+      grid-template-columns: 250px 1fr;
+      min-height: 860px;
+    }
+
+    .sidebar {
+      background: #111827;
+      color: #ffffff;
+      padding: 18px;
+    }
+
+    .brand {
+      font-size: 22px;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+
+    .role {
+      font-size: 12px;
+      color: #cbd5e1;
+      margin-bottom: 18px;
+    }
+
+    .role-switch {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+
+    .role-switch button {
+      flex: 1;
+      font-size: 12px;
+      padding: 8px;
+      border: 1px solid #374151;
+      background: #1f2937;
+      color: #ffffff;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+
+    .role-switch button.active {
+      background: #2563eb;
+    }
+
+    .nav-item {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      padding: 11px 10px;
+      border-radius: 12px;
+      cursor: pointer;
+      margin-bottom: 6px;
+      color: #e5e7eb;
+    }
+
+    .nav-item:hover {
+      background: #1f2937;
+    }
+
+    .nav-item.active {
+      background: #2563eb;
+      color: #ffffff;
+    }
+
+    .main {
+      padding: 20px;
+    }
+
+    .header {
+      background: #ffffff;
+      border-radius: 18px;
+      padding: 18px 20px;
+      box-shadow: 0 1px 5px rgba(0,0,0,0.08);
+      margin-bottom: 16px;
+    }
+
+    .title {
+      font-size: 24px;
+      font-weight: 800;
+      margin-bottom: 5px;
+    }
+
+    .subtitle {
+      color: #6b7280;
+      font-size: 14px;
+    }
+
+    .toolbar {
+      margin-top: 14px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      border: 0;
+      background: #2563eb;
+      color: white;
+      border-radius: 10px;
+      padding: 9px 12px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    button.secondary {
+      background: #6b7280;
+    }
+
+    button.safe {
+      background: #059669;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 1px 5px rgba(0,0,0,0.08);
+    }
+
+    .card.emphasis {
+      border: 2px solid #2563eb;
+    }
+
+    .card-title {
+      color: #6b7280;
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+
+    .card-value {
+      font-size: 22px;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+
+    .card-desc {
+      color: #6b7280;
+      font-size: 13px;
+    }
+
+    .content {
+      background: #ffffff;
+      border-radius: 18px;
+      padding: 18px;
+      box-shadow: 0 1px 5px rgba(0,0,0,0.08);
+      min-height: 280px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: #ecfeff;
+      color: #155e75;
+      font-size: 12px;
+      margin-right: 5px;
+    }
+
+    .placeholder {
+      background: #f9fafb;
+      border-radius: 14px;
+      padding: 16px;
+      color: #6b7280;
+    }
+
+    .status {
+      white-space: pre-wrap;
+      background: #111827;
+      color: #e5e7eb;
+      border-radius: 14px;
+      padding: 12px;
+      font-size: 12px;
+      max-height: 260px;
+      overflow: auto;
+      margin-top: 16px;
+    }
+
+    .learning-box {
+      background: #f9fafb;
+      border-radius: 14px;
+      padding: 14px;
+      margin-top: 10px;
+    }
+
+    .small {
+      font-size: 12px;
+      color: #6b7280;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="shell">
+    <div class="sidebar">
+      <div class="brand">KIDLEARN V3</div>
+      <div id="roleText" class="role">Loading...</div>
+
+      <div class="role-switch">
+        <button id="btnFamily" onclick="switchRole('FAMILY_ADMIN')">
+          Family
+        </button>
+        <button id="btnChild" onclick="switchRole('CHILD')">
+          Child
+        </button>
+      </div>
+
+      <div id="nav"></div>
+    </div>
+
+    <div class="main">
+      <div class="header">
+        <div id="headerTitle" class="title">Loading...</div>
+        <div id="headerSubtitle" class="subtitle"></div>
+
+        <div class="toolbar">
+          <button onclick="loadShell()">Refresh Shell</button>
+          <button class="secondary" onclick="preview3LA()">Preview</button>
+          <button class="secondary" onclick="status3LA()">Status</button>
+          <button class="safe" onclick="smoke3LA()">Smoke Test</button>
+          <button class="safe" onclick="markReady3LA()">Mark Ready</button>
+        </div>
+      </div>
+
+      <div id="cards" class="cards"></div>
+
+      <div id="content" class="content"></div>
+
+      <div id="status" class="status">Loading...</div>
+    </div>
+  </div>
+
+  <?!= kidlearnV3_uiInclude_('UI_App_Shell_3LA_Client_V3'); ?>
+
+  <script>
+    var currentRole = 'FAMILY_ADMIN';
+    var currentScreenId = 'HOME';
+    var currentShell = null;
+
+    function setStatus(value) {
+      document.getElementById('status').textContent =
+        typeof value === 'string'
+          ? value
+          : JSON.stringify(value, null, 2);
+    }
+
+    function showError(error) {
+      setStatus({
+        success: false,
+        error: error && error.message ? error.message : String(error)
+      });
+    }
+
+    function switchRole(role) {
+      currentRole = role;
+      currentScreenId =
+        role === 'CHILD'
+          ? 'CHILD_HOME'
+          : 'FAMILY_HOME';
+
+      loadShell();
+    }
+
+    function loadShell() {
+      setStatus('Loading App Shell 3L-A...');
+
+      KidlearnV3AppShell3LA
+        .getContext({
+          role: currentRole
+        })
+        .then(function(shell) {
+          currentShell = shell;
+          currentRole = shell.role;
+          renderShell(shell);
+          loadScreen(
+            shell.roleConfig.defaultScreenId || 'HOME'
+          );
+          setStatus(shell);
+        })
+        .catch(showError);
+    }
+
+    function loadScreen(screenId) {
+      currentScreenId = screenId;
+
+      KidlearnV3AppShell3LA
+        .getScreenPayload({
+          role: currentRole,
+          screenId: screenId
+        })
+        .then(function(payload) {
+          renderContent(payload);
+          setActiveNav(screenId);
+          setStatus(payload);
+        })
+        .catch(showError);
+    }
+
+    function renderShell(shell) {
+      document.getElementById('roleText').textContent =
+        shell.role + ' · ' +
+        (shell.session.childName || '');
+
+      document.getElementById('headerTitle').textContent =
+        shell.header.title || '';
+
+      document.getElementById('headerSubtitle').textContent =
+        shell.header.subtitle || '';
+
+      document.getElementById('btnFamily').className =
+        shell.role === 'FAMILY_ADMIN' ? 'active' : '';
+
+      document.getElementById('btnChild').className =
+        shell.role === 'CHILD' ? 'active' : '';
+
+      renderNav(shell.navigation || []);
+      renderCards(shell.homeCards || []);
+    }
+
+    function renderNav(items) {
+      var el = document.getElementById('nav');
+
+      if (!items.length) {
+        el.innerHTML = '<div class="small">No navigation</div>';
+        return;
+      }
+
+      el.innerHTML =
+        items.map(function(item) {
+          return (
+            '<div class="nav-item" data-screen="' +
+              escapeAttr(item.screenId) +
+              '" onclick="loadScreen(\'' +
+              escapeAttr(item.screenId) +
+              '\')">' +
+              '<span>' + escapeHtml(item.icon || '') + '</span>' +
+              '<span>' + escapeHtml(item.label || item.navId) + '</span>' +
+            '</div>'
+          );
+        }).join('');
+    }
+
+    function setActiveNav(screenId) {
+      var nodes =
+        document.querySelectorAll('.nav-item');
+
+      for (var i = 0; i < nodes.length; i++) {
+        if (
+          nodes[i].getAttribute('data-screen') === screenId
+        ) {
+          nodes[i].className = 'nav-item active';
+        } else {
+          nodes[i].className = 'nav-item';
+        }
+      }
+    }
+
+    function renderCards(cards) {
+      var el = document.getElementById('cards');
+
+      if (!cards.length) {
+        el.innerHTML = '';
+        return;
+      }
+
+      el.innerHTML =
+        cards.map(function(card) {
+          var cls =
+            card.emphasis
+              ? 'card emphasis'
+              : 'card';
+
+          return (
+            '<div class="' + cls + '" onclick="loadScreen(\'' +
+              escapeAttr(card.screenId || 'HOME') +
+              '\')">' +
+              '<div class="card-title">' +
+                escapeHtml(card.title || '') +
+              '</div>' +
+              '<div class="card-value">' +
+                escapeHtml(card.value || '') +
+              '</div>' +
+              '<div class="card-desc">' +
+                escapeHtml(card.description || '') +
+              '</div>' +
+            '</div>'
+          );
+        }).join('');
+    }
+
+    function renderContent(payload) {
+      var el = document.getElementById('content');
+      var content = payload.content || {};
+
+      if (content.contentType === 'HOME') {
+        el.innerHTML =
+          '<span class="badge">READ ONLY</span>' +
+          '<span class="badge">3L-A</span>' +
+          '<h2>' + escapeHtml(content.title || 'Home') + '</h2>' +
+          '<div class="placeholder">App Shell đã sẵn sàng cho role ' +
+          escapeHtml(payload.role || '') +
+          '. Các module chi tiết sẽ được nối ở 3L-B / 3L-C.</div>';
+        return;
+      }
+
+      if (content.contentType === 'LEARNING_SCREEN_PAYLOAD') {
+        var p = content.payload || {};
+        var lesson =
+          p.lessonPlayer && p.lessonPlayer.lesson
+            ? p.lessonPlayer.lesson
+            : {};
+
+        el.innerHTML =
+          '<span class="badge">LEARNING</span>' +
+          '<span class="badge">READ ONLY</span>' +
+          '<h2>Learning Home</h2>' +
+          '<div class="learning-box">' +
+            '<b>Bài học:</b> ' +
+            escapeHtml(lesson.lessonTitle || lesson.lessonId || 'Chưa có bài học') +
+            '<br><span class="small">Subjects: ' +
+            escapeHtml(String(p.diagnostics ? p.diagnostics.subjectsCount : 0)) +
+            ' · Lessons: ' +
+            escapeHtml(String(p.diagnostics ? p.diagnostics.lessonsCount : 0)) +
+            '</span>' +
+          '</div>';
+        return;
+      }
+
+      if (content.contentType === 'ERROR_PLACEHOLDER') {
+        el.innerHTML =
+          '<h2>' + escapeHtml(content.title || 'Error') + '</h2>' +
+          '<div class="placeholder">' +
+          escapeHtml(content.message || '') +
+          '</div>';
+        return;
+      }
+
+      el.innerHTML =
+        '<span class="badge">PLACEHOLDER</span>' +
+        '<h2>' + escapeHtml(content.title || payload.screenId) + '</h2>' +
+        '<div class="placeholder">' +
+          escapeHtml(content.message || '') +
+        '</div>';
+    }
+
+    function preview3LA() {
+      KidlearnV3AppShell3LA
+        .preview()
+        .then(setStatus)
+        .catch(showError);
+    }
+
+    function status3LA() {
+      KidlearnV3AppShell3LA
+        .status()
+        .then(setStatus)
+        .catch(showError);
+    }
+
+    function smoke3LA() {
+      KidlearnV3AppShell3LA
+        .smokeTest()
+        .then(setStatus)
+        .catch(showError);
+    }
+
+    function markReady3LA() {
+      KidlearnV3AppShell3LA
+        .markReady()
+        .then(setStatus)
+        .catch(showError);
+    }
+
+    function escapeHtml(value) {
+      return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function escapeAttr(value) {
+      return escapeHtml(value).replace(/\\/g, '\\\\');
+    }
+
+    loadShell();
+  </script>
+</body>
+</html>

@@ -1,0 +1,266 @@
+<script>
+  /**
+   * KIDLEARN_PARENT_REVIEW_ACTION_BUTTONS_UI_4F2
+   * Phase 4F-2 — Add Accept / Retry Buttons to Parent Review Queue UI
+   * Mode: DRY_RUN_ONLY
+   */
+
+  (function () {
+    var KIDLEARN_PARENT_REVIEW_ACTION_BUTTONS_UI_4F2 = {
+      phase: '4F-2',
+      marker: 'KIDLEARN_PARENT_REVIEW_ACTION_BUTTONS_UI_4F2',
+      buttonMode: 'DRY_RUN_ONLY',
+      policyLoaded: false,
+      policyLoading: false,
+      policy: null,
+      injectTimer: null
+    };
+
+    window.KIDLEARN_PARENT_REVIEW_ACTION_BUTTONS_UI_4F2 =
+      KIDLEARN_PARENT_REVIEW_ACTION_BUTTONS_UI_4F2;
+
+    function escapeHtml4F2(value) {
+      return String(value === null || value === undefined ? '' : value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function getPolicyLabel4F2() {
+      var policy =
+        KIDLEARN_PARENT_REVIEW_ACTION_BUTTONS_UI_4F2.policy || {};
+
+      var gateMode =
+        policy.gateMode || 'CLOSED_DRY_RUN_ONLY';
+
+      return gateMode + ' / DRY_RUN_ONLY';
+    }
+
+    function loadParentReviewActionPolicy4F2(callback) {
+      if (
+        KIDLEARN_PARENT_REVIEW_ACTION_BUTTONS_UI_4F2.policyLoaded
+      ) {
+        if (callback) callback();
+        return;
+      }
+
+      if (
+        KIDLEARN_PARENT_REVIEW_ACTION_BUTTONS_UI_4F2.policyLoading
+      ) {
+        if (callback) {
+          setTimeout(callback, 600);
+        }
+        return;
+      }
+
+      if (
+        typeof google === 'undefined' ||
+        !google.script ||
+        !google.script.run
+      ) {
+        KIDLEARN_PARENT_REVIEW_ACTION_BUTTONS_UI_4F2.policyLoaded = true;
+        KIDLEARN_PARENT_REVIEW_ACTION_BUTTONS_UI_4F2.policy = {
+          gateMode: 'CLOSED_DRY_RUN_ONLY',
+          writeAllowedNow: false
+        };
+
+        if (callback) callback();
+        return;
+      }
+
+      KIDLEARN_PARENT_REVIEW_ACTION_BUTTONS_UI_4F2.policyLoading = true;
+
+      google.script.run
+        .withSuccessHandler(function (policy) {
+          KIDLEARN_PARENT_REVIEW_ACTION_BUTTONS_UI_4F2.policyLoading = false;
+          KIDLEARN_PARENT_REVIEW_ACTION_BUTTONS_UI_4F2.policyLoaded = true;
+          KIDLEARN_PARENT_REVIEW_ACTION_BUTTONS_UI_4F2.policy = policy || {};
+
+          if (callback) callback();
+        })
+        .withFailureHandler(function () {
+          KIDLEARN_PARENT_REVIEW_ACTION_BUTTONS_UI_4F2.policyLoading = false;
+          KIDLEARN_PARENT_REVIEW_ACTION_BUTTONS_UI_4F2.policyLoaded = true;
+          KIDLEARN_PARENT_REVIEW_ACTION_BUTTONS_UI_4F2.policy = {
+            gateMode: 'CLOSED_DRY_RUN_ONLY',
+            writeAllowedNow: false
+          };
+
+          if (callback) callback();
+        })
+        .kidlearnV3_getParentReviewActionUiPolicy4F1V3();
+    }
+
+    function injectParentReviewActionButtons4F2() {
+      loadParentReviewActionPolicy4F2(function () {
+        var cards =
+          document.querySelectorAll('.kl-parent-review-card-4e5b');
+
+        if (!cards || !cards.length) {
+          return;
+        }
+
+        for (var i = 0; i < cards.length; i++) {
+          injectButtonsIntoCard4F2(cards[i]);
+        }
+      });
+    }
+
+    function injectButtonsIntoCard4F2(card) {
+      if (!card) return;
+
+      if (
+        card.querySelector('.kl-parent-review-actions-4f2')
+      ) {
+        return;
+      }
+
+      var responseId =
+        card.getAttribute('data-response-id') || '';
+
+      var side =
+        card.querySelector('.kl-parent-review-card-side-4e5b') ||
+        card;
+
+      var actions =
+        document.createElement('div');
+
+      actions.className =
+        'kl-parent-review-actions-4f2';
+
+      actions.setAttribute(
+        'data-response-id',
+        responseId
+      );
+
+      actions.innerHTML =
+        '<div class="kl-parent-review-gate-badge-4f2">' +
+          escapeHtml4F2(getPolicyLabel4F2()) +
+        '</div>' +
+
+        '<button type="button" class="kl-parent-review-action-button-4f2 kl-parent-review-accept-4f2" ' +
+          'data-action="parent-review-accept-4f2" ' +
+          'data-response-id="' + escapeHtml4F2(responseId) + '">' +
+          'Chấp nhận bài viết' +
+        '</button>' +
+
+        '<button type="button" class="kl-parent-review-action-button-4f2 kl-parent-review-retry-4f2" ' +
+          'data-action="parent-review-retry-4f2" ' +
+          'data-response-id="' + escapeHtml4F2(responseId) + '">' +
+          'Yêu cầu bé làm lại' +
+        '</button>' +
+
+        '<div class="kl-parent-review-feedback-4f2" aria-live="polite">' +
+          '4F-2: Nút đã sẵn sàng, chưa ghi dữ liệu.' +
+        '</div>';
+
+      side.appendChild(actions);
+    }
+
+    function renderParentReviewDryRunFeedback4F2(card, actionType) {
+      if (!card) return;
+
+      var feedback =
+        card.querySelector('.kl-parent-review-feedback-4f2');
+
+      if (!feedback) return;
+
+      var responseId =
+        card.getAttribute('data-response-id') || '';
+
+      var label =
+        actionType === 'ACCEPT'
+          ? 'Chấp nhận bài viết'
+          : 'Yêu cầu bé làm lại';
+
+      feedback.classList.add('is-active');
+
+      feedback.innerHTML =
+        '<strong>' + escapeHtml4F2(label) + '</strong><br>' +
+        'Dry-run only ở 4F-2. Chưa ghi DATA_Responses / LOG_Audit.<br>' +
+        'Response ID: ' + escapeHtml4F2(responseId) + '<br>' +
+        'Ghi thật sẽ được kết nối ở 4F-3.';
+    }
+
+    document.addEventListener(
+      'click',
+      function (event) {
+        var actionEl =
+          event.target.closest('[data-action]');
+
+        if (!actionEl) return;
+
+        var action =
+          actionEl.getAttribute('data-action');
+
+        if (
+          action !== 'parent-review-accept-4f2' &&
+          action !== 'parent-review-retry-4f2'
+        ) {
+          return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        var card =
+          actionEl.closest('.kl-parent-review-card-4e5b');
+
+        var actionType =
+          action === 'parent-review-accept-4f2'
+            ? 'ACCEPT'
+            : 'RETRY';
+
+        renderParentReviewDryRunFeedback4F2(
+          card,
+          actionType
+        );
+      },
+      true
+    );
+
+    function scheduleInjectParentReviewActionButtons4F2() {
+      if (
+        KIDLEARN_PARENT_REVIEW_ACTION_BUTTONS_UI_4F2.injectTimer
+      ) {
+        return;
+      }
+
+      KIDLEARN_PARENT_REVIEW_ACTION_BUTTONS_UI_4F2.injectTimer =
+        setTimeout(function () {
+          KIDLEARN_PARENT_REVIEW_ACTION_BUTTONS_UI_4F2.injectTimer = null;
+          injectParentReviewActionButtons4F2();
+        }, 500);
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener(
+        'DOMContentLoaded',
+        scheduleInjectParentReviewActionButtons4F2
+      );
+    } else {
+      scheduleInjectParentReviewActionButtons4F2();
+    }
+
+    var observer4F2 =
+      new MutationObserver(function () {
+        scheduleInjectParentReviewActionButtons4F2();
+      });
+
+    observer4F2.observe(
+      document.documentElement,
+      {
+        childList: true,
+        subtree: true
+      }
+    );
+
+    window.injectParentReviewActionButtons4F2 =
+      injectParentReviewActionButtons4F2;
+
+    window.renderParentReviewDryRunFeedback4F2 =
+      renderParentReviewDryRunFeedback4F2;
+  })();
+</script>

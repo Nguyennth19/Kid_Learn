@@ -1,0 +1,465 @@
+<script>
+  /**
+   * KIDLEARN_PARENT_REVIEW_QUEUE_UI_4E5B
+   * Phase 4E-5B — Parent Review Queue UI Read-only
+   */
+
+  (function () {
+    var KIDLEARN_PARENT_REVIEW_QUEUE_UI_4E5B = {
+      phase: '4E-5B',
+      marker: 'KIDLEARN_PARENT_REVIEW_QUEUE_UI_4E5B',
+      contextLoaded: false,
+      loading: false,
+      lastContext: null,
+      observerTimer: null
+    };
+
+    window.KIDLEARN_PARENT_REVIEW_QUEUE_UI_4E5B =
+      KIDLEARN_PARENT_REVIEW_QUEUE_UI_4E5B;
+
+    function escapeHtml4E5B(value) {
+      return String(value === null || value === undefined ? '' : value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function safeDriveUrl4E5B(url) {
+      var text =
+        String(url || '').trim();
+
+      if (
+        text.indexOf('https://drive.google.com/') === 0 ||
+        text.indexOf('https://docs.google.com/') === 0
+      ) {
+        return text;
+      }
+
+      return '';
+    }
+
+    function readGlobalText4E5B() {
+      var parts = [];
+
+      var names = [
+        'KIDLEARN_AUTH_CONTEXT_4A',
+        'KIDLEARN_PRODUCT_AUTH_CONTEXT_4A',
+        'KIDLEARN_CURRENT_USER',
+        'KIDLEARN_V3_CURRENT_USER',
+        'KIDLEARN_SESSION',
+        'KIDLEARN_APP_STATE',
+        'KIDLEARN_PRODUCT_STATE_4A'
+      ];
+
+      for (var i = 0; i < names.length; i++) {
+        try {
+          if (window[names[i]]) {
+            parts.push(JSON.stringify(window[names[i]]));
+          }
+        } catch (error) {
+          // ignore
+        }
+      }
+
+      try {
+        parts.push(document.body ? document.body.innerText || '' : '');
+      } catch (error2) {
+        // ignore
+      }
+
+      return parts.join(' ').toUpperCase();
+    }
+
+    function isFamilyAdminContext4E5B() {
+      var text =
+        readGlobalText4E5B();
+
+      if (
+        text.indexOf('FAMILY_ADMIN') >= 0 ||
+        text.indexOf('PARENT') >= 0 ||
+        text.indexOf('PHỤ HUYNH') >= 0 ||
+        text.indexOf('PHU HUYNH') >= 0 ||
+        text.indexOf('ADMIN') >= 0
+      ) {
+        return true;
+      }
+
+      return false;
+    }
+
+    function findParentHomeHost4E5B() {
+      return (
+        document.querySelector('#parentDashboard4A') ||
+        document.querySelector('[data-view="parent-home"]') ||
+        document.querySelector('.kl-parent-home') ||
+        document.querySelector('.kl-home-grid') ||
+        document.querySelector('.kl-dashboard-grid') ||
+        document.querySelector('.kl-product-main') ||
+        document.querySelector('main') ||
+        document.body
+      );
+    }
+
+    function ensureParentReviewEntry4E5B() {
+      if (!document.body) return;
+
+      var existing =
+        document.getElementById('parentReviewEntry4E5B');
+
+      if (!isFamilyAdminContext4E5B()) {
+        if (existing) {
+          existing.remove();
+        }
+
+        return;
+      }
+
+      if (existing) return;
+
+      var host =
+        findParentHomeHost4E5B();
+
+      if (!host) return;
+
+      var card =
+        document.createElement('section');
+
+      card.id =
+        'parentReviewEntry4E5B';
+
+      card.className =
+        'kl-parent-review-entry-4e5b';
+
+      card.innerHTML =
+        '<div class="kl-parent-review-entry-icon-4e5b">✍️</div>' +
+        '<div class="kl-parent-review-entry-body-4e5b">' +
+          '<h3>Bài viết tay chờ duyệt</h3>' +
+          '<p>Xem các bài viết tay đã lưu ảnh và đang chờ phụ huynh duyệt.</p>' +
+          '<div class="kl-parent-review-entry-meta-4e5b">' +
+            '<span>Read-only</span>' +
+            '<span>Mở ảnh bằng Drive link</span>' +
+          '</div>' +
+        '</div>' +
+        '<button type="button" class="kl-parent-review-entry-button-4e5b" data-action="open-parent-review-queue-4e5b">' +
+          'Xem danh sách' +
+        '</button>';
+
+      try {
+        host.insertBefore(card, host.firstChild);
+      } catch (error) {
+        document.body.appendChild(card);
+      }
+    }
+
+    function openParentReviewQueue4E5B() {
+      if (
+        typeof google === 'undefined' ||
+        !google.script ||
+        !google.script.run
+      ) {
+        renderParentReviewQueuePanel4E5B({
+          success: false,
+          reviewQueue: {
+            title: 'Bài viết tay chờ duyệt',
+            itemCount: 0,
+            pendingCount: 0,
+            items: [],
+            emptyState: {
+              visible: true,
+              title: 'Không kết nối được server',
+              message: 'Thiếu google.script.run trong môi trường hiện tại.'
+            }
+          },
+          errors: ['Không gọi được Apps Script server.']
+        });
+
+        return;
+      }
+
+      if (KIDLEARN_PARENT_REVIEW_QUEUE_UI_4E5B.loading) {
+        return;
+      }
+
+      KIDLEARN_PARENT_REVIEW_QUEUE_UI_4E5B.loading = true;
+
+      renderParentReviewQueueLoading4E5B();
+
+      google.script.run
+        .withSuccessHandler(function (context) {
+          KIDLEARN_PARENT_REVIEW_QUEUE_UI_4E5B.loading = false;
+          KIDLEARN_PARENT_REVIEW_QUEUE_UI_4E5B.contextLoaded = true;
+          KIDLEARN_PARENT_REVIEW_QUEUE_UI_4E5B.lastContext = context;
+
+          renderParentReviewQueuePanel4E5B(context);
+        })
+        .withFailureHandler(function (error) {
+          KIDLEARN_PARENT_REVIEW_QUEUE_UI_4E5B.loading = false;
+
+          renderParentReviewQueuePanel4E5B({
+            success: false,
+            reviewQueue: {
+              title: 'Bài viết tay chờ duyệt',
+              itemCount: 0,
+              pendingCount: 0,
+              items: [],
+              emptyState: {
+                visible: true,
+                title: 'Chưa tải được danh sách',
+                message:
+                  error && error.message
+                    ? error.message
+                    : String(error || 'Unknown error')
+              }
+            },
+            errors: [
+              error && error.message
+                ? error.message
+                : String(error || 'Unknown error')
+            ]
+          });
+        })
+        .kidlearnV3_getParentReviewQueueContext4E5AV3({
+          limit: 50
+        });
+    }
+
+    function renderParentReviewQueueLoading4E5B() {
+      renderParentReviewQueuePanel4E5B({
+        success: true,
+        loading: true,
+        reviewQueue: {
+          title: 'Bài viết tay chờ duyệt',
+          itemCount: 0,
+          pendingCount: 0,
+          items: [],
+          emptyState: {
+            visible: false,
+            title: '',
+            message: ''
+          }
+        }
+      });
+    }
+
+    function closeParentReviewQueue4E5B() {
+      var panel =
+        document.getElementById('parentReviewPanel4E5B');
+
+      if (panel) {
+        panel.remove();
+      }
+    }
+
+    function renderParentReviewQueuePanel4E5B(context) {
+      context = context || {};
+
+      var queue =
+        context.reviewQueue || {
+          title: 'Bài viết tay chờ duyệt',
+          itemCount: 0,
+          pendingCount: 0,
+          items: []
+        };
+
+      var existing =
+        document.getElementById('parentReviewPanel4E5B');
+
+      if (existing) {
+        existing.remove();
+      }
+
+      var overlay =
+        document.createElement('div');
+
+      overlay.id =
+        'parentReviewPanel4E5B';
+
+      overlay.className =
+        'kl-parent-review-panel-4e5b';
+
+      var loadingHtml =
+        context.loading
+          ? '<div class="kl-parent-review-loading-4e5b">Đang tải danh sách...</div>'
+          : '';
+
+      var errorHtml =
+        !context.success && context.errors && context.errors.length
+          ? '<div class="kl-parent-review-error-4e5b">' +
+              escapeHtml4E5B(context.errors.join(' | ')) +
+            '</div>'
+          : '';
+
+      var items =
+        queue.items || [];
+
+      var listHtml = '';
+
+      if (context.loading) {
+        listHtml = loadingHtml;
+      } else if (!items.length) {
+        var empty =
+          queue.emptyState || {};
+
+        listHtml =
+          '<div class="kl-parent-review-empty-4e5b">' +
+            '<div class="kl-parent-review-empty-icon-4e5b">🌱</div>' +
+            '<h3>' + escapeHtml4E5B(empty.title || 'Chưa có bài viết tay cần duyệt') + '</h3>' +
+            '<p>' + escapeHtml4E5B(empty.message || 'Danh sách hiện đang trống.') + '</p>' +
+          '</div>';
+      } else {
+        listHtml =
+          '<div class="kl-parent-review-list-4e5b">' +
+            items.map(renderParentReviewCard4E5B).join('') +
+          '</div>';
+      }
+
+      overlay.innerHTML =
+        '<div class="kl-parent-review-backdrop-4e5b" data-action="close-parent-review-queue-4e5b"></div>' +
+        '<section class="kl-parent-review-shell-4e5b">' +
+          '<header class="kl-parent-review-header-4e5b">' +
+            '<div>' +
+              '<div class="kl-parent-review-kicker-4e5b">Phụ huynh / Admin</div>' +
+              '<h2>' + escapeHtml4E5B(queue.title || 'Bài viết tay chờ duyệt') + '</h2>' +
+              '<p>Read-only: chỉ xem danh sách và mở ảnh viết tay bằng Google Drive link.</p>' +
+            '</div>' +
+            '<button type="button" class="kl-parent-review-close-4e5b" data-action="close-parent-review-queue-4e5b">×</button>' +
+          '</header>' +
+
+          '<div class="kl-parent-review-stats-4e5b">' +
+            '<div><strong>' + escapeHtml4E5B(queue.itemCount || 0) + '</strong><span>Tổng item</span></div>' +
+            '<div><strong>' + escapeHtml4E5B(queue.pendingCount || 0) + '</strong><span>Chờ duyệt</span></div>' +
+            '<div><strong>4E-5B</strong><span>Read-only</span></div>' +
+          '</div>' +
+
+          errorHtml +
+          listHtml +
+
+          '<footer class="kl-parent-review-footer-4e5b">' +
+            '<button type="button" class="kl-parent-review-refresh-4e5b" data-action="refresh-parent-review-queue-4e5b">Tải lại</button>' +
+            '<span>Chấp nhận / Yêu cầu làm lại sẽ được mở ở 4E-5C.</span>' +
+          '</footer>' +
+        '</section>';
+
+      document.body.appendChild(overlay);
+    }
+
+    function renderParentReviewCard4E5B(item, index) {
+      item = item || {};
+
+      var asset =
+        item.handwritingAsset || {};
+
+      var fileUrl =
+        safeDriveUrl4E5B(asset.fileUrl || '');
+
+      var openLinkHtml =
+        fileUrl
+          ? '<a class="kl-parent-review-open-link-4e5b" href="' +
+              escapeHtml4E5B(fileUrl) +
+            '" target="_blank" rel="noopener noreferrer">' +
+              'Mở ảnh viết tay' +
+            '</a>'
+          : '<span class="kl-parent-review-missing-link-4e5b">Thiếu Drive link</span>';
+
+      return (
+        '<article class="kl-parent-review-card-4e5b" data-response-id="' + escapeHtml4E5B(item.responseId || '') + '">' +
+          '<div class="kl-parent-review-card-main-4e5b">' +
+            '<div class="kl-parent-review-subject-4e5b">' +
+              escapeHtml4E5B(item.subjectLabel || item.subjectCode || 'Bài học') +
+            '</div>' +
+            '<h3>' + escapeHtml4E5B(item.childName || 'Bé') + '</h3>' +
+            '<p>' +
+              '<span>Lesson: ' + escapeHtml4E5B(item.lessonId || '') + '</span>' +
+              '<span>Response: ' + escapeHtml4E5B(item.responseId || '') + '</span>' +
+            '</p>' +
+            '<div class="kl-parent-review-file-4e5b">' +
+              '<span>File:</span> ' + escapeHtml4E5B(asset.fileName || 'Handwriting PNG') +
+            '</div>' +
+          '</div>' +
+
+          '<div class="kl-parent-review-card-side-4e5b">' +
+            '<div class="kl-parent-review-status-4e5b">' +
+              escapeHtml4E5B(item.reviewStatus || 'NEEDS_REVIEW') +
+            '</div>' +
+            openLinkHtml +
+            '<div class="kl-parent-review-readonly-note-4e5b">Chưa mở thao tác duyệt</div>' +
+          '</div>' +
+        '</article>'
+      );
+    }
+
+    document.addEventListener(
+      'click',
+      function (event) {
+        var actionEl =
+          event.target.closest('[data-action]');
+
+        if (!actionEl) return;
+
+        var action =
+          actionEl.getAttribute('data-action');
+
+        if (action === 'open-parent-review-queue-4e5b') {
+          event.preventDefault();
+          openParentReviewQueue4E5B();
+          return;
+        }
+
+        if (action === 'close-parent-review-queue-4e5b') {
+          event.preventDefault();
+          closeParentReviewQueue4E5B();
+          return;
+        }
+
+        if (action === 'refresh-parent-review-queue-4e5b') {
+          event.preventDefault();
+          openParentReviewQueue4E5B();
+          return;
+        }
+      },
+      true
+    );
+
+    function scheduleEnsureEntry4E5B() {
+      if (KIDLEARN_PARENT_REVIEW_QUEUE_UI_4E5B.observerTimer) {
+        return;
+      }
+
+      KIDLEARN_PARENT_REVIEW_QUEUE_UI_4E5B.observerTimer =
+        setTimeout(function () {
+          KIDLEARN_PARENT_REVIEW_QUEUE_UI_4E5B.observerTimer = null;
+          ensureParentReviewEntry4E5B();
+        }, 800);
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', scheduleEnsureEntry4E5B);
+    } else {
+      scheduleEnsureEntry4E5B();
+    }
+
+    var observer4E5B =
+      new MutationObserver(function () {
+        scheduleEnsureEntry4E5B();
+      });
+
+    observer4E5B.observe(
+      document.documentElement,
+      {
+        childList: true,
+        subtree: true
+      }
+    );
+
+    window.openParentReviewQueue4E5B =
+      openParentReviewQueue4E5B;
+
+    window.renderParentReviewQueuePanel4E5B =
+      renderParentReviewQueuePanel4E5B;
+
+    window.ensureParentReviewEntry4E5B =
+      ensureParentReviewEntry4E5B;
+  })();
+</script>

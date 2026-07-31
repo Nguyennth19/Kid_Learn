@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <title>KID LEARN</title>
+  <?!= kidlearnV3_include4A('UI_Product_Styles_4A'); ?>
+</head>
+
+<body>
+  <script>
+    window.KIDLEARN_4A_BOOTSTRAP = <?!= bootstrapJson ?>;
+  </script>
+
+  <section id="loginScreen" class="kl-login-fullscreen">
+    <div class="kl-login-layout">
+      <div class="kl-login-brand-panel">
+        <div class="kl-login-brand-top">
+          <div class="kl-brand-mark large">K</div>
+          <div>
+            <div class="kl-large-logo">KID LEARN</div>
+            <p>Học vui - Tiến bộ mỗi ngày</p>
+          </div>
+        </div>
+
+        <div class="kl-login-visual">
+          <div class="kl-login-orbit orb-1">📚</div>
+          <div class="kl-login-orbit orb-2">⭐</div>
+          <div class="kl-login-orbit orb-3">✏️</div>
+          <div class="kl-login-orbit orb-4">🎒</div>
+        </div>
+
+        <div class="kl-login-brand-note">
+          <h1>Chào mừng đến với KID LEARN</h1>
+          <p>
+            Mỗi ngày một bài học nhỏ, giúp bé tự tin và tiến bộ từng bước.
+          </p>
+        </div>
+      </div>
+
+      <div class="kl-login-form-panel">
+        <div class="kl-login-box">
+          <div class="kl-login-kicker">Đăng nhập</div>
+          <h2>Con muốn học hôm nay? 👋</h2>
+          <p class="kl-muted">
+            Chọn vai trò, nhập mã tài khoản và mã PIN để vào đúng khu học tập.
+          </p>
+
+          <div class="kl-login-role-grid">
+            <button
+              id="loginRoleCardChild"
+              class="kl-login-role-card active"
+              data-login-role="CHILD"
+              type="button"
+            >
+              <span class="kl-login-role-icon">🧒</span>
+              <span>
+                <strong>Bé học</strong>
+                <small>Vào trang học tập</small>
+              </span>
+            </button>
+
+            <button
+              id="loginRoleCardParent"
+              class="kl-login-role-card"
+              data-login-role="FAMILY_ADMIN"
+              type="button"
+            >
+              <span class="kl-login-role-icon">👨‍👩‍👧</span>
+              <span>
+                <strong>Phụ huynh</strong>
+                <small>Theo dõi tiến độ</small>
+              </span>
+            </button>
+          </div>
+
+          <select id="loginRole" class="kl-hidden-select" aria-label="Vai trò">
+            <option value="CHILD">Bé học</option>
+            <option value="FAMILY_ADMIN">Phụ huynh / Family Admin</option>
+          </select>
+
+          <label>Mã tài khoản</label>
+          <input id="loginCode" value="LICH_KHE" placeholder="Ví dụ: LICH_KHE">
+
+          <label>Mã PIN</label>
+          <input id="loginPin" value="1234" type="password" placeholder="Demo: 1234">
+
+          <button id="loginButton" class="kl-primary-btn">
+            Vào KID LEARN
+          </button>
+
+          <button id="skipLoginButton" class="kl-text-btn">
+            Xem giao diện demo
+          </button>
+
+          <div class="kl-login-help">
+            Demo bé học: <b>LICH_KHE / 1234</b><br>
+            Demo phụ huynh: <b>PARENT / 1234</b>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div id="kidlearnApp" class="kl-app hidden">
+    <aside class="kl-sidebar">
+      <div class="kl-brand">
+        <div class="kl-brand-mark">K</div>
+        <div>
+          <div class="kl-brand-title">
+            <span>KID</span><span>LEARN</span>
+          </div>
+          <div class="kl-brand-subtitle">Học vui mỗi ngày</div>
+        </div>
+      </div>
+
+      <div class="kl-profile-mini">
+        <div class="kl-avatar" data-bind="avatar">🧒</div>
+        <div>
+          <div class="kl-profile-name" data-bind="childName">Lịch Khê</div>
+          <div class="kl-profile-grade" data-bind="gradeLabel">Lớp 2</div>
+        </div>
+      </div>
+
+      <nav class="kl-nav" id="childNav"></nav>
+
+      <div class="kl-sidebar-bottom">
+        <button class="kl-role-btn active" data-role-switch="CHILD">
+          🧒 Bé học
+        </button>
+        <button class="kl-role-btn" data-role-switch="FAMILY_ADMIN">
+          👨‍👩‍👧 Phụ huynh
+        </button>
+      </div>
+    </aside>
+
+    <main class="kl-main">
+      <header class="kl-header">
+        <button class="kl-menu-toggle" id="mobileMenuButton">☰</button>
+
+        <div>
+          <div class="kl-header-kicker" id="roleKicker">Khu học tập của bé</div>
+          <h1 id="pageTitle">Trang chủ</h1>
+        </div>
+
+        <div class="kl-header-actions">
+          <div class="kl-pill">
+            ⭐ <span data-bind="todayStars">28</span> sao
+          </div>
+          <div class="kl-pill">
+            🔥 <span data-bind="streakDays">5</span> ngày
+          </div>
+        </div>
+      </header>
+
+      <section id="childHomeScreen" class="kl-screen hidden">
+        <div class="kl-4b-hero-layout">
+          <div class="kl-hero-card">
+            <div>
+              <div class="kl-hero-kicker">Xin chào 👋</div>
+              <h2 id="childWelcomeTitle">Hôm nay Lịch Khê học gì nào?</h2>
+              <p id="childWelcomeSubtitle">
+                Chọn một bài học ngắn để nhận sao thưởng và giữ chuỗi học tập nhé.
+              </p>
+
+              <div class="kl-hero-actions">
+                <button class="kl-primary-btn" data-page="courses">
+                  Bắt đầu học
+                </button>
+                <button class="kl-secondary-btn" data-page="practice">
+                  Ôn bài nhanh
+                </button>
+              </div>
+            </div>
+
+            <div class="kl-hero-illustration">
+              <div class="kl-bubble big">📚</div>
+              <div class="kl-bubble mid">⭐</div>
+              <div class="kl-bubble small">✏️</div>
+            </div>
+          </div>
+
+          <aside id="nextLessonCard" class="kl-next-lesson-card">
+            <div class="kl-card-kicker">Bài học tiếp theo</div>
+            <div class="kl-next-icon" id="nextLessonIcon">🔢</div>
+            <h3 id="nextLessonTitle">Bài toán có lời văn ngắn</h3>
+            <p id="nextLessonSubtitle">Toán học · 10 phút</p>
+            <button class="kl-primary-btn" data-page="courses">
+              Bắt đầu
+            </button>
+          </aside>
+        </div>
+
+        <div class="kl-stat-grid">
+          <div class="kl-stat-card">
+            <div class="kl-stat-icon">⭐</div>
+            <div>
+              <div class="kl-stat-value" data-bind="todayStars">28</div>
+              <div class="kl-stat-label">Sao thưởng</div>
+            </div>
+          </div>
+
+          <div class="kl-stat-card">
+            <div class="kl-stat-icon">🔥</div>
+            <div>
+              <div class="kl-stat-value" data-bind="streakDays">5</div>
+              <div class="kl-stat-label">Ngày liên tiếp</div>
+            </div>
+          </div>
+
+          <div class="kl-stat-card">
+            <div class="kl-stat-icon">🎯</div>
+            <div>
+              <div class="kl-stat-value" id="todayMissionCount">2</div>
+              <div class="kl-stat-label">Mục tiêu hôm nay</div>
+            </div>
+          </div>
+
+          <div class="kl-stat-card">
+            <div class="kl-stat-icon">⏱️</div>
+            <div>
+              <div class="kl-stat-value" id="suggestedMinutes">25'</div>
+              <div class="kl-stat-label">Thời gian gợi ý</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="kl-section-head">
+          <div>
+            <h2>4 môn học chính</h2>
+            <p>Chọn một môn để bắt đầu học.</p>
+          </div>
+        </div>
+
+        <div id="subjectGrid" class="kl-subject-grid"></div>
+
+        <div class="kl-two-columns">
+          <div class="kl-panel">
+            <h3>🎯 Mục tiêu hôm nay</h3>
+            <div id="todayPlanList" class="kl-plan-list"></div>
+          </div>
+
+          <div class="kl-panel">
+            <h3>✨ Bài học gợi ý</h3>
+            <div id="homeRecommendedList" class="kl-recommended-list"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="coursesScreen" class="kl-screen hidden">
+        <div class="kl-section-head">
+          <div>
+            <h2 id="coursesTitle">Khóa học của Lịch Khê</h2>
+            <p id="coursesSubtitle">Lớp 2 - Học từng bước nhỏ, tiến bộ mỗi ngày.</p>
+          </div>
+        </div>
+
+        <div id="courseSummaryGrid" class="kl-course-summary-grid"></div>
+
+        <div class="kl-section-head">
+          <div>
+            <h2>Các môn học</h2>
+            <p>Mỗi môn có bài học ngắn, tiến độ và gợi ý học tiếp.</p>
+          </div>
+        </div>
+
+        <div id="coursesGrid" class="kl-subject-grid"></div>
+
+        <div class="kl-panel kl-course-recommended-panel">
+          <h3>📌 Nên học tiếp</h3>
+          <div id="recommendedLessonsList" class="kl-recommended-list"></div>
+        </div>
+      </section>
+
+      <section id="subjectDetailScreen" class="kl-screen hidden">
+        <div class="kl-subject-detail-hero">
+          <div>
+            <div class="kl-card-kicker" id="subjectDetailStatus">Đang học</div>
+            <h2 id="subjectDetailTitle">Toán học</h2>
+            <p id="subjectDetailSubtitle">
+              Màn hình môn học sẽ được hoàn thiện ở 4C.
+            </p>
+            <div class="kl-hero-actions">
+              <button class="kl-primary-btn" data-page="courses">
+                Quay lại khóa học
+              </button>
+              <button class="kl-secondary-btn" data-page="practice">
+                Ôn nhanh
+              </button>
+            </div>
+          </div>
+
+          <div class="kl-subject-detail-icon" id="subjectDetailIcon">🔢</div>
+        </div>
+
+        <div class="kl-subject-detail-grid">
+          <div class="kl-panel">
+            <h3>📘 Bài tiếp theo</h3>
+            <p id="subjectDetailNextLesson">Bài học tiếp theo</p>
+          </div>
+
+          <div class="kl-panel">
+            <h3>📈 Tiến độ</h3>
+            <div class="kl-progress">
+              <span id="subjectDetailProgressBar" style="width:0%"></span>
+            </div>
+            <p id="subjectDetailProgressText">0% hoàn thành</p>
+          </div>
+
+          <div class="kl-panel">
+            <h3>🚧 Sắp mở ở 4C</h3>
+            <p>
+              4C sẽ làm trang từng môn, danh sách chủ đề và lesson player.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section id="parentHomeScreen" class="kl-screen hidden">
+        <div class="kl-hero-card parent">
+          <div>
+            <div class="kl-hero-kicker">Family Admin</div>
+            <h2>Tổng quan học tập của Lịch Khê</h2>
+            <p>
+              Theo dõi tiến độ, môn học mạnh, phần cần ôn và mục tiêu học tập.
+            </p>
+          </div>
+          <div class="kl-hero-illustration">
+            <div class="kl-bubble big">📊</div>
+            <div class="kl-bubble mid">🎯</div>
+            <div class="kl-bubble small">🏆</div>
+          </div>
+        </div>
+
+        <div class="kl-stat-grid">
+          <div class="kl-stat-card">
+            <div class="kl-stat-icon">📅</div>
+            <div>
+              <div class="kl-stat-value" id="weekStudyDays">5</div>
+              <div class="kl-stat-label">Ngày học tuần này</div>
+            </div>
+          </div>
+
+          <div class="kl-stat-card">
+            <div class="kl-stat-icon">⏱️</div>
+            <div>
+              <div class="kl-stat-value" id="totalMinutes">85</div>
+              <div class="kl-stat-label">Phút học</div>
+            </div>
+          </div>
+
+          <div class="kl-stat-card">
+            <div class="kl-stat-icon">💪</div>
+            <div>
+              <div class="kl-stat-value small" id="strongSubject">Tiếng Việt</div>
+              <div class="kl-stat-label">Môn nổi bật</div>
+            </div>
+          </div>
+
+          <div class="kl-stat-card">
+            <div class="kl-stat-icon">🔁</div>
+            <div>
+              <div class="kl-stat-value small" id="reviewSubject">Toán</div>
+              <div class="kl-stat-label">Cần ôn thêm</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="kl-two-columns">
+          <div class="kl-panel">
+            <h3>📈 Tiến độ theo môn</h3>
+            <div id="parentSubjectProgress"></div>
+          </div>
+
+          <div class="kl-panel">
+            <h3>📝 Gợi ý cho phụ huynh</h3>
+            <p id="parentRecommendation">
+              Tuần này nên ôn thêm 3 bài toán có lời văn ngắn.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section id="placeholderScreen" class="kl-screen hidden">
+        <div class="kl-empty-state">
+          <div class="kl-empty-icon">🚧</div>
+          <h2 id="placeholderTitle">Tính năng đang chuẩn bị</h2>
+          <p>
+            Màn hình này sẽ được hoàn thiện trong các bước tiếp theo của Phase 4.
+          </p>
+        </div>
+      </section>
+    </main>
+  </div>
+
+    <?!= kidlearnV3_include4A('UI_Product_Client_4A'); ?>
+    <?!= kidlearnV3_include4A('UI_Product_Client_Assets_4B2R4'); ?>
+    <?!= kidlearnV3_include4A('UI_Product_Client_SubjectDashboard_4C2'); ?>
+    <?!= kidlearnV3_include4A('UI_Product_Client_SubjectDashboard_Patch_4C2P'); ?>
+    <?!= kidlearnV3_include4A('UI_Product_Client_LessonPlayer_4C4'); ?>
+    <?!= kidlearnV3_include4A('UI_Product_Client_WriteGate_4D6'); ?>
+    <?!= kidlearnV3_include4A('UI_Product_Client_LessonInteraction_DryRun_4C5'); ?>
+    <?!= kidlearnV3_include4A('UI_Product_Client_ParentReviewQueue_4E5B'); ?>
+    <?!= kidlearnV3_include4A('UI_Product_Client_ParentReviewActions_4F2'); ?>
+    <?!= kidlearnV3_include4A('UI_Product_Client_ParentReviewActions_Write_4F3'); ?>
+    <?!= kidlearnV3_include4A('UI_Product_Client_ChildRetryHome_4F4B'); ?>
+    <?!= kidlearnV3_include4A('UI_Product_Client_ChildRetryRouting_4F4C'); ?>
+    <?!= kidlearnV3_include4A('UI_Product_Client_ParentDashboard_4G2'); ?>
+    <?!= kidlearnV3_include4A('UI_Product_Client_ParentSubjectProgress_4G3'); ?>
+    <?!= kidlearnV3_include4A('UI_Product_Client_ParentActivityTimeline_4G4'); ?>
+    <?!= kidlearnV3_include4A('UI_Product_Client_LearningPlan_4H2'); ?>
+    <?!= kidlearnV3_include4A('UI_Product_Client_LearningPlan_WriteChild_4H3'); ?>
+    <?!= kidlearnV3_include4A('UI_Product_Client_AssignmentLearning_4I2'); ?>
+    <?!= kidlearnV3_include4A('UI_Product_Client_AssignmentLearning_4I2P2'); ?>
+    <?!= kidlearnV3_include4A('UI_Product_Client_AssignmentLearning_Write_4I3'); ?>
+    <?!= kidlearnV3_include4A('UI_Product_Client_ParentAssignmentManagement_4J'); ?>
+</body>
+</html>

@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f5f7fb;
+      color: #111827;
+    }
+
+    .app {
+      padding: 18px;
+    }
+
+    .header {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 16px 18px;
+      box-shadow: 0 1px 5px rgba(0,0,0,0.08);
+      margin-bottom: 16px;
+    }
+
+    .title {
+      font-size: 24px;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+
+    .subtitle {
+      color: #6b7280;
+      font-size: 13px;
+    }
+
+    .toolbar {
+      margin-top: 14px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      border: 0;
+      border-radius: 10px;
+      padding: 9px 12px;
+      cursor: pointer;
+      background: #2563eb;
+      color: #ffffff;
+      font-weight: 700;
+    }
+
+    button.secondary {
+      background: #6b7280;
+    }
+
+    button.safe {
+      background: #059669;
+    }
+
+    button.warn {
+      background: #9333ea;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 16px;
+    }
+
+    .panel {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 1px 5px rgba(0,0,0,0.08);
+    }
+
+    .lesson-title {
+      font-size: 22px;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+
+    .meta {
+      color: #6b7280;
+      font-size: 13px;
+      margin-bottom: 12px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: #ecfeff;
+      color: #155e75;
+      font-size: 12px;
+      margin-right: 5px;
+    }
+
+    .block {
+      border-left: 5px solid #2563eb;
+      background: #f9fafb;
+      border-radius: 14px;
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+
+    .activity {
+      margin-top: 10px;
+      border-left: 4px solid #9333ea;
+      background: #faf5ff;
+      border-radius: 12px;
+      padding: 10px;
+    }
+
+    .empty {
+      background: #f9fafb;
+      border-radius: 14px;
+      padding: 18px;
+      color: #6b7280;
+    }
+
+    .status {
+      white-space: pre-wrap;
+      background: #111827;
+      color: #e5e7eb;
+      border-radius: 14px;
+      padding: 12px;
+      font-size: 12px;
+      max-height: 300px;
+      overflow: auto;
+      margin-top: 16px;
+    }
+
+    .side-title {
+      font-weight: 800;
+      margin-bottom: 10px;
+    }
+
+    .small {
+      font-size: 12px;
+      color: #6b7280;
+    }
+
+    .answer-box {
+      width: 100%;
+      min-height: 80px;
+      border-radius: 10px;
+      border: 1px solid #d1d5db;
+      padding: 10px;
+      box-sizing: border-box;
+      margin-top: 8px;
+      font-family: Arial, sans-serif;
+    }
+
+    .result-box {
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-radius: 12px;
+      padding: 12px;
+      margin-top: 12px;
+      color: #166534;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <div class="header">
+      <div class="title">KIDLEARN V3 - Learning Interaction 3L-C</div>
+      <div class="subtitle">
+        DRY_RUN UI for Start / Complete Block / Submit Answer / Finish. No real write.
+      </div>
+
+      <div class="toolbar">
+        <button onclick="loadPayload()">Refresh</button>
+        <button class="secondary" onclick="preview3LC()">Preview</button>
+        <button class="secondary" onclick="status3LC()">Status</button>
+        <button class="safe" onclick="runAll3LC()">Run All DRY_RUN</button>
+        <button class="safe" onclick="markReady3LC()">Mark Ready</button>
+      </div>
+    </div>
+
+    <div class="layout">
+      <div class="panel">
+        <div id="lesson"></div>
+        <div id="blocks"></div>
+      </div>
+
+      <div class="panel">
+        <div class="side-title">Interaction Controls</div>
+
+        <button onclick="runAction3LC('START_LESSON')">
+          Start Lesson DRY_RUN
+        </button>
+
+        <br><br>
+
+        <button class="warn" onclick="runAction3LC('COMPLETE_BLOCK')">
+          Complete Block DRY_RUN
+        </button>
+
+        <br><br>
+
+        <textarea id="answerText" class="answer-box">Đáp án thử nghiệm DRY_RUN</textarea>
+
+        <button class="warn" onclick="runAction3LC('SUBMIT_ANSWER')">
+          Submit Answer DRY_RUN
+        </button>
+
+        <br><br>
+
+        <button class="safe" onclick="runAction3LC('FINISH_LESSON')">
+          Finish Lesson DRY_RUN
+        </button>
+
+        <div id="actionResult"></div>
+
+        <hr>
+
+        <div class="side-title">Diagnostics</div>
+        <div id="diagnostics" class="small"></div>
+      </div>
+    </div>
+
+    <div id="status" class="status">Loading...</div>
+  </div>
+
+  <?!= kidlearnV3_uiInclude_('UI_Learning_Interaction_3LC_Client_V3'); ?>
+
+  <script>
+    var currentPayload = null;
+
+    function setStatus(value) {
+      document.getElementById('status').textContent =
+        typeof value === 'string'
+          ? value
+          : JSON.stringify(value, null, 2);
+    }
+
+    function showError(error) {
+      setStatus({
+        success: false,
+        error: error && error.message ? error.message : String(error)
+      });
+    }
+
+    function loadPayload() {
+      setStatus('Loading Learning Interaction 3L-C...');
+
+      KidlearnV3LearningInteraction3LC
+        .getPayload({})
+        .then(function(payload) {
+          currentPayload = payload;
+          render(payload);
+          setStatus(payload);
+        })
+        .catch(showError);
+    }
+
+    function render(payload) {
+      renderLesson(payload);
+      renderBlocks(payload);
+      renderDiagnostics(payload);
+    }
+
+    function renderLesson(payload) {
+      var lesson =
+        payload.lessonContent && payload.lessonContent.lesson
+          ? payload.lessonContent.lesson
+          : {};
+
+      var el = document.getElementById('lesson');
+
+      el.innerHTML =
+        '<span class="badge">DRY_RUN ONLY</span>' +
+        '<span class="badge">3L-C</span>' +
+        '<div class="lesson-title">' +
+          escapeHtml(lesson.lessonTitle || lesson.lessonId || 'Bài học') +
+        '</div>' +
+        '<div class="meta">Lesson ID: ' +
+          escapeHtml(lesson.lessonId || '-') +
+        '</div>';
+    }
+
+    function renderBlocks(payload) {
+      var blocks =
+        payload.lessonContent && payload.lessonContent.blocks
+          ? payload.lessonContent.blocks
+          : [];
+
+      var el = document.getElementById('blocks');
+
+      if (!blocks.length) {
+        el.innerHTML =
+          '<div class="empty">Chưa có block nội dung. UI vẫn có thể test DRY_RUN bằng DEV fallback.</div>';
+        return;
+      }
+
+      el.innerHTML =
+        blocks.map(function(block, index) {
+          var activities = block.activities || [];
+
+          return (
+            '<div class="block">' +
+              '<b>' + escapeHtml(block.title || block.blockType || 'Nội dung') + '</b>' +
+              '<div class="meta">' + escapeHtml(block.blockType || '') + '</div>' +
+              '<div>' + escapeHtml(block.body || '') + '</div>' +
+              activities.map(function(activity) {
+                return (
+                  '<div class="activity">' +
+                    '<b>' + escapeHtml(activity.activityType || 'Activity') + '</b>' +
+                    '<div>' + escapeHtml(activity.prompt || '') + '</div>' +
+                    '<div class="small">Submit Answer sẽ chạy DRY_RUN, không ghi DATA_Responses thật.</div>' +
+                  '</div>'
+                );
+              }).join('') +
+            '</div>'
+          );
+        }).join('');
+    }
+
+    function renderDiagnostics(payload) {
+      var d = payload.diagnostics || {};
+
+      document.getElementById('diagnostics').innerHTML =
+        'Lesson ID: ' + escapeHtml(d.lessonId || '-') + '<br>' +
+        'Child ID: ' + escapeHtml(d.childId || '-') + '<br>' +
+        'Blocks: ' + escapeHtml(String(d.blockCount || 0)) + '<br>' +
+        'Actions: ' + escapeHtml(String(d.actionCount || 0));
+    }
+
+    function runAction3LC(actionCode) {
+      var answerText =
+        document.getElementById('answerText').value || '';
+
+      setStatus('Running ' + actionCode + ' DRY_RUN...');
+
+      KidlearnV3LearningInteraction3LC
+        .runAction({
+          actionCode: actionCode,
+          answerText: answerText
+        })
+        .then(function(result) {
+          setStatus(result);
+          renderActionResult(result);
+        })
+        .catch(showError);
+    }
+
+    function renderActionResult(result) {
+      var el = document.getElementById('actionResult');
+
+      el.innerHTML =
+        '<div class="result-box">' +
+          '<b>' + escapeHtml(result.actionCode || '') + '</b><br>' +
+          'Success: ' + escapeHtml(String(result.success)) + '<br>' +
+          'No-write changed sheets: ' +
+          escapeHtml(String(result.noWriteCheck ? result.noWriteCheck.changedSheetCount : 0)) +
+        '</div>';
+    }
+
+    function preview3LC() {
+      KidlearnV3LearningInteraction3LC
+        .preview()
+        .then(setStatus)
+        .catch(showError);
+    }
+
+    function status3LC() {
+      KidlearnV3LearningInteraction3LC
+        .status()
+        .then(setStatus)
+        .catch(showError);
+    }
+
+    function runAll3LC() {
+      KidlearnV3LearningInteraction3LC
+        .runAll()
+        .then(setStatus)
+        .catch(showError);
+    }
+
+    function markReady3LC() {
+      KidlearnV3LearningInteraction3LC
+        .markReady()
+        .then(setStatus)
+        .catch(showError);
+    }
+
+    function escapeHtml(value) {
+      return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    loadPayload();
+  </script>
+</body>
+</html>

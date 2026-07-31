@@ -1,0 +1,364 @@
+<script>
+  /**
+   * KIDLEARN_CHILD_RETRY_ROUTING_UI_4F4C
+   * Phase 4F-4C — Retry Lesson Routing
+   */
+
+  (function () {
+    var KIDLEARN_CHILD_RETRY_ROUTING_UI_4F4C = {
+      phase: '4F-4C',
+      marker: 'KIDLEARN_CHILD_RETRY_ROUTING_UI_4F4C',
+      patchTimer: null,
+      routing: {},
+      currentRoute: null
+    };
+
+    window.KIDLEARN_CHILD_RETRY_ROUTING_UI_4F4C =
+      KIDLEARN_CHILD_RETRY_ROUTING_UI_4F4C;
+
+    function escapeHtml4F4C(value) {
+      return String(value === null || value === undefined ? '' : value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function patchChildRetryButtonsForRouting4F4C() {
+      var cards =
+        document.querySelectorAll('.kl-child-retry-card-4f4b');
+
+      if (!cards || !cards.length) {
+        return;
+      }
+
+      for (var i = 0; i < cards.length; i++) {
+        patchRetryCard4F4C(cards[i]);
+      }
+    }
+
+    function patchRetryCard4F4C(card) {
+      if (!card) return;
+
+      var button =
+        card.querySelector('[data-action="open-retry-lesson-placeholder-4f4b"]') ||
+        card.querySelector('[data-action="open-retry-lesson-4f4c"]');
+
+      if (!button) return;
+
+      var responseId =
+        card.getAttribute('data-response-id') ||
+        button.getAttribute('data-response-id') ||
+        '';
+
+      var lessonId =
+        card.getAttribute('data-lesson-id') ||
+        button.getAttribute('data-lesson-id') ||
+        '';
+
+      button.setAttribute(
+        'data-action',
+        'open-retry-lesson-4f4c'
+      );
+
+      button.setAttribute(
+        'data-response-id',
+        responseId
+      );
+
+      button.setAttribute(
+        'data-lesson-id',
+        lessonId
+      );
+
+      button.classList.add(
+        'kl-child-retry-routing-4f4c'
+      );
+
+      button.textContent =
+        'Làm lại bài này';
+
+      var note =
+        card.querySelector('.kl-child-retry-note-4f4b');
+
+      if (note && !note.classList.contains('kl-child-retry-routing-feedback-4f4c')) {
+        note.classList.add(
+          'kl-child-retry-routing-feedback-4f4c'
+        );
+
+        note.innerHTML =
+          '4F-4C: Bấm nút để mở lại Lesson Player. Không ghi dữ liệu ở bước này.';
+      }
+    }
+
+    function openRetryLesson4F4C(button) {
+      if (!button) return;
+
+      var card =
+        button.closest('.kl-child-retry-card-4f4b');
+
+      var responseId =
+        button.getAttribute('data-response-id') ||
+        (card ? card.getAttribute('data-response-id') : '') ||
+        '';
+
+      var lessonId =
+        button.getAttribute('data-lesson-id') ||
+        (card ? card.getAttribute('data-lesson-id') : '') ||
+        '';
+
+      var feedback =
+        card
+          ? card.querySelector('.kl-child-retry-routing-feedback-4f4c') ||
+            card.querySelector('.kl-child-retry-note-4f4b')
+          : null;
+
+      if (!responseId && !lessonId) {
+        renderRetryRoutingFeedback4F4C(
+          feedback,
+          false,
+          'Thiếu responseId hoặc lessonId trên retry card.'
+        );
+        return;
+      }
+
+      if (
+        KIDLEARN_CHILD_RETRY_ROUTING_UI_4F4C.routing[responseId || lessonId]
+      ) {
+        return;
+      }
+
+      if (
+        typeof google === 'undefined' ||
+        !google.script ||
+        !google.script.run
+      ) {
+        renderRetryRoutingFeedback4F4C(
+          feedback,
+          false,
+          'Không gọi được Apps Script server.'
+        );
+        return;
+      }
+
+      KIDLEARN_CHILD_RETRY_ROUTING_UI_4F4C.routing[responseId || lessonId] = true;
+
+      button.disabled = true;
+
+      renderRetryRoutingFeedback4F4C(
+        feedback,
+        true,
+        'Đang mở bài làm lại...'
+      );
+
+      google.script.run
+        .withSuccessHandler(function (result) {
+          KIDLEARN_CHILD_RETRY_ROUTING_UI_4F4C.routing[responseId || lessonId] = false;
+          button.disabled = false;
+
+          var route =
+            result && result.route ? result.route : null;
+
+          if (!route || !route.lessonId) {
+            renderRetryRoutingFeedback4F4C(
+              feedback,
+              false,
+              'Không tìm thấy lessonId để mở bài.'
+            );
+            return;
+          }
+
+          var opened =
+            openLessonPlayerFromRetryRoute4F4C(route);
+
+          if (opened) {
+            renderRetryRoutingFeedback4F4C(
+              feedback,
+              true,
+              'Đã mở bài làm lại: ' +
+              escapeHtml4F4C(route.lessonTitle || route.lessonId)
+            );
+
+            closeRetryPanelAfterOpen4F4C();
+          } else {
+            renderRetryRoutingFeedback4F4C(
+              feedback,
+              false,
+              'Không tìm thấy Lesson Player router 4C4. Vui lòng kiểm tra include 4C4.'
+            );
+          }
+        })
+        .withFailureHandler(function (error) {
+          KIDLEARN_CHILD_RETRY_ROUTING_UI_4F4C.routing[responseId || lessonId] = false;
+          button.disabled = false;
+
+          renderRetryRoutingFeedback4F4C(
+            feedback,
+            false,
+            error && error.message
+              ? error.message
+              : String(error || 'Không mở được bài làm lại.')
+          );
+        })
+        .kidlearnV3_getRetryLessonRoute4F4CV3({
+          responseId: responseId,
+          lessonId: lessonId,
+          childId: 'CHD_V2_CHILD_DEFAULT'
+        });
+    }
+
+    function openLessonPlayerFromRetryRoute4F4C(route) {
+      route = route || {};
+
+      window.KIDLEARN_CHILD_RETRY_ROUTING_UI_4F4C.currentRoute =
+        route;
+
+      window.KIDLEARN_CURRENT_RETRY_ROUTE_4F4C =
+        route;
+
+      if (
+        typeof window.openLessonFromSubjectDashboard4C2 === 'function'
+      ) {
+        try {
+          var output =
+            window.openLessonFromSubjectDashboard4C2(
+              route.lessonId,
+              route.subjectCode,
+              {
+                source: '4F-4C_RETRY_ROUTING',
+                retryRoute: route
+              }
+            );
+
+          return output !== false;
+        } catch (error1) {
+          try {
+            var output2 =
+              window.openLessonFromSubjectDashboard4C2({
+                lessonId: route.lessonId,
+                subjectCode: route.subjectCode,
+                childId: route.childId,
+                source: '4F-4C_RETRY_ROUTING',
+                retryRoute: route
+              });
+
+            return output2 !== false;
+          } catch (error2) {
+            try {
+              var output3 =
+                window.openLessonFromSubjectDashboard4C2(
+                  route.lessonId
+                );
+
+              return output3 !== false;
+            } catch (error3) {
+              return false;
+            }
+          }
+        }
+      }
+
+      return false;
+    }
+
+    function renderRetryRoutingFeedback4F4C(feedback, success, message) {
+      if (!feedback) return;
+
+      feedback.classList.add(
+        'kl-child-retry-routing-feedback-4f4c'
+      );
+
+      feedback.classList.remove(
+        'is-success',
+        'is-error'
+      );
+
+      if (success) {
+        feedback.classList.add('is-success');
+      } else {
+        feedback.classList.add('is-error');
+      }
+
+      feedback.innerHTML =
+        '<strong>4F-4C</strong><br>' +
+        String(message || '');
+    }
+
+    function closeRetryPanelAfterOpen4F4C() {
+      setTimeout(function () {
+        var overlay =
+          document.querySelector('.kl-child-retry-panel-overlay-4f4b');
+
+        if (overlay && overlay.parentNode) {
+          overlay.parentNode.removeChild(overlay);
+        }
+      }, 500);
+    }
+
+    document.addEventListener(
+      'click',
+      function (event) {
+        var actionEl =
+          event.target.closest('[data-action]');
+
+        if (!actionEl) return;
+
+        var action =
+          actionEl.getAttribute('data-action');
+
+        if (action !== 'open-retry-lesson-4f4c') {
+          return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        openRetryLesson4F4C(actionEl);
+      },
+      true
+    );
+
+    function schedulePatchChildRetryButtonsForRouting4F4C() {
+      if (
+        KIDLEARN_CHILD_RETRY_ROUTING_UI_4F4C.patchTimer
+      ) {
+        return;
+      }
+
+      KIDLEARN_CHILD_RETRY_ROUTING_UI_4F4C.patchTimer =
+        setTimeout(function () {
+          KIDLEARN_CHILD_RETRY_ROUTING_UI_4F4C.patchTimer = null;
+          patchChildRetryButtonsForRouting4F4C();
+        }, 650);
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener(
+        'DOMContentLoaded',
+        schedulePatchChildRetryButtonsForRouting4F4C
+      );
+    } else {
+      schedulePatchChildRetryButtonsForRouting4F4C();
+    }
+
+    var observer4F4C =
+      new MutationObserver(function () {
+        schedulePatchChildRetryButtonsForRouting4F4C();
+      });
+
+    observer4F4C.observe(
+      document.documentElement,
+      {
+        childList: true,
+        subtree: true
+      }
+    );
+
+    window.patchChildRetryButtonsForRouting4F4C =
+      patchChildRetryButtonsForRouting4F4C;
+
+    window.openRetryLesson4F4C =
+      openRetryLesson4F4C;
+  })();
+</script>

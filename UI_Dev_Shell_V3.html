@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --good: #16a34a;
+      --warn: #d97706;
+      --bad: #dc2626;
+      --primary: #2563eb;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+    }
+
+    .page {
+      padding: 20px;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: flex-start;
+      margin-bottom: 18px;
+    }
+
+    .title {
+      font-size: 24px;
+      font-weight: 700;
+      margin: 0 0 6px;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      margin: 0;
+    }
+
+    .badge {
+      display: inline-block;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      background: #dbeafe;
+      color: #1d4ed8;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+    }
+
+    .card-title {
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .card-value {
+      font-size: 24px;
+      font-weight: 700;
+    }
+
+    .section {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      margin-bottom: 16px;
+      overflow: hidden;
+    }
+
+    .section-head {
+      padding: 14px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .section-title {
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .section-body {
+      padding: 14px;
+    }
+
+    .status {
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: #e2e8f0;
+      color: #334155;
+      margin-bottom: 14px;
+      white-space: pre-wrap;
+    }
+
+    .status.good {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .status.warn {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .status.bad {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .subject-list,
+    .assignment-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .subject-item,
+    .assignment-item {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      background: #ffffff;
+    }
+
+    .subject-name,
+    .assignment-title {
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .small {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      border: none;
+      border-radius: 10px;
+      padding: 9px 12px;
+      background: var(--primary);
+      color: white;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    button.secondary {
+      background: #475569;
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    pre {
+      margin: 0;
+      white-space: pre-wrap;
+      word-break: break-word;
+      background: #0f172a;
+      color: #e2e8f0;
+      padding: 12px;
+      border-radius: 12px;
+      max-height: 220px;
+      overflow: auto;
+      font-size: 12px;
+    }
+
+    @media (max-width: 900px) {
+      .grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .header {
+        display: block;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <?!= kidlearnV3_uiInclude_('UI_Service_Client_V3'); ?>
+
+  <div class="page">
+    <div class="header">
+      <div>
+        <h1 class="title">KIDLEARN V3 - DEV UI Shell</h1>
+        <p class="subtitle">
+          UI DEV đang gọi App Service Facade V3 qua google.script.run
+        </p>
+      </div>
+      <div>
+        <span class="badge" id="schemaBadge">V3</span>
+      </div>
+    </div>
+
+    <div id="status" class="status">
+      Đang khởi tạo UI DEV Shell...
+    </div>
+
+    <div class="toolbar" style="margin-bottom: 16px;">
+      <button onclick="KidlearnV3Ui.reload()">Reload Bootstrap</button>
+      <button class="secondary" onclick="KidlearnV3Ui.testPing()">Ping Service</button>
+      <button class="secondary" onclick="KidlearnV3Ui.showRaw()">Show Raw Payload</button>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div class="card-title">Môn học</div>
+        <div class="card-value" id="subjectCount">-</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Users</div>
+        <div class="card-value" id="userCount">-</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Children</div>
+        <div class="card-value" id="childCount">-</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Assignments</div>
+        <div class="card-value" id="assignmentCount">-</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-head">
+        <h3 class="section-title">Selected Child</h3>
+      </div>
+      <div class="section-body">
+        <div id="selectedChild">Chưa có dữ liệu.</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-head">
+        <h3 class="section-title">Subjects</h3>
+      </div>
+      <div class="section-body">
+        <div id="subjects" class="subject-list"></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-head">
+        <h3 class="section-title">Latest Assignments</h3>
+      </div>
+      <div class="section-body">
+        <div id="assignments" class="assignment-list"></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-head">
+        <h3 class="section-title">Raw Payload</h3>
+      </div>
+      <div class="section-body">
+        <pre id="rawPayload">Chưa load.</pre>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    window.KidlearnV3Ui = (function() {
+      var state = {
+        bootstrap: null,
+        rawVisible: true
+      };
+
+      function setStatus(message, type) {
+        var element =
+          document.getElementById('status');
+
+        element.className =
+          'status ' + (type || '');
+
+        element.textContent =
+          message;
+      }
+
+      function setText(id, value) {
+        var element =
+          document.getElementById(id);
+
+        if (element) {
+          element.textContent = value;
+        }
+      }
+
+      function reload() {
+        setStatus(
+          'Đang gọi kidlearnV3_serviceGetBootstrapV3...',
+          ''
+        );
+
+        KidlearnV3Client
+          .getBootstrap({})
+          .then(function(response) {
+            if (!response.success) {
+              throw new Error(
+                response.error &&
+                response.error.message
+                  ? response.error.message
+                  : 'Bootstrap service failed.'
+              );
+            }
+
+            state.bootstrap =
+              response.data;
+
+            renderBootstrap(
+              response.data
+            );
+
+            setStatus(
+              'UI DEV Shell đã kết nối thành công với App Service Facade V3.',
+              'good'
+            );
+          })
+          .catch(function(error) {
+            setStatus(
+              'Lỗi load bootstrap: ' +
+              String(error.message || error),
+              'bad'
+            );
+          });
+      }
+
+      function testPing() {
+        setStatus(
+          'Đang ping service...',
+          ''
+        );
+
+        KidlearnV3Client
+          .ping({})
+          .then(function(response) {
+            if (!response.success) {
+              throw new Error(
+                response.error &&
+                response.error.message
+                  ? response.error.message
+                  : 'Ping failed.'
+              );
+            }
+
+            setStatus(
+              'Ping thành công. Database mode: ' +
+              response.data.databaseMode +
+              ', connection: ' +
+              response.data.connectionStatus,
+              'good'
+            );
+          })
+          .catch(function(error) {
+            setStatus(
+              'Ping lỗi: ' +
+              String(error.message || error),
+              'bad'
+            );
+          });
+      }
+
+      function renderBootstrap(data) {
+        var counts =
+          data.counts || {};
+
+        setText(
+          'subjectCount',
+          counts.subjects || 0
+        );
+
+        setText(
+          'userCount',
+          counts.users || 0
+        );
+
+        setText(
+          'childCount',
+          counts.children || 0
+        );
+
+        setText(
+          'assignmentCount',
+          counts.assignments || 0
+        );
+
+        document.getElementById('schemaBadge').textContent =
+          'Schema ' + (data.schemaVersion || 'V3');
+
+        renderChild(
+          data.selectedChild
+        );
+
+        renderSubjects(
+          data.subjects || []
+        );
+
+        renderAssignments(
+          data.assignments || []
+        );
+
+        document.getElementById('rawPayload').textContent =
+          JSON.stringify(data, null, 2);
+      }
+
+      function renderChild(child) {
+        var element =
+          document.getElementById('selectedChild');
+
+        if (!child) {
+          element.innerHTML =
+            '<span class="small">Chưa có child.</span>';
+          return;
+        }
+
+        element.innerHTML =
+          '<div class="subject-name">' +
+          escapeHtml(
+            child.displayName ||
+            child.childName ||
+            ''
+          ) +
+          '</div>' +
+          '<div class="small">childId: ' +
+          escapeHtml(child.childId || '') +
+          ' | Grade: ' +
+          escapeHtml(child.gradeLevel || '') +
+          ' | Status: ' +
+          escapeHtml(child.status || '') +
+          '</div>';
+      }
+
+      function renderSubjects(subjects) {
+        var element =
+          document.getElementById('subjects');
+
+        if (!subjects.length) {
+          element.innerHTML =
+            '<span class="small">Chưa có subjects.</span>';
+          return;
+        }
+
+        var html = '';
+
+        for (
+          var i = 0;
+          i < subjects.length;
+          i++
+        ) {
+          var item =
+            subjects[i];
+
+          html +=
+            '<div class="subject-item">' +
+            '<div class="subject-name">' +
+            escapeHtml(item.icon || '') +
+            ' ' +
+            escapeHtml(item.subjectName || '') +
+            '</div>' +
+            '<div class="small">Code: ' +
+            escapeHtml(item.subjectCode || '') +
+            ' | Theme: ' +
+            escapeHtml(item.themeKey || '') +
+            ' | Status: ' +
+            escapeHtml(item.status || '') +
+            '</div>' +
+            '</div>';
+        }
+
+        element.innerHTML =
+          html;
+      }
+
+      function renderAssignments(assignments) {
+        var element =
+          document.getElementById('assignments');
+
+        if (!assignments.length) {
+          element.innerHTML =
+            '<span class="small">Chưa có assignments hoặc chưa gắn với child hiện tại.</span>';
+          return;
+        }
+
+        var html = '';
+
+        var max =
+          Math.min(assignments.length, 10);
+
+        for (
+          var i = 0;
+          i < max;
+          i++
+        ) {
+          var item =
+            assignments[i];
+
+          html +=
+            '<div class="assignment-item">' +
+            '<div class="assignment-title">' +
+            escapeHtml(item.title || '') +
+            '</div>' +
+            '<div class="small">Status: ' +
+            escapeHtml(item.status || '') +
+            ' | Priority: ' +
+            escapeHtml(item.priority || '') +
+            ' | Progress: ' +
+            escapeHtml(item.progressPercent || 0) +
+            '%</div>' +
+            '</div>';
+        }
+
+        element.innerHTML =
+          html;
+      }
+
+      function showRaw() {
+        if (!state.bootstrap) {
+          setStatus(
+            'Chưa có raw payload. Hãy reload bootstrap trước.',
+            'warn'
+          );
+          return;
+        }
+
+        document.getElementById('rawPayload').textContent =
+          JSON.stringify(
+            state.bootstrap,
+            null,
+            2
+          );
+
+        setStatus(
+          'Raw payload đã được cập nhật.',
+          'good'
+        );
+      }
+
+      function escapeHtml(value) {
+        return String(value || '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+      }
+
+      return {
+        reload: reload,
+        testPing: testPing,
+        showRaw: showRaw
+      };
+    })();
+
+    document.addEventListener(
+      'DOMContentLoaded',
+      function() {
+        KidlearnV3Ui.reload();
+      }
+    );
+  </script>
+</body>
+</html>

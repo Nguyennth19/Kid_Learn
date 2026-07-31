@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+
+  <style>
+    body {
+      margin: 0;
+      background: #f8fafc;
+      color: #0f172a;
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+    }
+
+    .page {
+      padding: 20px;
+    }
+
+    .top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    h1 {
+      margin: 0 0 6px;
+      font-size: 24px;
+    }
+
+    .muted {
+      color: #64748b;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #dbeafe;
+      color: #1d4ed8;
+      font-weight: 700;
+      font-size: 12px;
+    }
+
+    .danger-badge {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .status {
+      padding: 12px 14px;
+      border-radius: 12px;
+      background: #e2e8f0;
+      margin-bottom: 16px;
+      white-space: pre-wrap;
+    }
+
+    .status.good {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .status.warn {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .status.bad {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 14px;
+    }
+
+    .label {
+      color: #64748b;
+      font-size: 12px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .value {
+      font-size: 16px;
+      font-weight: 700;
+      word-break: break-word;
+    }
+
+    .section {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      margin-bottom: 16px;
+      overflow: hidden;
+    }
+
+    .section-head {
+      padding: 14px;
+      border-bottom: 1px solid #e2e8f0;
+      font-weight: 700;
+    }
+
+    .section-body {
+      padding: 14px;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    button {
+      border: none;
+      border-radius: 10px;
+      padding: 9px 12px;
+      background: #2563eb;
+      color: #ffffff;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    button.secondary {
+      background: #475569;
+    }
+
+    button.warning {
+      background: #d97706;
+    }
+
+    button:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    input {
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      padding: 9px 10px;
+      min-width: 220px;
+    }
+
+    .two {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    pre {
+      margin: 0;
+      background: #0f172a;
+      color: #e2e8f0;
+      padding: 12px;
+      border-radius: 12px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: 330px;
+      overflow: auto;
+      font-size: 12px;
+    }
+
+    .event {
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 10px;
+      margin-bottom: 8px;
+      background: #ffffff;
+    }
+
+    @media (max-width: 900px) {
+      .grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .two {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <?!= kidlearnV3_uiInclude_('UI_Real_Write_Gate_Client_V3'); ?>
+
+  <div class="page">
+    <div class="top">
+      <div>
+        <h1>KIDLEARN V3 - UI Real Write Gate DEV</h1>
+        <div class="muted">
+          Bundle 3J-A: thiết kế gate và test DRY_RUN. Chưa ghi thật qua UI.
+        </div>
+      </div>
+
+      <div>
+        <span class="badge" id="gateBadge">3J-A / DRY_RUN</span>
+        <span class="badge danger-badge">REAL WRITE OFF</span>
+      </div>
+    </div>
+
+    <div id="status" class="status">
+      Đang khởi tạo UI Real Write Gate...
+    </div>
+
+    <div class="section">
+      <div class="section-head">
+        Confirmation Gate
+      </div>
+
+      <div class="section-body">
+        <p class="muted">
+          Nhập đúng <strong>DRY_RUN_ONLY</strong> để chạy các nút test.
+          Ở Bundle 3J-A, mọi request đều bị force DRY_RUN.
+        </p>
+
+        <div class="toolbar">
+          <input id="confirmText" placeholder="Nhập DRY_RUN_ONLY">
+          <button onclick="KidlearnUiRealGatePage.loadStatus()">Get Status</button>
+          <button class="secondary" onclick="KidlearnUiRealGatePage.loadSample()">Sample Context</button>
+          <button class="warning" onclick="KidlearnUiRealGatePage.runAllDryRun()">Run All DRY_RUN</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div class="label">Gate Status</div>
+        <div class="value" id="gateStatus">-</div>
+      </div>
+
+      <div class="card">
+        <div class="label">Safe Write</div>
+        <div class="value" id="safeWrite">-</div>
+      </div>
+
+      <div class="card">
+        <div class="label">Router</div>
+        <div class="value" id="router">-</div>
+      </div>
+
+      <div class="card">
+        <div class="label">Real Write</div>
+        <div class="value">OFF</div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div class="label">Child ID</div>
+        <div class="value" id="childId">-</div>
+      </div>
+
+      <div class="card">
+        <div class="label">Subject ID</div>
+        <div class="value" id="subjectId">-</div>
+      </div>
+
+      <div class="card">
+        <div class="label">Lesson ID</div>
+        <div class="value" id="lessonId">-</div>
+      </div>
+
+      <div class="card">
+        <div class="label">Study Session ID</div>
+        <div class="value" id="studySessionId">-</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-head">
+        DRY_RUN Actions
+      </div>
+
+      <div class="section-body">
+        <div class="toolbar">
+          <button onclick="KidlearnUiRealGatePage.auditEvent()">Audit Event</button>
+          <button onclick="KidlearnUiRealGatePage.studyStart()">Study Start</button>
+          <button onclick="KidlearnUiRealGatePage.saveProgress(25)">Progress 25%</button>
+          <button onclick="KidlearnUiRealGatePage.saveProgress(50)">Progress 50%</button>
+          <button onclick="KidlearnUiRealGatePage.saveProgress(100)">Progress 100%</button>
+          <button onclick="KidlearnUiRealGatePage.dailyGoal()">Daily Goal</button>
+          <button onclick="KidlearnUiRealGatePage.studyFinish()">Study Finish</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="two">
+      <div class="section">
+        <div class="section-head">
+          Event Log
+        </div>
+
+        <div class="section-body">
+          <div id="eventLog">Chưa có event.</div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-head">
+          Last Response
+        </div>
+
+        <div class="section-body">
+          <pre id="lastResponse">Chưa có response.</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    window.KidlearnUiRealGatePage = (function() {
+      var state = {
+        context: {},
+        studySessionId: '',
+        lessonId: '',
+        events: []
+      };
+
+      function init() {
+        state.studySessionId =
+          KidlearnV3UiRealWriteGate.makeId(
+            'DRY_RUN_UI_GATE_SESSION'
+          );
+
+        state.lessonId =
+          KidlearnV3UiRealWriteGate.makeId(
+            'DRY_RUN_UI_GATE_LESSON'
+          );
+
+        setText(
+          'studySessionId',
+          state.studySessionId
+        );
+
+        setText(
+          'lessonId',
+          state.lessonId
+        );
+
+        loadStatus()
+          .then(loadSample)
+          .catch(function(error) {
+            setStatus(
+              'Khởi tạo lỗi: ' +
+              String(error.message || error),
+              'bad'
+            );
+          });
+      }
+
+      function requireConfirm() {
+        var value =
+          document
+            .getElementById('confirmText')
+            .value
+            .trim();
+
+        if (value !== 'DRY_RUN_ONLY') {
+          throw new Error(
+            'Vui lòng nhập DRY_RUN_ONLY trước khi chạy.'
+          );
+        }
+      }
+
+      function loadStatus() {
+        setStatus(
+          'Đang lấy Gate status...',
+          ''
+        );
+
+        return KidlearnV3UiRealWriteGate
+          .getStatus()
+          .then(function(response) {
+            setLastResponse(response);
+
+            if (!response.success) {
+              throw new Error(
+                getError(response)
+              );
+            }
+
+            setText(
+              'gateStatus',
+              response.status || '-'
+            );
+
+            var safe =
+              response.safeWriteStatus || {};
+
+            setText(
+              'safeWrite',
+              String(safe.mode || '-') +
+              ' / enabled=' +
+              String(safe.enabled)
+            );
+
+            var router =
+              response.routerStatus || {};
+
+            var dryRunOnly =
+              router.data
+                ? router.data.dryRunOnly
+                : null;
+
+            setText(
+              'router',
+              'DRY_RUN_ONLY=' +
+              String(dryRunOnly)
+            );
+
+            document.getElementById('gateBadge').textContent =
+              '3J-A / ' + String(response.status || 'DRY_RUN');
+
+            setStatus(
+              'Gate status loaded. Real write vẫn OFF.',
+              'good'
+            );
+
+            addEvent(
+              'STATUS',
+              'Loaded gate status.'
+            );
+
+            return response;
+          });
+      }
+
+      function loadSample() {
+        setStatus(
+          'Đang lấy sample context...',
+          ''
+        );
+
+        return KidlearnV3UiRealWriteGate
+          .getSampleContext()
+          .then(function(response) {
+            setLastResponse(response);
+
+            if (!response.success) {
+              throw new Error(
+                getError(response)
+              );
+            }
+
+            var sample =
+              response.data &&
+              response.data.sampleContext
+                ? response.data.sampleContext
+                : {};
+
+            state.context =
+              sample;
+
+            if (!state.context.childId) {
+              state.context.childId =
+                'DRY_RUN_CHILD_ID';
+            }
+
+            if (!state.context.subjectId) {
+              state.context.subjectId =
+                'SUB_TV';
+            }
+
+            setText(
+              'childId',
+              state.context.childId || '-'
+            );
+
+            setText(
+              'subjectId',
+              state.context.subjectId || '-'
+            );
+
+            setStatus(
+              'Sample context loaded.',
+              'good'
+            );
+
+            addEvent(
+              'SAMPLE',
+              'Loaded sample context.'
+            );
+
+            return response;
+          });
+      }
+
+      function auditEvent() {
+        requireConfirm();
+
+        return runAction(
+          'AUDIT_EVENT',
+          KidlearnV3UiRealWriteGate.auditEvent({
+            eventType: 'UI_REAL_GATE_MANUAL_DRY_RUN',
+            message: 'Manual dry-run from UI Real Write Gate',
+            entityType: 'UI_GATE',
+            entityId: '3J-A',
+            childId: state.context.childId || ''
+          })
+        );
+      }
+
+      function studyStart() {
+        requireConfirm();
+
+        return runAction(
+          'STUDY_START',
+          KidlearnV3UiRealWriteGate.studyStart({
+            studySessionId: state.studySessionId,
+            childId: state.context.childId || 'DRY_RUN_CHILD_ID',
+            subjectId: state.context.subjectId || 'SUB_TV',
+            lessonId: state.lessonId
+          })
+        );
+      }
+
+      function saveProgress(percent) {
+        requireConfirm();
+
+        return runAction(
+          'LESSON_PROGRESS_SAVE_' + percent,
+          KidlearnV3UiRealWriteGate.lessonProgressSave({
+            childId: state.context.childId || 'DRY_RUN_CHILD_ID',
+            subjectId: state.context.subjectId || 'SUB_TV',
+            lessonId: state.lessonId,
+            progressPercent: percent
+          })
+        );
+      }
+
+      function dailyGoal() {
+        requireConfirm();
+
+        return runAction(
+          'DAILY_GOAL_SAVE',
+          KidlearnV3UiRealWriteGate.dailyGoalSave({
+            childId: state.context.childId || 'DRY_RUN_CHILD_ID',
+            goalDate: KidlearnV3UiRealWriteGate.today(),
+            targetMinutes: 20,
+            completedMinutes: 10
+          })
+        );
+      }
+
+      function studyFinish() {
+        requireConfirm();
+
+        return runAction(
+          'STUDY_FINISH',
+          KidlearnV3UiRealWriteGate.studyFinish({
+            studySessionId: state.studySessionId,
+            durationSeconds: 300
+          })
+        );
+      }
+
+      function runAllDryRun() {
+        requireConfirm();
+
+        return auditEvent()
+          .then(studyStart)
+          .then(function() {
+            return saveProgress(25);
+          })
+          .then(function() {
+            return saveProgress(50);
+          })
+          .then(dailyGoal)
+          .then(studyFinish)
+          .then(function() {
+            setStatus(
+              'Run All DRY_RUN hoàn tất. Không ghi thật.',
+              'good'
+            );
+          });
+      }
+
+      function runAction(name, promise) {
+        setStatus(
+          'Đang chạy ' + name + '...',
+          ''
+        );
+
+        return promise
+          .then(function(response) {
+            setLastResponse(response);
+
+            if (!response.success) {
+              throw new Error(
+                getError(response)
+              );
+            }
+
+            setStatus(
+              name + ' DRY_RUN thành công.',
+              'good'
+            );
+
+            addEvent(
+              name,
+              'DRY_RUN success.'
+            );
+
+            return response;
+          })
+          .catch(function(error) {
+            setStatus(
+              name + ' lỗi: ' +
+              String(error.message || error),
+              'bad'
+            );
+
+            addEvent(
+              name,
+              'ERROR: ' + String(error.message || error)
+            );
+
+            throw error;
+          });
+      }
+
+      function setStatus(message, type) {
+        var element =
+          document.getElementById('status');
+
+        element.className =
+          'status ' + (type || '');
+
+        element.textContent =
+          message;
+      }
+
+      function setText(id, value) {
+        var element =
+          document.getElementById(id);
+
+        if (element) {
+          element.textContent =
+            value;
+        }
+      }
+
+      function setLastResponse(response) {
+        document.getElementById('lastResponse').textContent =
+          JSON.stringify(response, null, 2);
+      }
+
+      function addEvent(action, message) {
+        state.events.unshift({
+          at: new Date().toISOString(),
+          action: action,
+          message: message
+        });
+
+        if (state.events.length > 20) {
+          state.events.pop();
+        }
+
+        renderEvents();
+      }
+
+      function renderEvents() {
+        var element =
+          document.getElementById('eventLog');
+
+        if (!state.events.length) {
+          element.innerHTML =
+            'Chưa có event.';
+          return;
+        }
+
+        var html = '';
+
+        for (var i = 0; i < state.events.length; i++) {
+          var item =
+            state.events[i];
+
+          html +=
+            '<div class="event">' +
+            '<strong>' +
+            escapeHtml(item.action) +
+            '</strong>' +
+            '<div class="muted">' +
+            escapeHtml(item.at) +
+            '</div>' +
+            '<div>' +
+            escapeHtml(item.message) +
+            '</div>' +
+            '</div>';
+        }
+
+        element.innerHTML =
+          html;
+      }
+
+      function getError(response) {
+        if (
+          response &&
+          response.error &&
+          response.error.message
+        ) {
+          return response.error.message;
+        }
+
+        if (
+          response &&
+          response.routerResponse &&
+          response.routerResponse.error &&
+          response.routerResponse.error.message
+        ) {
+          return response.routerResponse.error.message;
+        }
+
+        return 'Không rõ lỗi.';
+      }
+
+      function escapeHtml(value) {
+        return String(value || '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+      }
+
+      return {
+        init: init,
+        loadStatus: loadStatus,
+        loadSample: loadSample,
+        auditEvent: auditEvent,
+        studyStart: studyStart,
+        saveProgress: saveProgress,
+        dailyGoal: dailyGoal,
+        studyFinish: studyFinish,
+        runAllDryRun: runAllDryRun
+      };
+    })();
+
+    document.addEventListener(
+      'DOMContentLoaded',
+      function() {
+        KidlearnUiRealGatePage.init();
+      }
+    );
+  </script>
+</body>
+</html>

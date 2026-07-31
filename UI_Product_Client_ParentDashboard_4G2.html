@@ -1,0 +1,615 @@
+<script>
+  /**
+   * KIDLEARN_PARENT_DASHBOARD_UI_4G2
+   * Phase 4G-2 — Parent Dashboard UI Overview
+   */
+
+  (function () {
+    var KIDLEARN_PARENT_DASHBOARD_UI_4G2 = {
+      phase: '4G-2',
+      marker: 'KIDLEARN_PARENT_DASHBOARD_UI_4G2',
+      contextLoaded: false,
+      contextLoading: false,
+      context: null,
+      injectTimer: null,
+      panelOpen: false
+    };
+
+    window.KIDLEARN_PARENT_DASHBOARD_UI_4G2 =
+      KIDLEARN_PARENT_DASHBOARD_UI_4G2;
+
+    function escapeHtml4G2(value) {
+      return String(value === null || value === undefined ? '' : value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function isLikelyParentView4G2() {
+      var bodyText =
+        document.body ? document.body.innerText || '' : '';
+
+      var upper =
+        bodyText.toUpperCase();
+
+      if (
+        upper.indexOf('LICH_KHE') !== -1 &&
+        upper.indexOf('PHỤ HUYNH') === -1 &&
+        upper.indexOf('PARENT') === -1
+      ) {
+        return false;
+      }
+
+      if (
+        upper.indexOf('PARENT') !== -1 ||
+        upper.indexOf('PHỤ HUYNH') !== -1 ||
+        upper.indexOf('BÀI VIẾT TAY CHỜ DUYỆT') !== -1 ||
+        document.querySelector('.kl-parent-review-entry-4e5b')
+      ) {
+        return true;
+      }
+
+      return false;
+    }
+
+    function loadParentDashboardContext4G2(callback, force) {
+      if (
+        KIDLEARN_PARENT_DASHBOARD_UI_4G2.contextLoaded &&
+        !force
+      ) {
+        if (callback) callback();
+        return;
+      }
+
+      if (
+        KIDLEARN_PARENT_DASHBOARD_UI_4G2.contextLoading
+      ) {
+        if (callback) {
+          setTimeout(callback, 600);
+        }
+        return;
+      }
+
+      if (
+        typeof google === 'undefined' ||
+        !google.script ||
+        !google.script.run
+      ) {
+        KIDLEARN_PARENT_DASHBOARD_UI_4G2.contextLoaded = true;
+        KIDLEARN_PARENT_DASHBOARD_UI_4G2.context = {
+          success: true,
+          parentDashboard: {
+            title: 'Dashboard phụ huynh',
+            child: { displayName: 'Bé' },
+            dashboardSummary: {},
+            overviewToday: {},
+            progressBySubject: { items: [] },
+            reviewSummary: {},
+            retrySummary: {},
+            recentActivities: { items: [] }
+          }
+        };
+
+        if (callback) callback();
+        return;
+      }
+
+      KIDLEARN_PARENT_DASHBOARD_UI_4G2.contextLoading = true;
+
+      google.script.run
+        .withSuccessHandler(function (context) {
+          KIDLEARN_PARENT_DASHBOARD_UI_4G2.contextLoading = false;
+          KIDLEARN_PARENT_DASHBOARD_UI_4G2.contextLoaded = true;
+          KIDLEARN_PARENT_DASHBOARD_UI_4G2.context = context || {};
+
+          if (callback) callback();
+        })
+        .withFailureHandler(function (error) {
+          KIDLEARN_PARENT_DASHBOARD_UI_4G2.contextLoading = false;
+          KIDLEARN_PARENT_DASHBOARD_UI_4G2.contextLoaded = true;
+          KIDLEARN_PARENT_DASHBOARD_UI_4G2.context = {
+            success: false,
+            errorMessage:
+              error && error.message
+                ? error.message
+                : String(error || 'Không đọc được dashboard phụ huynh.')
+          };
+
+          if (callback) callback();
+        })
+        .kidlearnV3_getParentDashboardContext4G1V3({
+          parentId: 'PARENT',
+          childId: 'CHD_V2_CHILD_DEFAULT',
+          recentLimit: 12
+        });
+    }
+
+    function findParentDashboardTarget4G2() {
+      var selectors = [
+        '.kl-parent-home-grid',
+        '.kl-home-grid',
+        '.kl-dashboard-grid',
+        '.kl-product-home',
+        '.kl-page-content',
+        '.kl-main-content',
+        'main',
+        '#app'
+      ];
+
+      for (var i = 0; i < selectors.length; i++) {
+        var el =
+          document.querySelector(selectors[i]);
+
+        if (el) return el;
+      }
+
+      return document.body;
+    }
+
+    function ensureParentDashboardEntry4G2() {
+      if (!isLikelyParentView4G2()) {
+        removeParentDashboardEntry4G2();
+        return;
+      }
+
+      loadParentDashboardContext4G2(function () {
+        renderParentDashboardEntry4G2(
+          KIDLEARN_PARENT_DASHBOARD_UI_4G2.context || {}
+        );
+      });
+    }
+
+    function removeParentDashboardEntry4G2() {
+      var existing =
+        document.querySelector('.kl-parent-dashboard-entry-4g2');
+
+      if (existing && existing.parentNode) {
+        existing.parentNode.removeChild(existing);
+      }
+    }
+
+    function renderParentDashboardEntry4G2(context) {
+      var target =
+        findParentDashboardTarget4G2();
+
+      if (!target) return;
+
+      var existing =
+        document.querySelector('.kl-parent-dashboard-entry-4g2');
+
+      var dashboard =
+        context.parentDashboard || {};
+
+      var summary =
+        dashboard.dashboardSummary ||
+        context.dashboardSummary ||
+        {};
+
+      var child =
+        dashboard.child ||
+        context.child ||
+        {};
+
+      var html =
+        '<div class="kl-parent-dashboard-entry-inner-4g2">' +
+          '<div class="kl-parent-dashboard-entry-icon-4g2">📊</div>' +
+          '<div class="kl-parent-dashboard-entry-content-4g2">' +
+            '<div class="kl-parent-dashboard-badge-4g2">4G-2 Overview</div>' +
+            '<h3>Dashboard phụ huynh</h3>' +
+            '<p>Theo dõi tiến độ học tập của ' +
+              escapeHtml4G2(child.displayName || child.name || 'bé') +
+            '</p>' +
+            '<div class="kl-parent-dashboard-entry-stats-4g2">' +
+              '<span>' + escapeHtml4G2(summary.completedLessonCount || 0) + ' bài hoàn thành</span>' +
+              '<span>' + escapeHtml4G2(summary.pendingReviewCount || 0) + ' bài chờ duyệt</span>' +
+              '<span>' + escapeHtml4G2(summary.retryCount || 0) + ' bài làm lại</span>' +
+            '</div>' +
+          '</div>' +
+          '<button type="button" class="kl-parent-dashboard-open-4g2" data-action="open-parent-dashboard-4g2">' +
+            'Xem dashboard' +
+          '</button>' +
+        '</div>';
+
+      if (!existing) {
+        existing =
+          document.createElement('section');
+
+        existing.className =
+          'kl-parent-dashboard-entry-4g2';
+
+        existing.setAttribute(
+          'data-phase',
+          '4G-2'
+        );
+
+        existing.innerHTML = html;
+
+        if (target.firstChild) {
+          target.insertBefore(existing, target.firstChild);
+        } else {
+          target.appendChild(existing);
+        }
+      } else {
+        existing.innerHTML = html;
+      }
+    }
+
+    function openParentDashboard4G2() {
+      loadParentDashboardContext4G2(function () {
+        renderParentDashboardPanel4G2(
+          KIDLEARN_PARENT_DASHBOARD_UI_4G2.context || {}
+        );
+      }, true);
+    }
+
+    function renderParentDashboardPanel4G2(context) {
+      closeParentDashboardPanel4G2();
+
+      var overlay =
+        document.createElement('div');
+
+      overlay.className =
+        'kl-parent-dashboard-panel-overlay-4g2';
+
+      overlay.setAttribute(
+        'data-phase',
+        '4G-2'
+      );
+
+      if (!context.success) {
+        overlay.innerHTML =
+          '<div class="kl-parent-dashboard-panel-4g2" role="dialog" aria-modal="true">' +
+            renderPanelHeader4G2(null) +
+            '<div class="kl-parent-dashboard-empty-4g2">' +
+              '<h4>Chưa mở được dashboard</h4>' +
+              '<p>' + escapeHtml4G2(context.errorMessage || 'Vui lòng thử lại sau.') + '</p>' +
+            '</div>' +
+          '</div>';
+
+        document.body.appendChild(overlay);
+        return;
+      }
+
+      var dashboard =
+        context.parentDashboard || {};
+
+      overlay.innerHTML =
+        '<div class="kl-parent-dashboard-panel-4g2" role="dialog" aria-modal="true">' +
+          renderPanelHeader4G2(dashboard) +
+          '<div class="kl-parent-dashboard-grid-4g2">' +
+            renderTodayOverview4G2(dashboard.overviewToday || {}, dashboard.dashboardSummary || {}) +
+            renderReviewSummary4G2(dashboard.reviewSummary || {}) +
+            renderRetrySummary4G2(dashboard.retrySummary || {}) +
+          '</div>' +
+          renderSubjectProgress4G2(dashboard.progressBySubject || {}) +
+          renderRecentActivities4G2(dashboard.recentActivities || {}) +
+        '</div>';
+
+      document.body.appendChild(overlay);
+
+      KIDLEARN_PARENT_DASHBOARD_UI_4G2.panelOpen = true;
+    }
+
+    function renderPanelHeader4G2(dashboard) {
+      dashboard =
+        dashboard || {};
+
+      var child =
+        dashboard.child || {};
+
+      return (
+        '<div class="kl-parent-dashboard-panel-head-4g2">' +
+          '<div>' +
+            '<div class="kl-parent-dashboard-badge-4g2">Parent Dashboard • Read-only</div>' +
+            '<h3>Dashboard phụ huynh</h3>' +
+            '<p>Theo dõi tổng quan việc học của ' +
+              escapeHtml4G2(child.displayName || child.name || 'bé') +
+            '</p>' +
+          '</div>' +
+          '<button type="button" class="kl-parent-dashboard-close-4g2" data-action="close-parent-dashboard-4g2">×</button>' +
+        '</div>'
+      );
+    }
+
+    function renderTodayOverview4G2(today, summary) {
+      today =
+        today || {};
+
+      summary =
+        summary || {};
+
+      return (
+        '<article class="kl-parent-dashboard-card-4g2">' +
+          '<div class="kl-parent-dashboard-card-icon-4g2">☀️</div>' +
+          '<h4>Tổng quan hôm nay</h4>' +
+          '<div class="kl-parent-dashboard-metrics-4g2">' +
+            '<div><strong>' + escapeHtml4G2(today.todaySessionCount || 0) + '</strong><span>buổi học</span></div>' +
+            '<div><strong>' + escapeHtml4G2(today.todayDurationMinutes || 0) + '</strong><span>phút học</span></div>' +
+            '<div><strong>' + escapeHtml4G2(today.todayResponseCount || 0) + '</strong><span>bài nộp</span></div>' +
+          '</div>' +
+          '<p>' +
+            'Tổng bài hoàn thành: ' +
+            escapeHtml4G2(summary.completedLessonCount || 0) +
+          '</p>' +
+        '</article>'
+      );
+    }
+
+    function renderReviewSummary4G2(review) {
+      review =
+        review || {};
+
+      return (
+        '<article class="kl-parent-dashboard-card-4g2">' +
+          '<div class="kl-parent-dashboard-card-icon-4g2">✍️</div>' +
+          '<h4>Bài cần phụ huynh duyệt</h4>' +
+          '<div class="kl-parent-dashboard-big-number-4g2">' +
+            escapeHtml4G2(review.pendingReviewCount || 0) +
+          '</div>' +
+          '<p>' +
+            'Đã chấp nhận: ' + escapeHtml4G2(review.acceptedCount || 0) +
+            ' • Làm lại: ' + escapeHtml4G2(review.retryCount || 0) +
+          '</p>' +
+          '<button type="button" class="kl-parent-dashboard-secondary-4g2" data-action="open-parent-review-from-dashboard-4g2">' +
+            'Mở danh sách duyệt' +
+          '</button>' +
+        '</article>'
+      );
+    }
+
+    function renderRetrySummary4G2(retry) {
+      retry =
+        retry || {};
+
+      return (
+        '<article class="kl-parent-dashboard-card-4g2">' +
+          '<div class="kl-parent-dashboard-card-icon-4g2">🔁</div>' +
+          '<h4>Bài bé cần làm lại</h4>' +
+          '<div class="kl-parent-dashboard-big-number-4g2">' +
+            escapeHtml4G2(retry.retryCount || 0) +
+          '</div>' +
+          '<p>' +
+            (
+              retry.retryCount > 0
+                ? 'Bé đang có bài cần làm lại.'
+                : 'Hiện chưa có bài cần làm lại.'
+            ) +
+          '</p>' +
+        '</article>'
+      );
+    }
+
+    function renderSubjectProgress4G2(progress) {
+      progress =
+        progress || {};
+
+      var items =
+        progress.items || [];
+
+      if (!items.length) {
+        return (
+          '<section class="kl-parent-dashboard-section-4g2">' +
+            '<h4>Tiến độ theo môn học</h4>' +
+            '<div class="kl-parent-dashboard-empty-4g2">' +
+              '<h4>Chưa có dữ liệu tiến độ theo môn</h4>' +
+              '<p>Khi bé học bài, tiến độ theo môn sẽ hiển thị ở đây.</p>' +
+            '</div>' +
+          '</section>'
+        );
+      }
+
+      return (
+        '<section class="kl-parent-dashboard-section-4g2">' +
+          '<h4>Tiến độ theo môn học</h4>' +
+          '<div class="kl-parent-dashboard-subject-grid-4g2">' +
+            items.map(renderSubjectItem4G2).join('') +
+          '</div>' +
+        '</section>'
+      );
+    }
+
+    function renderSubjectItem4G2(item) {
+      item =
+        item || {};
+
+      var percent =
+        Number(item.averageProgressPercent || 0);
+
+      if (isNaN(percent)) {
+        percent = 0;
+      }
+
+      return (
+        '<article class="kl-parent-dashboard-subject-4g2" data-subject-code="' +
+          escapeHtml4G2(item.subjectCode || '') +
+        '">' +
+          '<div class="kl-parent-dashboard-subject-head-4g2">' +
+            '<strong>' + escapeHtml4G2(item.subjectName || item.subjectCode || 'Môn học') + '</strong>' +
+            '<span>' + escapeHtml4G2(percent) + '%</span>' +
+          '</div>' +
+          '<div class="kl-parent-dashboard-progressbar-4g2">' +
+            '<i style="width:' + Math.max(0, Math.min(100, percent)) + '%"></i>' +
+          '</div>' +
+          '<div class="kl-parent-dashboard-subject-stats-4g2">' +
+            '<span>' + escapeHtml4G2(item.completedLessons || 0) + ' hoàn thành</span>' +
+            '<span>' + escapeHtml4G2(item.sessionCount || 0) + ' buổi học</span>' +
+            '<span>' + escapeHtml4G2(item.handwritingCount || 0) + ' viết tay</span>' +
+          '</div>' +
+        '</article>'
+      );
+    }
+
+    function renderRecentActivities4G2(activities) {
+      activities =
+        activities || {};
+
+      var items =
+        activities.items || [];
+
+      if (!items.length) {
+        return (
+          '<section class="kl-parent-dashboard-section-4g2">' +
+            '<h4>Hoạt động gần đây</h4>' +
+            '<div class="kl-parent-dashboard-empty-4g2">' +
+              '<h4>Chưa có hoạt động gần đây</h4>' +
+              '<p>Hoạt động học tập của bé sẽ hiển thị ở đây.</p>' +
+            '</div>' +
+          '</section>'
+        );
+      }
+
+      return (
+        '<section class="kl-parent-dashboard-section-4g2">' +
+          '<h4>Hoạt động gần đây</h4>' +
+          '<div class="kl-parent-dashboard-activity-list-4g2">' +
+            items.map(renderActivityItem4G2).join('') +
+          '</div>' +
+        '</section>'
+      );
+    }
+
+    function renderActivityItem4G2(item) {
+      item =
+        item || {};
+
+      return (
+        '<article class="kl-parent-dashboard-activity-4g2">' +
+          '<div class="kl-parent-dashboard-activity-icon-4g2">' +
+            escapeHtml4G2(item.icon || '📌') +
+          '</div>' +
+          '<div>' +
+            '<strong>' + escapeHtml4G2(item.title || 'Hoạt động') + '</strong>' +
+            '<p>' + escapeHtml4G2(item.subtitle || '') + '</p>' +
+          '</div>' +
+          '<small>' + escapeHtml4G2(formatDate4G2(item.at || '')) + '</small>' +
+        '</article>'
+      );
+    }
+
+    function formatDate4G2(value) {
+      if (!value) return '';
+
+      var date =
+        new Date(value);
+
+      if (isNaN(date.getTime())) {
+        return String(value).substring(0, 16);
+      }
+
+      return date.toLocaleDateString('vi-VN') +
+        ' ' +
+        date.toLocaleTimeString('vi-VN', {
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+    }
+
+    function closeParentDashboardPanel4G2() {
+      var existing =
+        document.querySelector('.kl-parent-dashboard-panel-overlay-4g2');
+
+      if (existing && existing.parentNode) {
+        existing.parentNode.removeChild(existing);
+      }
+
+      KIDLEARN_PARENT_DASHBOARD_UI_4G2.panelOpen = false;
+    }
+
+    document.addEventListener(
+      'click',
+      function (event) {
+        var actionEl =
+          event.target.closest('[data-action]');
+
+        if (!actionEl) return;
+
+        var action =
+          actionEl.getAttribute('data-action');
+
+        if (action === 'open-parent-dashboard-4g2') {
+          event.preventDefault();
+          event.stopPropagation();
+          openParentDashboard4G2();
+          return;
+        }
+
+        if (action === 'close-parent-dashboard-4g2') {
+          event.preventDefault();
+          event.stopPropagation();
+          closeParentDashboardPanel4G2();
+          return;
+        }
+
+        if (action === 'open-parent-review-from-dashboard-4g2') {
+          event.preventDefault();
+          event.stopPropagation();
+
+          if (typeof window.openParentReviewQueue4E5B === 'function') {
+            closeParentDashboardPanel4G2();
+            window.openParentReviewQueue4E5B();
+          }
+
+          return;
+        }
+      },
+      true
+    );
+
+    function scheduleEnsureParentDashboardEntry4G2(force) {
+      if (force) {
+        KIDLEARN_PARENT_DASHBOARD_UI_4G2.contextLoaded = false;
+      }
+
+      if (
+        KIDLEARN_PARENT_DASHBOARD_UI_4G2.injectTimer
+      ) {
+        return;
+      }
+
+      KIDLEARN_PARENT_DASHBOARD_UI_4G2.injectTimer =
+        setTimeout(function () {
+          KIDLEARN_PARENT_DASHBOARD_UI_4G2.injectTimer = null;
+          ensureParentDashboardEntry4G2();
+        }, 700);
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener(
+        'DOMContentLoaded',
+        function () {
+          scheduleEnsureParentDashboardEntry4G2(false);
+        }
+      );
+    } else {
+      scheduleEnsureParentDashboardEntry4G2(false);
+    }
+
+    var observer4G2 =
+      new MutationObserver(function () {
+        scheduleEnsureParentDashboardEntry4G2(false);
+      });
+
+    observer4G2.observe(
+      document.documentElement,
+      {
+        childList: true,
+        subtree: true
+      }
+    );
+
+    window.ensureParentDashboardEntry4G2 =
+      ensureParentDashboardEntry4G2;
+
+    window.renderParentDashboardPanel4G2 =
+      renderParentDashboardPanel4G2;
+
+    window.openParentDashboard4G2 =
+      openParentDashboard4G2;
+
+    window.refreshParentDashboard4G2 = function () {
+      scheduleEnsureParentDashboardEntry4G2(true);
+    };
+  })();
+</script>

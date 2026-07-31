@@ -1,0 +1,90 @@
+<script>
+const AuthService = {
+  // Key lưu trữ Token ở LocalStorage
+  TOKEN_KEY: 'unilms_session_token',
+  USER_KEY: 'unilms_user_profile',
+
+  /**
+   * Lưu Token và thông tin User vào bộ nhớ trình duyệt
+   */
+  setSession: function(token, userData) {
+    localStorage.setItem(this.TOKEN_KEY, token);
+    localStorage.setItem(this.USER_KEY, JSON.stringify(userData));
+  },
+
+  /**
+   * Lấy Token hiện tại
+   */
+  getToken: function() {
+    return localStorage.getItem(this.TOKEN_KEY);
+  },
+
+  /**
+   * Lấy thông tin User hiện tại
+   */
+  getUser: function() {
+    try {
+      const data = localStorage.getItem(this.USER_KEY);
+      return data ? JSON.parse(data) : null;
+    } catch (e) {
+      return null;
+    }
+  },
+
+  /**
+   * Xóa phiên đăng nhập (Đăng xuất)
+   */
+  clearSession: function() {
+    localStorage.removeItem(this.TOKEN_KEY);
+    localStorage.removeItem(this.USER_KEY);
+  },
+
+  /**
+   * Xử lý hành động Submit từ Form Login
+   */
+  handleLogin: async function(event) {
+    event.preventDefault();
+    
+    const emailInput = document.getElementById('login-email').value;
+    const passwordInput = document.getElementById('login-password').value;
+    const btnSubmit = document.getElementById('btn-login-submit');
+    const errorText = document.getElementById('login-error-text');
+    
+    // Validate Front-end
+    if (!emailInput || !passwordInput) {
+      errorText.textContent = "Vui lòng nhập đầy đủ email và mật khẩu.";
+      errorText.classList.remove('spa-hidden');
+      return;
+    }
+
+    // UX: Bật trạng thái Loading cho nút bấm [cite: 137]
+    btnSubmit.disabled = true;
+    btnSubmit.classList.add('ui-disabled');
+    btnSubmit.innerHTML = '<span class="loader-spinner mr-2"></span> Đang xử lý...';
+    errorText.classList.add('spa-hidden');
+
+    try {
+      // Gọi API qua Promise Wrapper
+      const payload = { email: emailInput, password: passwordInput };
+      const response = await NetworkService.call('api_loginUser', payload);
+      
+      // Xử lý thành công
+      const userData = response.data;
+      AuthService.setSession(userData.token, userData);
+      
+      // Chuyển hướng giao diện (Khởi tạo Dashboard)
+      AppController.navigateTo('dashboard');
+      
+    } catch (error) {
+      // Bắt lỗi và hiển thị lên UI
+      errorText.textContent = error.message;
+      errorText.classList.remove('spa-hidden');
+    } finally {
+      // UX: Khôi phục trạng thái nút bấm
+      btnSubmit.disabled = false;
+      btnSubmit.classList.remove('ui-disabled');
+      btnSubmit.innerHTML = 'Đăng nhập';
+    }
+  }
+};
+</script>

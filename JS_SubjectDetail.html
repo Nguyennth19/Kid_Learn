@@ -1,0 +1,173 @@
+<!-- 
+  File: JS_SubjectDetail.html
+  Mô tả: Controller trung tâm nhận ID Môn học, gọi API và "thay áo" giao diện động.
+-->
+<script>
+const SubjectDetailController = {
+  
+  init: function() {
+    // 1. Lấy mã môn học từ LocalStorage (Được lưu từ trang Khóa học)
+    const activeSubjectId = localStorage.getItem('current_active_subject') || "SUBJECT_TV";
+    this.fetchData(activeSubjectId);
+  },
+
+  fetchData: async function(subjectId) {
+    const token = AuthService.getToken();
+    if (!token) return;
+
+    try {
+      const payload = { token: token, subjectId: subjectId };
+      const response = await NetworkService.call('api_getSubjectDetail', payload);
+      
+      const data = response.data;
+      this.applyThemeAndHeader(data.header);
+      this.renderSidebarTimeline(data.sidebar, data.header.theme);
+      this.renderTaskGrid(data.taskGrid, data.header.theme);
+      this.renderWidgets(data.widgets, data.header.theme);
+      
+    } catch (err) {
+      console.error("[SubjectDetail] Fetch Error:", err);
+      document.getElementById('sd-banner').innerHTML = `<p class="text-red-500 font-bold p-10 bg-white rounded-xl">Lỗi tải dữ liệu: ${err.message}</p>`;
+    }
+  },
+
+  /**
+   * Thay áo (Theming) và đổ dữ liệu Header
+   */
+  applyThemeAndHeader: function(headerData) {
+    const th = headerData.theme;
+    
+    // Đổi Text Header
+    document.getElementById('sd-title').textContent = headerData.title;
+    document.getElementById('sd-subtitle').textContent = headerData.subtitle;
+    document.getElementById('sd-greeting').textContent = headerData.greeting;
+    document.getElementById('sd-greeting-sub').textContent = headerData.greetingSub;
+    document.getElementById('sd-completed-lessons').textContent = headerData.completedStr;
+
+    // Đổi Màu Khối (Icon, Banner, Progress)
+    const iconMain = document.getElementById('sd-icon-main');
+    iconMain.className = `w-12 h-12 rounded-2xl flex items-center justify-center text-2xl shadow-sm ${th.bg} ${th.text}`;
+    
+    const banner = document.getElementById('sd-banner');
+    banner.className = `w-full rounded-3xl p-8 relative overflow-hidden flex flex-col justify-center transition-colors duration-500 min-h-[160px] ${th.bg}`;
+    
+    const iconBook = document.getElementById('sd-icon-book');
+    iconBook.className = `w-10 h-10 rounded-xl flex items-center justify-center text-xl ${th.bg} ${th.text}`;
+
+    const progressBar = document.getElementById('sd-progress-bar');
+    progressBar.className = `h-2 rounded-full transition-all duration-1000 ${th.accent}`;
+    
+    // Animation Thanh Tiến Độ
+    setTimeout(() => {
+      progressBar.style.width = headerData.progress + '%';
+      document.getElementById('sd-progress-text').textContent = headerData.progress + '%';
+      document.getElementById('sd-progress-text').classList.add(th.text);
+    }, 100);
+  },
+
+  /**
+   * Vẽ Cây Bài Học bên Trái (Timeline)
+   */
+  renderSidebarTimeline: function(sidebarData, theme) {
+    document.getElementById('sd-active-topic').textContent = sidebarData.activeTopic;
+    const listEl = document.getElementById('sd-lesson-list');
+    listEl.innerHTML = '';
+
+    sidebarData.lessons.forEach(lesson => {
+      let statusIcon = '';
+      let dotColor = '';
+      let textClass = 'text-slate-700';
+      let wrapperClass = '';
+
+      if (lesson.status === "completed") {
+        statusIcon = `<span class="w-5 h-5 bg-green-500 text-white rounded-full flex items-center justify-center text-[10px] font-bold shadow-sm">✓</span>`;
+        dotColor = 'bg-green-500';
+      } else if (lesson.status === "active") {
+        statusIcon = `<button class="${theme.btn} text-white w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shadow-md hover:scale-110 transition-transform">▶</button>`;
+        dotColor = theme.accent;
+        wrapperClass = `bg-white shadow-md border ${theme.border} p-3 rounded-2xl -ml-6 z-10 relative flex-1`; // Nổi bật bài đang học
+        textClass = `font-extrabold ${theme.text}`;
+      } else {
+        statusIcon = `<span class="text-slate-300">🔒</span>`;
+        dotColor = 'bg-slate-200';
+        textClass = 'text-slate-400';
+      }
+
+      const lessonEl = document.createElement('div');
+      lessonEl.className = "relative flex items-center gap-4 cursor-pointer hover:bg-slate-50 p-2 rounded-xl transition-colors group";
+      
+      // Chấm tròn Timeline
+      const dot = `<div class="absolute -left-[23px] w-3 h-3 ${dotColor} rounded-full ring-4 ring-white"></div>`;
+      
+      const content = `
+        <div class="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-xl shrink-0 group-hover:scale-110 transition-transform shadow-sm border border-slate-100">
+          ${lesson.icon}
+        </div>
+        <div class="flex-1 ${wrapperClass}">
+          <h4 class="text-sm font-bold ${textClass} line-clamp-1">${lesson.title}</h4>
+          <p class="text-[11px] font-medium text-slate-500 line-clamp-1">${lesson.desc}</p>
+        </div>
+        <div class="shrink-0 ml-2">
+          ${statusIcon}
+        </div>
+      `;
+
+      lessonEl.innerHTML = dot + content;
+      listEl.appendChild(lessonEl);
+    });
+  },
+
+  /**
+   * Vẽ Khối Bài Tập Tương Tác Giữa Trang
+   */
+  renderTaskGrid: function(tasks, theme) {
+    const gridEl = document.getElementById('sd-task-grid');
+    gridEl.innerHTML = '';
+
+    tasks.forEach(task => {
+      const card = document.createElement('div');
+      card.className = `${task.bg} border border-white/50 p-4 rounded-2xl flex flex-col justify-between hover:shadow-md cursor-pointer transition-all hover:-translate-y-1 min-h-[120px] group`;
+      card.innerHTML = `
+        <div class="flex justify-between items-start mb-2">
+          <div class="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-xl shadow-sm group-hover:scale-110 transition-transform">
+             ${task.icon}
+          </div>
+        </div>
+        <div>
+          <h4 class="font-bold text-slate-800 text-sm mb-1">${task.title}</h4>
+          <p class="text-xs text-slate-500 font-medium">${task.desc}</p>
+        </div>
+      `;
+      gridEl.appendChild(card);
+    });
+  },
+
+  /**
+   * Đổ dữ liệu Widgets Cột Phải
+   */
+  renderWidgets: function(widgets, theme) {
+    // Streak
+    document.getElementById('sd-header-streak').textContent = widgets.streak;
+    document.getElementById('sd-streak-count').textContent = widgets.streak;
+    
+    // Fact
+    document.getElementById('sd-fact').textContent = widgets.fact;
+
+    // Goals
+    const goalsEl = document.getElementById('sd-daily-goals');
+    goalsEl.innerHTML = '';
+    widgets.dailyGoals.forEach(goal => {
+      const icon = goal.done 
+        ? `<span class="w-5 h-5 bg-green-500 text-white rounded-md flex items-center justify-center text-xs shadow-sm">✓</span>` 
+        : `<span class="w-5 h-5 bg-white border-2 border-slate-200 rounded-md"></span>`;
+      
+      const textClass = goal.done ? "text-slate-400 line-through" : "text-slate-700";
+
+      const li = document.createElement('li');
+      li.className = "flex items-center gap-3 cursor-pointer hover:bg-slate-50 p-1.5 rounded-lg";
+      li.innerHTML = `${icon} <span class="${textClass}">${goal.task}</span>`;
+      goalsEl.appendChild(li);
+    });
+  }
+};
+</script>

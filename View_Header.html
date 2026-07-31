@@ -1,0 +1,69 @@
+<!-- 
+  File: View_Header.html
+  Mô tả: Component Header (Thanh trên cùng) của ứng dụng.
+  Bản cập nhật: Đồng bộ Typography (Be Vietnam Pro & Nunito Sans), tối ưu giao diện sát với Mockup.
+-->
+<div class="flex items-center justify-between w-full h-full">
+  
+  <!-- Nút Menu Mobile (Chỉ hiện trên màn hình nhỏ) -->
+  <div class="md:hidden flex items-center">
+    <button class="p-2 text-slate-500 hover:text-indigo-600 transition-colors rounded-lg hover:bg-slate-50">
+      <i class="ph ph-list text-2xl"></i>
+    </button>
+  </div>
+
+  <!-- Vùng Trống / Thanh Tìm kiếm (Tùy chọn) -->
+  <div class="hidden md:flex items-center gap-2 text-slate-400 font-sans text-sm w-1/3">
+     <!-- Nếu cần thiết, có thể thêm ô tìm kiếm ở đây. Hiện tại giữ thiết kế tối giản. -->
+  </div>
+
+  <!-- Nhóm Thống Kê & Người Dùng (Căn phải) -->
+  <div class="flex items-center gap-3 sm:gap-5 ml-auto">
+    
+    <!-- Widget: Điểm thưởng -->
+    <div class="hidden sm:flex items-center gap-2 bg-yellow-50 px-3 py-1.5 rounded-full border border-yellow-100 shadow-sm cursor-pointer hover:bg-yellow-100 transition-colors">
+      <span class="text-xl drop-shadow-sm">⭐</span>
+      <div class="flex flex-col justify-center">
+        <span class="font-display font-extrabold text-yellow-700 leading-tight text-sm">860</span>
+        <span class="text-[9px] font-sans font-semibold text-yellow-600 leading-none uppercase tracking-wide">Điểm thưởng</span>
+      </div>
+    </div>
+
+    <!-- Widget: Chuỗi ngày học (Streak) -->
+    <div class="hidden sm:flex items-center gap-2 bg-orange-50 px-3 py-1.5 rounded-full border border-orange-100 shadow-sm cursor-pointer hover:bg-orange-100 transition-colors">
+      <span class="text-xl drop-shadow-sm">🔥</span>
+      <div class="flex flex-col justify-center">
+        <span class="font-display font-extrabold text-orange-700 leading-tight text-sm">7</span>
+        <span class="text-[9px] font-sans font-semibold text-orange-600 leading-none uppercase tracking-wide">Ngày liên tiếp</span>
+      </div>
+    </div>
+    
+    <!-- Đường kẻ phân cách -->
+    <div class="hidden sm:block w-px h-8 bg-slate-200 mx-1"></div>
+
+    <!-- Nút Thông báo -->
+    <button class="relative p-2 text-slate-400 hover:text-indigo-600 transition-colors rounded-full hover:bg-indigo-50">
+      <i class="ph ph-bell text-2xl"></i>
+      <!-- Chấm đỏ thông báo chưa đọc -->
+      <span class="absolute top-1 right-2 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white shadow-sm"></span>
+    </button>
+
+    <!-- Khối Thông tin Người dùng (User Profile) -->
+    <div class="flex items-center gap-3 pl-1 sm:pl-2 cursor-pointer group">
+      <!-- Tên & Lớp (Ẩn trên mobile nhỏ) -->
+      <div class="text-right hidden md:block">
+        <p class="font-display font-bold text-sm text-slate-700 group-hover:text-indigo-600 transition-colors">Nguyễn Minh Anh</p>
+        <p class="text-xs font-sans font-semibold text-slate-500">Lớp 2A</p>
+      </div>
+      
+      <!-- Avatar -->
+      <div class="w-10 h-10 bg-indigo-100 rounded-full overflow-hidden border-2 border-white shadow-sm flex items-center justify-center text-xl group-hover:ring-2 group-hover:ring-indigo-300 transition-all">
+        👦🏻
+      </div>
+      
+      <!-- Icon thả xuống -->
+      <i class="ph ph-caret-down text-slate-400 text-sm group-hover:text-indigo-600 transition-colors hidden sm:block"></i>
+    </div>
+
+  </div>
+</div>

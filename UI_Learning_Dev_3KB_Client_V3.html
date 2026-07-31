@@ -1,0 +1,52 @@
+<script>
+  window.KidlearnV3Learning3KB = {
+    getInitialPayload: function(request) {
+      return runServer3KB_(
+        'kidlearnV3_uiLearning3KBGetInitialPayloadV3',
+        request || {}
+      );
+    },
+
+    preview: function() {
+      return runServer3KB_(
+        'kidlearnV3_previewLearningUi3KBV3'
+      );
+    },
+
+    smokeTest: function() {
+      return runServer3KB_(
+        'kidlearnV3_smokeTestLearningUi3KBV3'
+      );
+    },
+
+    markReady: function() {
+      return runServer3KB_(
+        'kidlearnV3_markLearningUi3KBReadyV3'
+      );
+    },
+
+    getStatus: function() {
+      return runServer3KB_(
+        'kidlearnV3_getLearningUi3KBStatusV3'
+      );
+    }
+  };
+
+
+  function runServer3KB_(functionName, payload) {
+    return new Promise(function(resolve, reject) {
+      var runner =
+        google.script.run
+          .withSuccessHandler(resolve)
+          .withFailureHandler(function(error) {
+            reject(error);
+          });
+
+      if (typeof payload === 'undefined') {
+        runner[functionName]();
+      } else {
+        runner[functionName](payload);
+      }
+    });
+  }
+</script>

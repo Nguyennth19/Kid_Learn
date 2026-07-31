@@ -1,0 +1,1182 @@
+<script>
+  /**
+   * KIDLEARN_LESSON_PLAYER_UI_4C4
+   * Phase 4C-4 — Lesson Player UI with Answer Input Modes
+   */
+
+  (function () {
+    var KIDLEARN_LESSON_PLAYER_UI_4C4 = {
+      phase: '4C-4',
+      uiName: 'LESSON_PLAYER_UI_WITH_ANSWER_INPUT_MODES',
+      marker: 'KIDLEARN_LESSON_PLAYER_UI_4C4'
+    };
+
+    window.KIDLEARN_LESSON_PLAYER_UI_4C4 =
+      KIDLEARN_LESSON_PLAYER_UI_4C4;
+
+    var lessonPlayerState4C4 = {
+      context: null,
+      currentStepIndex: 0,
+      selectedAnswers: {},
+      typedAnswers: {},
+      buttonAnswers: {},
+      handwriting: {},
+      currentSubjectKey: 'MATH'
+    };
+
+    var themeClassMap4C4 = {
+      MATH: 'kl-lesson-theme-blue-4c4',
+      VIETNAMESE: 'kl-lesson-theme-orange-4c4',
+      ENGLISH: 'kl-lesson-theme-green-4c4',
+      SCIENCE: 'kl-lesson-theme-red-4c4',
+      DEFAULT: 'kl-lesson-theme-blue-4c4'
+    };
+
+    function normalizeText4C4(value) {
+      return String(value || '')
+        .trim()
+        .toUpperCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/\s+/g, '')
+        .replace(/-/g, '_');
+    }
+
+    function resolveSubjectKey4C4(code, name, lessonId) {
+      var text =
+        normalizeText4C4(code) +
+        ' ' +
+        normalizeText4C4(name) +
+        ' ' +
+        normalizeText4C4(lessonId);
+
+      if (
+        text.indexOf('MATH') >= 0 ||
+        text.indexOf('TOAN') >= 0 ||
+        text.indexOf('SUB_T') >= 0
+      ) {
+        return 'MATH';
+      }
+
+      if (
+        text.indexOf('VIET') >= 0 ||
+        text.indexOf('TIENGVIET') >= 0 ||
+        text.indexOf('SUB_TV') >= 0 ||
+        text.indexOf('TV_') >= 0
+      ) {
+        return 'VIETNAMESE';
+      }
+
+      if (
+        text.indexOf('ENGLISH') >= 0 ||
+        text.indexOf('TIENGANH') >= 0 ||
+        text.indexOf('SUB_E') >= 0 ||
+        text.indexOf('ENG_') >= 0
+      ) {
+        return 'ENGLISH';
+      }
+
+      if (
+        text.indexOf('SCIENCE') >= 0 ||
+        text.indexOf('KHOAHOC') >= 0 ||
+        text.indexOf('SUB_K') >= 0 ||
+        text.indexOf('SUB_S') >= 0 ||
+        text.indexOf('SCI_') >= 0
+      ) {
+        return 'SCIENCE';
+      }
+
+      return 'DEFAULT';
+    }
+
+    function escapeHtml4C4(value) {
+      return String(value === null || value === undefined ? '' : value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function safePercent4C4(value) {
+      var number = Number(value || 0);
+      if (isNaN(number)) number = 0;
+      if (number < 0) number = 0;
+      if (number > 100) number = 100;
+      return Math.round(number);
+    }
+
+    function showSubjectDetailScreen4C4() {
+      var screens = [
+        'childHomeScreen',
+        'coursesScreen',
+        'subjectDetailScreen',
+        'parentHomeScreen',
+        'placeholderScreen'
+      ];
+
+      for (var i = 0; i < screens.length; i++) {
+        var screen =
+          document.getElementById(screens[i]);
+
+        if (!screen) continue;
+
+        if (screens[i] === 'subjectDetailScreen') {
+          screen.classList.remove('hidden');
+        } else {
+          screen.classList.add('hidden');
+        }
+      }
+
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    }
+
+    function ensureLessonPlayerRoot4C4() {
+      showSubjectDetailScreen4C4();
+
+      var screen =
+        document.getElementById('subjectDetailScreen');
+
+      if (!screen) return null;
+
+      screen.innerHTML =
+        '<div id="lessonPlayer4C4Root" class="kl-lesson-player-root-4c4"></div>';
+
+      return document.getElementById('lessonPlayer4C4Root');
+    }
+
+    function setLessonPlayerLoading4C4(subjectKey) {
+      var root =
+        ensureLessonPlayerRoot4C4();
+
+      if (!root) return;
+
+      var themeClass =
+        themeClassMap4C4[subjectKey] ||
+        themeClassMap4C4.DEFAULT;
+
+      root.innerHTML =
+        '<section class="kl-lesson-player-4c4 ' + themeClass + '">' +
+          '<div class="kl-lesson-loading-4c4">' +
+            '<div class="kl-spinner-4c4"></div>' +
+            '<strong>Đang mở bài học...</strong>' +
+            '<p>Chờ một chút nhé.</p>' +
+          '</div>' +
+        '</section>';
+    }
+
+    function setLessonPlayerError4C4(message) {
+      var root =
+        ensureLessonPlayerRoot4C4();
+
+      if (!root) return;
+
+      root.innerHTML =
+        '<section class="kl-lesson-player-4c4 kl-lesson-theme-blue-4c4">' +
+          '<div class="kl-lesson-error-4c4">' +
+            '<strong>Chưa mở được bài học</strong>' +
+            '<p>' + escapeHtml4C4(message || 'Vui lòng thử lại.') + '</p>' +
+            '<button class="kl-secondary-btn" data-action="lesson-back-subject-4c4">Quay lại môn học</button>' +
+          '</div>' +
+        '</section>';
+    }
+
+    function openLessonPlayer4C4(lessonId, subjectKey) {
+      subjectKey =
+        subjectKey ||
+        lessonPlayerState4C4.currentSubjectKey ||
+        resolveSubjectKey4C4('', '', lessonId);
+
+      if (subjectKey === 'DEFAULT') {
+        subjectKey = 'MATH';
+      }
+
+      lessonPlayerState4C4.currentSubjectKey =
+        subjectKey;
+
+      setLessonPlayerLoading4C4(subjectKey);
+
+      if (
+        typeof google === 'undefined' ||
+        !google.script ||
+        !google.script.run
+      ) {
+        setLessonPlayerError4C4(
+          'Không tìm thấy google.script.run trong môi trường hiện tại.'
+        );
+        return;
+      }
+
+      google.script.run
+        .withSuccessHandler(function (response) {
+          renderLessonPlayer4C4(response);
+        })
+        .withFailureHandler(function (error) {
+          setLessonPlayerError4C4(
+            error && error.message
+              ? error.message
+              : String(error || 'Unknown error')
+          );
+        })
+        .kidlearnV3_getLessonPlayerContext4C3V3({
+          lessonId: lessonId || '',
+          subjectCode: subjectKey
+        });
+    }
+
+    function renderLessonPlayer4C4(response) {
+      if (!response || response.success !== true || !response.context) {
+        setLessonPlayerError4C4(
+          response && response.errors
+            ? response.errors.join(' | ')
+            : 'Lesson Player context không hợp lệ.'
+        );
+        return;
+      }
+
+      lessonPlayerState4C4.context =
+        response.context;
+
+      lessonPlayerState4C4.currentStepIndex =
+        response.context.player &&
+        response.context.player.progress
+          ? Number(response.context.player.progress.currentStepIndex || 0)
+          : 0;
+
+      lessonPlayerState4C4.selectedAnswers = {};
+      lessonPlayerState4C4.typedAnswers = {};
+      lessonPlayerState4C4.buttonAnswers = {};
+      lessonPlayerState4C4.handwriting = {};
+
+      renderCurrentLessonStep4C4();
+    }
+
+    function renderCurrentLessonStep4C4() {
+      var context =
+        lessonPlayerState4C4.context;
+
+      if (!context || !context.player) {
+        setLessonPlayerError4C4('Không có dữ liệu bài học.');
+        return;
+      }
+
+      var player =
+        context.player;
+
+      var subjectKey =
+        context.subjectKey ||
+        lessonPlayerState4C4.currentSubjectKey ||
+        'MATH';
+
+      lessonPlayerState4C4.currentSubjectKey =
+        subjectKey;
+
+      var theme =
+        context.subjectTheme || {};
+
+      var steps =
+        player.playerSteps || [];
+
+      var currentIndex =
+        lessonPlayerState4C4.currentStepIndex;
+
+      if (currentIndex < 0) currentIndex = 0;
+      if (currentIndex >= steps.length) currentIndex = steps.length - 1;
+      if (currentIndex < 0) currentIndex = 0;
+
+      lessonPlayerState4C4.currentStepIndex =
+        currentIndex;
+
+      var currentStep =
+        steps[currentIndex] || null;
+
+      var themeClass =
+        themeClassMap4C4[subjectKey] ||
+        themeClassMap4C4.DEFAULT;
+
+      var root =
+        document.getElementById('lessonPlayer4C4Root');
+
+      if (!root) {
+        root =
+          ensureLessonPlayerRoot4C4();
+      }
+
+      if (!root) return;
+
+      root.innerHTML =
+        '<section class="kl-lesson-player-4c4 ' + themeClass + '" style="' + buildLessonThemeStyle4C4(theme) + '">' +
+          renderLessonHeader4C4(player, context, currentIndex, steps.length) +
+          renderLessonStepBody4C4(player, currentStep, currentIndex) +
+          renderLessonFooter4C4(currentIndex, steps.length) +
+        '</section>';
+
+      initCurrentStepAfterRender4C4();
+    }
+
+    function buildLessonThemeStyle4C4(theme) {
+      return [
+        '--lesson-primary:' + (theme.primary || '#2F80ED'),
+        '--lesson-pastel:' + (theme.pastel || '#EFF6FF'),
+        '--lesson-border:' + (theme.border || '#BFDBFE'),
+        '--lesson-text:' + (theme.text || '#1D4ED8'),
+        '--lesson-gradient:' + (theme.gradient || 'linear-gradient(135deg,#2F80ED,#38BDF8)')
+      ].join(';');
+    }
+
+    function renderLessonHeader4C4(player, context, currentIndex, totalSteps) {
+      var percent =
+        totalSteps > 0
+          ? Math.round(((currentIndex + 1) / totalSteps) * 100)
+          : 0;
+
+      var breadcrumb =
+        player.breadcrumb || [];
+
+      var crumbHtml =
+        breadcrumb.map(function (item) {
+          return '<span>' + escapeHtml4C4(item.label || '') + '</span>';
+        }).join('<em>/</em>');
+
+      return (
+        '<header class="kl-lesson-header-4c4">' +
+          '<div>' +
+            '<div class="kl-lesson-breadcrumb-4c4">' +
+              crumbHtml +
+            '</div>' +
+            '<h2>' + escapeHtml4C4(player.title || 'Bài học') + '</h2>' +
+            '<p>' + escapeHtml4C4(player.subtitle || '') + '</p>' +
+          '</div>' +
+          '<div class="kl-lesson-header-actions-4c4">' +
+            '<button class="kl-secondary-btn kl-lesson-back-btn-4c4" data-action="lesson-back-subject-4c4">Quay lại môn học</button>' +
+          '</div>' +
+          '<div class="kl-lesson-progress-wrap-4c4">' +
+            '<div class="kl-lesson-progress-row-4c4">' +
+              '<span>Bước ' + escapeHtml4C4(currentIndex + 1) + '/' + escapeHtml4C4(totalSteps || 1) + '</span>' +
+              '<strong>' + escapeHtml4C4(percent) + '%</strong>' +
+            '</div>' +
+            '<div class="kl-lesson-progress-track-4c4">' +
+              '<div class="kl-lesson-progress-fill-4c4" style="width:' + safePercent4C4(percent) + '%"></div>' +
+            '</div>' +
+          '</div>' +
+        '</header>'
+      );
+    }
+
+    function renderLessonStepBody4C4(player, step, currentIndex) {
+      if (!step) {
+        return (
+          '<main class="kl-lesson-step-card-4c4">' +
+            '<h3>Chưa có nội dung bài học</h3>' +
+            '<p>Bài học này sẽ được cập nhật sau.</p>' +
+          '</main>'
+        );
+      }
+
+      if (step.stepType === 'CONTENT_BLOCK') {
+        var block =
+          findBlockById4C4(player.blocks || [], step.refId);
+
+        return renderContentBlock4C4(block, currentIndex);
+      }
+
+      if (step.stepType === 'ACTIVITY') {
+        var activity =
+          findActivityById4C4(player.activities || [], step.refId);
+
+        return renderActivity4C4(activity, currentIndex);
+      }
+
+      return (
+        '<main class="kl-lesson-step-card-4c4">' +
+          '<h3>' + escapeHtml4C4(step.title || 'Bước học') + '</h3>' +
+          '<p>Loại nội dung này sẽ được hỗ trợ sau.</p>' +
+        '</main>'
+      );
+    }
+
+    function renderContentBlock4C4(block, currentIndex) {
+      block =
+        block || {};
+
+      return (
+        '<main class="kl-lesson-step-card-4c4 kl-content-block-4c4">' +
+          '<div class="kl-lesson-step-kicker-4c4">Nội dung bài học</div>' +
+          '<div class="kl-content-layout-4c4">' +
+            '<div>' +
+              '<h3>' + escapeHtml4C4(block.title || 'Cùng học nhé') + '</h3>' +
+              '<p>' + escapeHtml4C4(block.content || 'Nội dung đang được chuẩn bị.') + '</p>' +
+            '</div>' +
+            '<div class="kl-content-illustration-4c4">' +
+              renderIllustration4C4(block.illustrationHint || '') +
+            '</div>' +
+          '</div>' +
+        '</main>'
+      );
+    }
+
+    function renderIllustration4C4(hint) {
+      var subjectKey =
+        lessonPlayerState4C4.currentSubjectKey ||
+        'MATH';
+
+      var emojiMap = {
+        MATH: '🔢',
+        VIETNAMESE: '📖',
+        ENGLISH: '🔤',
+        SCIENCE: '🧪'
+      };
+
+      return (
+        '<div class="kl-lesson-emoji-4c4">' +
+          escapeHtml4C4(emojiMap[subjectKey] || '📘') +
+        '</div>'
+      );
+    }
+
+    function renderActivity4C4(activity, currentIndex) {
+      activity =
+        activity || {};
+
+      var mode =
+        String(activity.answerMode || activity.activityType || 'MULTIPLE_CHOICE')
+          .trim()
+          .toUpperCase();
+
+      var inputHtml = '';
+
+      if (mode === 'BUTTON_INPUT') {
+        inputHtml =
+          renderButtonInput4C4(activity);
+      } else if (mode === 'TEXT_INPUT') {
+        inputHtml =
+          renderTextInput4C4(activity);
+      } else if (mode === 'HANDWRITE_INPUT') {
+        inputHtml =
+          renderHandwritingInput4C4(activity);
+      } else {
+        inputHtml =
+          renderMultipleChoice4C4(activity);
+      }
+
+      return (
+        '<main class="kl-lesson-step-card-4c4 kl-activity-card-4c4" data-activity-id="' + escapeHtml4C4(activity.activityId || '') + '">' +
+          '<div class="kl-lesson-step-kicker-4c4">Hoạt động</div>' +
+          '<h3>' + escapeHtml4C4(activity.title || 'Câu hỏi') + '</h3>' +
+          '<p class="kl-activity-prompt-4c4">' + escapeHtml4C4(activity.prompt || 'Con trả lời câu hỏi nhé.') + '</p>' +
+          '<p class="kl-activity-instruction-4c4">' + escapeHtml4C4(activity.instruction || 'Con làm từng bước nhé.') + '</p>' +
+          inputHtml +
+          '<div id="lessonFeedback4C4" class="kl-lesson-feedback-4c4 hidden"></div>' +
+        '</main>'
+      );
+    }
+
+    function renderMultipleChoice4C4(activity) {
+      var options =
+        activity.options || [];
+
+      if (options.length === 0) {
+        options = [
+          { optionId: 'A', label: 'Đáp án A' },
+          { optionId: 'B', label: 'Đáp án B' },
+          { optionId: 'C', label: 'Đáp án C' }
+        ];
+      }
+
+      var html =
+        '<div class="kl-answer-options-4c4" data-answer-mode="MULTIPLE_CHOICE">';
+
+      for (var i = 0; i < options.length; i++) {
+        html +=
+          '<button class="kl-answer-option-4c4" ' +
+            'data-action="lesson-select-option-4c4" ' +
+            'data-activity-id="' + escapeHtml4C4(activity.activityId || '') + '" ' +
+            'data-option-id="' + escapeHtml4C4(options[i].optionId || i) + '" ' +
+            'data-option-label="' + escapeHtml4C4(options[i].label || '') + '">' +
+            '<span>' + escapeHtml4C4(String.fromCharCode(65 + i)) + '</span>' +
+            '<strong>' + escapeHtml4C4(options[i].label || '') + '</strong>' +
+          '</button>';
+      }
+
+      html +=
+        '</div>' +
+        '<button class="kl-primary-btn kl-submit-demo-btn-4c4" data-action="lesson-submit-demo-4c4" data-activity-id="' + escapeHtml4C4(activity.activityId || '') + '">' +
+          'Trả lời' +
+        '</button>';
+
+      return html;
+    }
+
+    function renderButtonInput4C4(activity) {
+      var config =
+        activity.buttonInput || {};
+
+      var buttons =
+        config.buttons || ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'];
+
+      var activityId =
+        activity.activityId || '';
+
+      var current =
+        lessonPlayerState4C4.buttonAnswers[activityId] || '';
+
+      var html =
+        '<div class="kl-button-input-wrap-4c4" data-answer-mode="BUTTON_INPUT">' +
+          '<div class="kl-button-answer-display-4c4" id="buttonAnswerDisplay4C4">' +
+            escapeHtml4C4(current || 'Con bấm nút để nhập đáp án') +
+          '</div>' +
+          '<div class="kl-button-pad-4c4">';
+
+      for (var i = 0; i < buttons.length; i++) {
+        html +=
+          '<button class="kl-button-key-4c4" ' +
+            'data-action="lesson-button-key-4c4" ' +
+            'data-activity-id="' + escapeHtml4C4(activityId) + '" ' +
+            'data-key-value="' + escapeHtml4C4(buttons[i]) + '">' +
+            escapeHtml4C4(buttons[i]) +
+          '</button>';
+      }
+
+      html +=
+          '</div>' +
+          '<div class="kl-button-pad-actions-4c4">' +
+            '<button class="kl-secondary-btn" data-action="lesson-button-clear-4c4" data-activity-id="' + escapeHtml4C4(activityId) + '">Xóa</button>' +
+            '<button class="kl-primary-btn" data-action="lesson-submit-demo-4c4" data-activity-id="' + escapeHtml4C4(activityId) + '">Trả lời</button>' +
+          '</div>' +
+        '</div>';
+
+      return html;
+    }
+
+    function renderTextInput4C4(activity) {
+      var config =
+        activity.textInput || {};
+
+      var activityId =
+        activity.activityId || '';
+
+      var value =
+        lessonPlayerState4C4.typedAnswers[activityId] || '';
+
+      if (config.multiline === false) {
+        return (
+          '<div class="kl-text-input-wrap-4c4" data-answer-mode="TEXT_INPUT">' +
+            '<input class="kl-text-answer-4c4" id="textAnswer4C4" ' +
+              'data-activity-id="' + escapeHtml4C4(activityId) + '" ' +
+              'maxlength="' + escapeHtml4C4(config.maxLength || 120) + '" ' +
+              'placeholder="' + escapeHtml4C4(config.placeholder || 'Con nhập câu trả lời...') + '" ' +
+              'value="' + escapeHtml4C4(value) + '">' +
+            '<button class="kl-primary-btn kl-submit-demo-btn-4c4" data-action="lesson-submit-demo-4c4" data-activity-id="' + escapeHtml4C4(activityId) + '">Trả lời</button>' +
+          '</div>'
+        );
+      }
+
+      return (
+        '<div class="kl-text-input-wrap-4c4" data-answer-mode="TEXT_INPUT">' +
+          '<textarea class="kl-text-answer-4c4" id="textAnswer4C4" ' +
+            'data-activity-id="' + escapeHtml4C4(activityId) + '" ' +
+            'maxlength="' + escapeHtml4C4(config.maxLength || 180) + '" ' +
+            'placeholder="' + escapeHtml4C4(config.placeholder || 'Con nhập câu trả lời...') + '">' +
+            escapeHtml4C4(value) +
+          '</textarea>' +
+          '<button class="kl-primary-btn kl-submit-demo-btn-4c4" data-action="lesson-submit-demo-4c4" data-activity-id="' + escapeHtml4C4(activityId) + '">Trả lời</button>' +
+        '</div>'
+      );
+    }
+
+    function renderHandwritingInput4C4(activity) {
+      var config =
+        activity.handwriting || {};
+
+      var activityId =
+        activity.activityId || '';
+
+      return (
+        '<div class="kl-handwriting-wrap-4c4" data-answer-mode="HANDWRITE_INPUT">' +
+          '<div class="kl-handwriting-toolbar-4c4">' +
+            '<span>Viết bằng tay / pen</span>' +
+            '<div>' +
+              '<button class="kl-secondary-btn" data-action="lesson-handwriting-undo-4c4" data-activity-id="' + escapeHtml4C4(activityId) + '">Hoàn tác</button>' +
+              '<button class="kl-secondary-btn" data-action="lesson-handwriting-clear-4c4" data-activity-id="' + escapeHtml4C4(activityId) + '">Xóa</button>' +
+            '</div>' +
+          '</div>' +
+          '<canvas id="lessonHandwritingCanvas4C4" class="kl-handwriting-canvas-4c4" ' +
+            'data-activity-id="' + escapeHtml4C4(activityId) + '" ' +
+            'width="' + escapeHtml4C4(config.width || 720) + '" ' +
+            'height="' + escapeHtml4C4(config.height || 280) + '">' +
+          '</canvas>' +
+          '<p class="kl-handwriting-note-4c4">Con có thể dùng tay, chuột hoặc bút cảm ứng để viết. Bước này chưa lưu thật.</p>' +
+          '<button class="kl-primary-btn kl-submit-demo-btn-4c4" data-action="lesson-submit-demo-4c4" data-activity-id="' + escapeHtml4C4(activityId) + '">Gửi bài</button>' +
+        '</div>'
+      );
+    }
+
+    function renderLessonFooter4C4(currentIndex, totalSteps) {
+      var isFirst =
+        currentIndex <= 0;
+
+      var isLast =
+        totalSteps <= 0 || currentIndex >= totalSteps - 1;
+
+      return (
+        '<footer class="kl-lesson-footer-4c4">' +
+          '<button class="kl-secondary-btn" data-action="lesson-prev-step-4c4" ' +
+            (isFirst ? 'disabled' : '') +
+          '>Quay lại</button>' +
+          '<button class="kl-primary-btn" data-action="' + (isLast ? 'lesson-complete-demo-4c4' : 'lesson-next-step-4c4') + '">' +
+            (isLast ? 'Hoàn thành demo' : 'Tiếp tục') +
+          '</button>' +
+        '</footer>'
+      );
+    }
+
+    function findBlockById4C4(blocks, blockId) {
+      for (var i = 0; i < blocks.length; i++) {
+        if (String(blocks[i].blockId) === String(blockId)) {
+          return blocks[i];
+        }
+      }
+
+      return null;
+    }
+
+    function findActivityById4C4(activities, activityId) {
+      for (var i = 0; i < activities.length; i++) {
+        if (String(activities[i].activityId) === String(activityId)) {
+          return activities[i];
+        }
+      }
+
+      return null;
+    }
+
+    function findCurrentActivity4C4(activityId) {
+      var context =
+        lessonPlayerState4C4.context;
+
+      var activities =
+        context && context.player
+          ? context.player.activities || []
+          : [];
+
+      return findActivityById4C4(activities, activityId);
+    }
+
+    function showFeedback4C4(message, type) {
+      var box =
+        document.getElementById('lessonFeedback4C4');
+
+      if (!box) return;
+
+      box.classList.remove('hidden');
+      box.classList.remove('is-good', 'is-soft', 'is-info');
+
+      if (type === 'good') {
+        box.classList.add('is-good');
+      } else if (type === 'soft') {
+        box.classList.add('is-soft');
+      } else {
+        box.classList.add('is-info');
+      }
+
+      box.innerHTML =
+        escapeHtml4C4(message || 'Con làm tốt lắm!');
+    }
+
+    function demoSubmitAnswer4C4(activityId) {
+      var activity =
+        findCurrentActivity4C4(activityId);
+
+      if (!activity) {
+        showFeedback4C4('Chưa tìm thấy hoạt động này.', 'soft');
+        return;
+      }
+
+      var mode =
+        String(activity.answerMode || '').toUpperCase();
+
+      if (mode === 'MULTIPLE_CHOICE') {
+        var selected =
+          lessonPlayerState4C4.selectedAnswers[activityId];
+
+        if (!selected) {
+          showFeedback4C4('Con chọn một đáp án trước nhé.', 'soft');
+          return;
+        }
+
+        showFeedback4C4('Con đã chọn: ' + selected.label + '. Ở bước sau cô sẽ lưu kết quả.', 'good');
+        return;
+      }
+
+      if (mode === 'BUTTON_INPUT') {
+        var buttonAnswer =
+          lessonPlayerState4C4.buttonAnswers[activityId] || '';
+
+        if (!buttonAnswer) {
+          showFeedback4C4('Con bấm nút để nhập đáp án trước nhé.', 'soft');
+          return;
+        }
+
+        showFeedback4C4('Con đã nhập: ' + buttonAnswer + '. Bước này chưa lưu thật.', 'good');
+        return;
+      }
+
+      if (mode === 'TEXT_INPUT') {
+        var input =
+          document.getElementById('textAnswer4C4');
+
+        var text =
+          input ? String(input.value || '').trim() : '';
+
+        lessonPlayerState4C4.typedAnswers[activityId] =
+          text;
+
+        if (!text) {
+          showFeedback4C4('Con nhập câu trả lời trước nhé.', 'soft');
+          return;
+        }
+
+        showFeedback4C4('Con đã nhập câu trả lời. Bước sau sẽ lưu thử ở chế độ dry-run.', 'good');
+        return;
+      }
+
+      if (mode === 'HANDWRITE_INPUT') {
+        var strokes =
+          lessonPlayerState4C4.handwriting[activityId] || [];
+
+        if (strokes.length === 0) {
+          showFeedback4C4('Con viết hoặc vẽ đáp án trước nhé.', 'soft');
+          return;
+        }
+
+        showFeedback4C4('Con đã viết bài rồi. Bước này chưa lưu ảnh thật.', 'good');
+        return;
+      }
+
+      showFeedback4C4('Con làm tốt lắm!', 'good');
+    }
+
+    function handleOptionClick4C4(button) {
+      var activityId =
+        button.getAttribute('data-activity-id') || '';
+
+      var optionId =
+        button.getAttribute('data-option-id') || '';
+
+      var label =
+        button.getAttribute('data-option-label') || button.textContent || '';
+
+      lessonPlayerState4C4.selectedAnswers[activityId] = {
+        optionId: optionId,
+        label: label
+      };
+
+      var siblings =
+        Array.prototype.slice.call(
+          button.parentNode.querySelectorAll('.kl-answer-option-4c4')
+        );
+
+      siblings.forEach(function (item) {
+        item.classList.remove('is-selected');
+      });
+
+      button.classList.add('is-selected');
+
+      showFeedback4C4('Đã chọn đáp án. Con bấm “Trả lời” nhé.', 'info');
+    }
+
+    function handleButtonKey4C4(button) {
+      var activityId =
+        button.getAttribute('data-activity-id') || '';
+
+      var value =
+        button.getAttribute('data-key-value') || '';
+
+      var current =
+        lessonPlayerState4C4.buttonAnswers[activityId] || '';
+
+      lessonPlayerState4C4.buttonAnswers[activityId] =
+        current + value;
+
+      var display =
+        document.getElementById('buttonAnswerDisplay4C4');
+
+      if (display) {
+        display.textContent =
+          lessonPlayerState4C4.buttonAnswers[activityId];
+      }
+    }
+
+    function clearButtonAnswer4C4(activityId) {
+      lessonPlayerState4C4.buttonAnswers[activityId] = '';
+
+      var display =
+        document.getElementById('buttonAnswerDisplay4C4');
+
+      if (display) {
+        display.textContent =
+          'Con bấm nút để nhập đáp án';
+      }
+    }
+
+    function initCurrentStepAfterRender4C4() {
+      var canvas =
+        document.getElementById('lessonHandwritingCanvas4C4');
+
+      if (canvas) {
+        initHandwritingCanvas4C4(canvas);
+      }
+
+      var textInput =
+        document.getElementById('textAnswer4C4');
+
+      if (textInput) {
+        textInput.addEventListener('input', function () {
+          var activityId =
+            textInput.getAttribute('data-activity-id') || '';
+
+          lessonPlayerState4C4.typedAnswers[activityId] =
+            textInput.value || '';
+        });
+      }
+    }
+
+    function initHandwritingCanvas4C4(canvas) {
+      var activityId =
+        canvas.getAttribute('data-activity-id') || '';
+
+      if (!lessonPlayerState4C4.handwriting[activityId]) {
+        lessonPlayerState4C4.handwriting[activityId] = [];
+      }
+
+      var ctx =
+        canvas.getContext('2d');
+
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.lineWidth = 5;
+      ctx.strokeStyle = '#0F172A';
+
+      drawCanvasGuides4C4(canvas, ctx);
+
+      var drawing = false;
+      var currentStroke = [];
+
+      function getPoint(event) {
+        var rect =
+          canvas.getBoundingClientRect();
+
+        return {
+          x:
+            ((event.clientX - rect.left) / rect.width) *
+            canvas.width,
+          y:
+            ((event.clientY - rect.top) / rect.height) *
+            canvas.height
+        };
+      }
+
+      canvas.addEventListener('pointerdown', function (event) {
+        event.preventDefault();
+
+        drawing = true;
+        currentStroke = [];
+
+        var point =
+          getPoint(event);
+
+        currentStroke.push(point);
+
+        ctx.beginPath();
+        ctx.moveTo(point.x, point.y);
+
+        if (canvas.setPointerCapture) {
+          canvas.setPointerCapture(event.pointerId);
+        }
+      });
+
+      canvas.addEventListener('pointermove', function (event) {
+        if (!drawing) return;
+
+        event.preventDefault();
+
+        var point =
+          getPoint(event);
+
+        currentStroke.push(point);
+
+        ctx.lineTo(point.x, point.y);
+        ctx.stroke();
+      });
+
+      canvas.addEventListener('pointerup', function (event) {
+        if (!drawing) return;
+
+        event.preventDefault();
+
+        drawing = false;
+
+        if (currentStroke.length > 0) {
+          lessonPlayerState4C4.handwriting[activityId].push(currentStroke);
+        }
+
+        currentStroke = [];
+      });
+
+      canvas.addEventListener('pointercancel', function () {
+        drawing = false;
+        currentStroke = [];
+      });
+    }
+
+    function drawCanvasGuides4C4(canvas, ctx) {
+      ctx.save();
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.strokeStyle = '#E5E7EB';
+      ctx.lineWidth = 1;
+
+      for (var y = 70; y < canvas.height; y += 70) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(canvas.width, y);
+        ctx.stroke();
+      }
+
+      ctx.restore();
+    }
+
+    function redrawHandwriting4C4(activityId) {
+      var canvas =
+        document.getElementById('lessonHandwritingCanvas4C4');
+
+      if (!canvas) return;
+
+      var ctx =
+        canvas.getContext('2d');
+
+      drawCanvasGuides4C4(canvas, ctx);
+
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.lineWidth = 5;
+      ctx.strokeStyle = '#0F172A';
+
+      var strokes =
+        lessonPlayerState4C4.handwriting[activityId] || [];
+
+      for (var i = 0; i < strokes.length; i++) {
+        var stroke =
+          strokes[i];
+
+        if (!stroke || stroke.length === 0) continue;
+
+        ctx.beginPath();
+        ctx.moveTo(stroke[0].x, stroke[0].y);
+
+        for (var j = 1; j < stroke.length; j++) {
+          ctx.lineTo(stroke[j].x, stroke[j].y);
+        }
+
+        ctx.stroke();
+      }
+    }
+
+    function clearHandwriting4C4(activityId) {
+      lessonPlayerState4C4.handwriting[activityId] = [];
+      redrawHandwriting4C4(activityId);
+    }
+
+    function undoHandwriting4C4(activityId) {
+      var strokes =
+        lessonPlayerState4C4.handwriting[activityId] || [];
+
+      strokes.pop();
+
+      lessonPlayerState4C4.handwriting[activityId] =
+        strokes;
+
+      redrawHandwriting4C4(activityId);
+    }
+
+    function nextStep4C4() {
+      var context =
+        lessonPlayerState4C4.context;
+
+      var steps =
+        context && context.player
+          ? context.player.playerSteps || []
+          : [];
+
+      if (
+        lessonPlayerState4C4.currentStepIndex <
+        steps.length - 1
+      ) {
+        lessonPlayerState4C4.currentStepIndex++;
+        renderCurrentLessonStep4C4();
+      }
+    }
+
+    function prevStep4C4() {
+      if (lessonPlayerState4C4.currentStepIndex > 0) {
+        lessonPlayerState4C4.currentStepIndex--;
+        renderCurrentLessonStep4C4();
+      }
+    }
+
+    function completeDemo4C4() {
+      showFeedback4C4(
+        'Con đã hoàn thành bản demo bài học. Bước sau mình sẽ làm dry-run để lưu thử.',
+        'good'
+      );
+    }
+
+    function backToSubjectDashboard4C4() {
+      var subjectKey =
+        lessonPlayerState4C4.currentSubjectKey ||
+        'MATH';
+
+      if (typeof window.openSubjectDashboard4C2 === 'function') {
+        window.openSubjectDashboard4C2(subjectKey);
+        return;
+      }
+
+      var courses =
+        document.getElementById('coursesScreen');
+
+      var subject =
+        document.getElementById('subjectDetailScreen');
+
+      if (subject) subject.classList.add('hidden');
+      if (courses) courses.classList.remove('hidden');
+    }
+
+    /**
+     * Override 4C-2 placeholder function.
+     */
+    window.openLessonFromSubjectDashboard4C2 = function (lessonId) {
+      var subjectKey =
+        lessonPlayerState4C4.currentSubjectKey ||
+        resolveSubjectKey4C4('', '', lessonId);
+
+      openLessonPlayer4C4(lessonId, subjectKey);
+    };
+
+    window.openLessonPlayer4C4 =
+      openLessonPlayer4C4;
+
+    window.renderLessonPlayer4C4 =
+      renderLessonPlayer4C4;
+
+    window.demoSubmitAnswer4C4 =
+      demoSubmitAnswer4C4;
+
+    document.addEventListener(
+      'click',
+      function (event) {
+        var actionEl =
+          event.target.closest('[data-action]');
+
+        if (!actionEl) return;
+
+        var action =
+          actionEl.getAttribute('data-action');
+
+        if (action === 'lesson-open-4c2') {
+          event.preventDefault();
+          event.stopPropagation();
+
+          if (event.stopImmediatePropagation) {
+            event.stopImmediatePropagation();
+          }
+
+          var lessonId =
+            actionEl.getAttribute('data-lesson-id') || '';
+
+          var subjectKey =
+            lessonPlayerState4C4.currentSubjectKey ||
+            resolveSubjectKey4C4('', '', lessonId);
+
+          openLessonPlayer4C4(lessonId, subjectKey);
+          return;
+        }
+
+        if (action === 'lesson-select-option-4c4') {
+          event.preventDefault();
+          handleOptionClick4C4(actionEl);
+          return;
+        }
+
+        if (action === 'lesson-button-key-4c4') {
+          event.preventDefault();
+          handleButtonKey4C4(actionEl);
+          return;
+        }
+
+        if (action === 'lesson-button-clear-4c4') {
+          event.preventDefault();
+          clearButtonAnswer4C4(
+            actionEl.getAttribute('data-activity-id') || ''
+          );
+          return;
+        }
+
+        if (action === 'lesson-submit-demo-4c4') {
+          event.preventDefault();
+          demoSubmitAnswer4C4(
+            actionEl.getAttribute('data-activity-id') || ''
+          );
+          return;
+        }
+
+        if (action === 'lesson-handwriting-clear-4c4') {
+          event.preventDefault();
+          clearHandwriting4C4(
+            actionEl.getAttribute('data-activity-id') || ''
+          );
+          return;
+        }
+
+        if (action === 'lesson-handwriting-undo-4c4') {
+          event.preventDefault();
+          undoHandwriting4C4(
+            actionEl.getAttribute('data-activity-id') || ''
+          );
+          return;
+        }
+
+        if (action === 'lesson-next-step-4c4') {
+          event.preventDefault();
+          nextStep4C4();
+          return;
+        }
+
+        if (action === 'lesson-prev-step-4c4') {
+          event.preventDefault();
+          prevStep4C4();
+          return;
+        }
+
+        if (action === 'lesson-complete-demo-4c4') {
+          event.preventDefault();
+          completeDemo4C4();
+          return;
+        }
+
+        if (action === 'lesson-back-subject-4c4') {
+          event.preventDefault();
+          backToSubjectDashboard4C4();
+          return;
+        }
+      },
+      true
+    );
+  })();
+</script>

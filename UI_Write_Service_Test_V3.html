@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --primary: #2563eb;
+      --good-bg: #dcfce7;
+      --good-text: #166534;
+      --warn-bg: #fef3c7;
+      --warn-text: #92400e;
+      --bad-bg: #fee2e2;
+      --bad-text: #991b1b;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+    }
+
+    .page {
+      padding: 20px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: flex-start;
+      margin-bottom: 16px;
+    }
+
+    .title {
+      font-size: 24px;
+      font-weight: 700;
+      margin: 0 0 6px;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      margin: 0;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #dbeafe;
+      color: #1d4ed8;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .status {
+      padding: 12px 14px;
+      border-radius: 12px;
+      background: #e2e8f0;
+      color: #334155;
+      margin-bottom: 16px;
+      white-space: pre-wrap;
+    }
+
+    .status.good {
+      background: var(--good-bg);
+      color: var(--good-text);
+    }
+
+    .status.warn {
+      background: var(--warn-bg);
+      color: var(--warn-text);
+    }
+
+    .status.bad {
+      background: var(--bad-bg);
+      color: var(--bad-text);
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    button {
+      border: none;
+      border-radius: 10px;
+      padding: 9px 12px;
+      background: var(--primary);
+      color: #ffffff;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    button.secondary {
+      background: #475569;
+    }
+
+    button.warning {
+      background: #d97706;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+    }
+
+    .card-label {
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      margin-bottom: 8px;
+    }
+
+    .card-value {
+      font-size: 22px;
+      font-weight: 700;
+      word-break: break-word;
+    }
+
+    .section {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      margin-bottom: 16px;
+      overflow: hidden;
+    }
+
+    .section-head {
+      padding: 14px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .section-title {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .section-body {
+      padding: 14px;
+    }
+
+    pre {
+      margin: 0;
+      background: #0f172a;
+      color: #e2e8f0;
+      padding: 12px;
+      border-radius: 12px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: 320px;
+      overflow: auto;
+      font-size: 12px;
+    }
+
+    .small {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    @media (max-width: 900px) {
+      .grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .topbar {
+        display: block;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <?!= kidlearnV3_uiInclude_('UI_Write_Service_Client_V3'); ?>
+
+  <div class="page">
+    <div class="topbar">
+      <div>
+        <h1 class="title">KIDLEARN V3 - Write Service Test</h1>
+        <p class="subtitle">
+          UI DEV gọi Write Service Facade V3. Tất cả test ở đây là DRY_RUN.
+        </p>
+      </div>
+
+      <div>
+        <span class="badge" id="badge">3J.2 / DRY_RUN</span>
+      </div>
+    </div>
+
+    <div id="status" class="status">
+      Đang khởi tạo Write Service Test UI...
+    </div>
+
+    <div class="toolbar">
+      <button onclick="KidlearnWriteTestV3.loadStatus()">
+        Get Status
+      </button>
+
+      <button class="secondary" onclick="KidlearnWriteTestV3.loadSampleContext()">
+        Sample Context
+      </button>
+
+      <button onclick="KidlearnWriteTestV3.testAuditLog()">
+        Dry-run Audit
+      </button>
+
+      <button onclick="KidlearnWriteTestV3.testStartStudySession()">
+        Dry-run Start Session
+      </button>
+
+      <button onclick="KidlearnWriteTestV3.testLessonProgress()">
+        Dry-run Lesson Progress
+      </button>
+
+      <button onclick="KidlearnWriteTestV3.testDailyGoal()">
+        Dry-run Daily Goal
+      </button>
+
+      <button class="warning" onclick="KidlearnWriteTestV3.testAssignmentStatus()">
+        Dry-run Assignment Status
+      </button>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div class="card-label">Safe Write Mode</div>
+        <div class="card-value" id="mode">-</div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Enabled</div>
+        <div class="card-value" id="enabled">-</div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Child ID</div>
+        <div class="card-value" id="childId">-</div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Assignment ID</div>
+        <div class="card-value" id="assignmentId">-</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-head">
+        <h3 class="section-title">Last Result</h3>
+      </div>
+
+      <div class="section-body">
+        <pre id="lastResult">Chưa có result.</pre>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-head">
+        <h3 class="section-title">Sample Context</h3>
+      </div>
+
+      <div class="section-body">
+        <pre id="sampleContext">Chưa load.</pre>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    window.KidlearnWriteTestV3 = (function() {
+      var state = {
+        sampleContext: {},
+        lastResult: null
+      };
+
+      function init() {
+        loadStatus()
+          .then(function() {
+            return loadSampleContext();
+          })
+          .catch(function(error) {
+            setStatus(
+              'Khởi tạo lỗi: ' +
+              String(error.message || error),
+              'bad'
+            );
+          });
+      }
+
+      function loadStatus() {
+        setStatus(
+          'Đang lấy Write Service status...',
+          ''
+        );
+
+        return KidlearnV3WriteService
+          .getStatus()
+          .then(function(response) {
+            state.lastResult =
+              response;
+
+            setLastResult(response);
+
+            if (!response.success) {
+              throw new Error(
+                getErrorMessage(response)
+              );
+            }
+
+            var data =
+              response.data || {};
+
+            var safeWrite =
+              data.safeWriteStatus || {};
+
+            setText(
+              'mode',
+              safeWrite.mode || '-'
+            );
+
+            setText(
+              'enabled',
+              String(safeWrite.enabled)
+            );
+
+            setStatus(
+              'Write Service status loaded. Mode=' +
+              (safeWrite.mode || ''),
+              'good'
+            );
+
+            return response;
+          })
+          .catch(function(error) {
+            setStatus(
+              'Load status lỗi: ' +
+              String(error.message || error),
+              'bad'
+            );
+
+            throw error;
+          });
+      }
+
+      function loadSampleContext() {
+        setStatus(
+          'Đang lấy sample context...',
+          ''
+        );
+
+        return KidlearnV3WriteService
+          .getSampleContext()
+          .then(function(response) {
+            state.lastResult =
+              response;
+
+            setLastResult(response);
+
+            if (!response.success) {
+              throw new Error(
+                getErrorMessage(response)
+              );
+            }
+
+            state.sampleContext =
+              response.data.sampleContext || {};
+
+            setText(
+              'childId',
+              state.sampleContext.childId || '-'
+            );
+
+            setText(
+              'assignmentId',
+              state.sampleContext.assignmentId || '-'
+            );
+
+            document.getElementById('sampleContext').textContent =
+              JSON.stringify(
+                state.sampleContext,
+                null,
+                2
+              );
+
+            setStatus(
+              'Sample context loaded.',
+              'good'
+            );
+
+            return response;
+          })
+          .catch(function(error) {
+            setStatus(
+              'Load sample context lỗi: ' +
+              String(error.message || error),
+              'bad'
+            );
+
+            throw error;
+          });
+      }
+
+      function testAuditLog() {
+        setStatus(
+          'Đang dry-run AUDIT_LOG...',
+          ''
+        );
+
+        return runTest(
+          KidlearnV3WriteService.auditLog({
+            eventType: 'UI_WRITE_SERVICE_TEST',
+            message: 'Dry-run audit from UI Write Service Test',
+            entityType: 'PHASE',
+            entityId: '3J.2'
+          }),
+          'AUDIT_LOG dry-run thành công.'
+        );
+      }
+
+      function testStartStudySession() {
+        var context =
+          ensureContext();
+
+        setStatus(
+          'Đang dry-run START_STUDY_SESSION...',
+          ''
+        );
+
+        return runTest(
+          KidlearnV3WriteService.startStudySession({
+            childId: context.childId || 'DRY_RUN_CHILD_ID',
+            subjectId: context.subjectId || '',
+            lessonId: context.lessonId || 'DRY_RUN_LESSON_ID'
+          }),
+          'START_STUDY_SESSION dry-run thành công.'
+        );
+      }
+
+      function testLessonProgress() {
+        var context =
+          ensureContext();
+
+        setStatus(
+          'Đang dry-run UPSERT_LESSON_PROGRESS...',
+          ''
+        );
+
+        return runTest(
+          KidlearnV3WriteService.upsertLessonProgress({
+            childId: context.childId || 'DRY_RUN_CHILD_ID',
+            subjectId: context.subjectId || '',
+            lessonId: context.lessonId || 'DRY_RUN_LESSON_ID',
+            status: 'IN_PROGRESS',
+            progressPercent: 25
+          }),
+          'UPSERT_LESSON_PROGRESS dry-run thành công.'
+        );
+      }
+
+      function testDailyGoal() {
+        var context =
+          ensureContext();
+
+        setStatus(
+          'Đang dry-run UPSERT_DAILY_GOAL...',
+          ''
+        );
+
+        return runTest(
+          KidlearnV3WriteService.upsertDailyGoal({
+            childId: context.childId || 'DRY_RUN_CHILD_ID',
+            goalDate: today(),
+            targetMinutes: 20,
+            status: 'ACTIVE'
+          }),
+          'UPSERT_DAILY_GOAL dry-run thành công.'
+        );
+      }
+
+      function testAssignmentStatus() {
+        var context =
+          ensureContext();
+
+        if (!context.assignmentId) {
+          setStatus(
+            'Không có assignmentId mẫu. Test này được bỏ qua.',
+            'warn'
+          );
+
+          setLastResult({
+            success: false,
+            skipped: true,
+            message: 'Không có assignmentId mẫu.'
+          });
+
+          return Promise.resolve(null);
+        }
+
+        setStatus(
+          'Đang dry-run UPDATE_ASSIGNMENT_STATUS...',
+          ''
+        );
+
+        return runTest(
+          KidlearnV3WriteService.updateAssignmentStatus({
+            assignmentId: context.assignmentId,
+            status: 'IN_PROGRESS',
+            progressPercent: 10
+          }),
+          'UPDATE_ASSIGNMENT_STATUS dry-run thành công.'
+        );
+      }
+
+      function runTest(promise, successMessage) {
+        return promise
+          .then(function(response) {
+            state.lastResult =
+              response;
+
+            setLastResult(response);
+
+            if (!response.success) {
+              throw new Error(
+                getErrorMessage(response)
+              );
+            }
+
+            setStatus(
+              successMessage,
+              'good'
+            );
+
+            return response;
+          })
+          .catch(function(error) {
+            setStatus(
+              'Dry-run lỗi: ' +
+              String(error.message || error),
+              'bad'
+            );
+
+            throw error;
+          });
+      }
+
+      function ensureContext() {
+        if (!state.sampleContext) {
+          state.sampleContext = {};
+        }
+
+        return state.sampleContext;
+      }
+
+      function setStatus(message, type) {
+        var element =
+          document.getElementById('status');
+
+        element.className =
+          'status ' + (type || '');
+
+        element.textContent =
+          message;
+      }
+
+      function setText(id, value) {
+        var element =
+          document.getElementById(id);
+
+        if (element) {
+          element.textContent =
+            value;
+        }
+      }
+
+      function setLastResult(value) {
+        document.getElementById('lastResult').textContent =
+          JSON.stringify(
+            value,
+            null,
+            2
+          );
+      }
+
+      function getErrorMessage(response) {
+        if (
+          response &&
+          response.error &&
+          response.error.message
+        ) {
+          return response.error.message;
+        }
+
+        return 'Không rõ lỗi.';
+      }
+
+      function today() {
+        var date =
+          new Date();
+
+        var year =
+          date.getFullYear();
+
+        var month =
+          String(date.getMonth() + 1)
+            .padStart(2, '0');
+
+        var day =
+          String(date.getDate())
+            .padStart(2, '0');
+
+        return year + '-' + month + '-' + day;
+      }
+
+      return {
+        init: init,
+        loadStatus: loadStatus,
+        loadSampleContext: loadSampleContext,
+        testAuditLog: testAuditLog,
+        testStartStudySession: testStartStudySession,
+        testLessonProgress: testLessonProgress,
+        testDailyGoal: testDailyGoal,
+        testAssignmentStatus: testAssignmentStatus
+      };
+    })();
+
+    document.addEventListener(
+      'DOMContentLoaded',
+      function() {
+        KidlearnWriteTestV3.init();
+      }
+    );
+  </script>
+</body>
+</html>

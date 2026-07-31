@@ -1,0 +1,1138 @@
+<script>
+  /**
+   * ================================================================
+   * KIDLEARN_PARENT_ASSIGNMENT_MANAGEMENT_UI_4J
+   * Phase 4J — Parent Assignment Management Read-only
+   * ================================================================
+   *
+   * Purpose:
+   * - Parent views assigned lessons.
+   * - View assignment status, progress, overdue/completed/in-progress.
+   *
+   * Safety:
+   * - Read-only UI.
+   * - No DATA write.
+   * - No Drive write.
+   * - No delete/cancel/reset action.
+   */
+
+  (function () {
+    var KIDLEARN_PARENT_ASSIGNMENT_MANAGEMENT_UI_4J = {
+      phase: '4J',
+      marker: 'KIDLEARN_PARENT_ASSIGNMENT_MANAGEMENT_UI_4J',
+      context: null,
+      loading: false,
+      timer: null,
+      attempts: 0,
+      maxAttempts: 30
+    };
+
+    window.KIDLEARN_PARENT_ASSIGNMENT_MANAGEMENT_UI_4J =
+      KIDLEARN_PARENT_ASSIGNMENT_MANAGEMENT_UI_4J;
+
+    function escapeHtml4J(value) {
+      return String(value === null || value === undefined ? '' : value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function getBodyText4J() {
+      return document.body
+        ? String(document.body.innerText || '')
+        : '';
+    }
+
+    function isLikelyParentAreaVisible4J() {
+      var text =
+        getBodyText4J().toUpperCase();
+
+      if (!text) {
+        return false;
+      }
+
+      var isLogin =
+        text.indexOf('ĐĂNG NHẬP') !== -1 &&
+        text.indexOf('TRANG CHỦ') === -1;
+
+      if (isLogin) {
+        return false;
+      }
+
+      return (
+        text.indexOf('DASHBOARD PHỤ HUYNH') !== -1 ||
+        text.indexOf('BÀI VIẾT TAY CHỜ DUYỆT') !== -1 ||
+        text.indexOf('LẬP KẾ HOẠCH HỌC') !== -1 ||
+        text.indexOf('PHỤ HUYNH') !== -1 ||
+        document.querySelector('.kl-parent-dashboard-entry-4g2') ||
+        document.querySelector('.kl-learning-plan-entry-4h2') ||
+        document.querySelector('.kl-parent-review-entry-4e5b')
+      );
+    }
+
+    function loadParentAssignmentManagementContext4J(callback, force) {
+      if (
+        KIDLEARN_PARENT_ASSIGNMENT_MANAGEMENT_UI_4J.context &&
+        !force
+      ) {
+        if (callback) {
+          callback(KIDLEARN_PARENT_ASSIGNMENT_MANAGEMENT_UI_4J.context);
+        }
+
+        return;
+      }
+
+      if (KIDLEARN_PARENT_ASSIGNMENT_MANAGEMENT_UI_4J.loading) {
+        return;
+      }
+
+      if (
+        typeof google === 'undefined' ||
+        !google.script ||
+        !google.script.run
+      ) {
+        var fallback = {
+          success: false,
+          errorMessage: 'Không gọi được Apps Script server.'
+        };
+
+        KIDLEARN_PARENT_ASSIGNMENT_MANAGEMENT_UI_4J.context =
+          fallback;
+
+        if (callback) {
+          callback(fallback);
+        }
+
+        return;
+      }
+
+      KIDLEARN_PARENT_ASSIGNMENT_MANAGEMENT_UI_4J.loading =
+        true;
+
+      google.script.run
+        .withSuccessHandler(function (result) {
+          KIDLEARN_PARENT_ASSIGNMENT_MANAGEMENT_UI_4J.loading =
+            false;
+
+          KIDLEARN_PARENT_ASSIGNMENT_MANAGEMENT_UI_4J.context =
+            result || {};
+
+          if (callback) {
+            callback(result || {});
+          }
+        })
+        .withFailureHandler(function (error) {
+          KIDLEARN_PARENT_ASSIGNMENT_MANAGEMENT_UI_4J.loading =
+            false;
+
+          var result = {
+            success: false,
+            errorMessage:
+              error && error.message
+                ? error.message
+                : String(
+                    error ||
+                    'Không đọc được Parent Assignment Management Context.'
+                  )
+          };
+
+          KIDLEARN_PARENT_ASSIGNMENT_MANAGEMENT_UI_4J.context =
+            result;
+
+          if (callback) {
+            callback(result);
+          }
+        })
+        .kidlearnV3_getParentAssignmentManagementContext4JV3({
+          parentId: 'PARENT',
+          childId: 'CHD_V2_CHILD_DEFAULT',
+          limit: 120
+        });
+    }
+
+    function ensureParentAssignmentManagementEntry4J() {
+      if (!isLikelyParentAreaVisible4J()) {
+        return;
+      }
+
+      if (
+        document.querySelector(
+          '.kl-parent-assignment-management-entry-4j'
+        )
+      ) {
+        return;
+      }
+
+      loadParentAssignmentManagementContext4J(function (context) {
+        renderParentAssignmentManagementEntry4J(context || {});
+      }, false);
+    }
+
+    function findParentAssignmentEntryTarget4J() {
+      var learningPlan =
+        document.querySelector('.kl-learning-plan-entry-4h2');
+
+      if (learningPlan && learningPlan.parentNode) {
+        return {
+          mode: 'after',
+          anchor: learningPlan
+        };
+      }
+
+      var parentDashboard =
+        document.querySelector('.kl-parent-dashboard-entry-4g2');
+
+      if (parentDashboard && parentDashboard.parentNode) {
+        return {
+          mode: 'after',
+          anchor: parentDashboard
+        };
+      }
+
+      var reviewQueue =
+        document.querySelector('.kl-parent-review-entry-4e5b');
+
+      if (reviewQueue && reviewQueue.parentNode) {
+        return {
+          mode: 'after',
+          anchor: reviewQueue
+        };
+      }
+
+      var candidates =
+        Array.prototype.slice.call(
+          document.querySelectorAll('section, article, div')
+        );
+
+      for (var i = 0; i < candidates.length; i++) {
+        var text =
+          String(candidates[i].innerText || '').toUpperCase();
+
+        if (
+          text.indexOf('DASHBOARD PHỤ HUYNH') !== -1 ||
+          text.indexOf('LẬP KẾ HOẠCH HỌC') !== -1 ||
+          text.indexOf('BÀI VIẾT TAY CHỜ DUYỆT') !== -1
+        ) {
+          return {
+            mode: 'inside-start',
+            anchor: candidates[i]
+          };
+        }
+      }
+
+      return {
+        mode: 'inside-start',
+        anchor:
+          document.querySelector('main') ||
+          document.querySelector('#app') ||
+          document.body
+      };
+    }
+
+    function renderParentAssignmentManagementEntry4J(context) {
+      if (!isLikelyParentAreaVisible4J()) {
+        return;
+      }
+
+      var existing =
+        document.querySelector(
+          '.kl-parent-assignment-management-entry-4j'
+        );
+
+      if (existing && existing.parentNode) {
+        existing.parentNode.removeChild(existing);
+      }
+
+      var summary =
+        context.contextSummary || {};
+
+      var child =
+        context.child || {};
+
+      var card =
+        document.createElement('section');
+
+      card.className =
+        'kl-parent-assignment-management-entry-4j';
+
+      card.setAttribute('data-phase', '4J');
+
+      card.innerHTML =
+        '<div class="kl-parent-assignment-management-entry-inner-4j">' +
+          '<div class="kl-parent-assignment-management-entry-icon-4j">📋</div>' +
+          '<div class="kl-parent-assignment-management-entry-content-4j">' +
+            '<div class="kl-parent-assignment-management-badge-4j">4J Read-only</div>' +
+            '<h3>Quản lý bài đã giao</h3>' +
+            '<p>' +
+              escapeHtml4J(child.displayName || 'Bé') +
+              ' • ' +
+              escapeHtml4J(summary.assignmentCount || 0) +
+              ' bài đã giao' +
+            '</p>' +
+            '<div class="kl-parent-assignment-management-mini-stats-4j">' +
+              '<span>Đang học: <strong>' +
+                escapeHtml4J(summary.inProgressCount || 0) +
+              '</strong></span>' +
+              '<span>Đã xong: <strong>' +
+                escapeHtml4J(summary.completedCount || 0) +
+              '</strong></span>' +
+              '<span>Quá hạn: <strong>' +
+                escapeHtml4J(summary.overdueCount || 0) +
+              '</strong></span>' +
+            '</div>' +
+          '</div>' +
+          '<button type="button" class="kl-parent-assignment-management-open-4j" data-action="open-parent-assignment-management-4j">' +
+            'Xem bài đã giao' +
+          '</button>' +
+        '</div>';
+
+      var target =
+        findParentAssignmentEntryTarget4J();
+
+      if (
+        target.mode === 'after' &&
+        target.anchor &&
+        target.anchor.parentNode
+      ) {
+        target.anchor.parentNode.insertBefore(
+          card,
+          target.anchor.nextSibling
+        );
+
+        return;
+      }
+
+      if (
+        target.anchor &&
+        target.anchor.firstChild
+      ) {
+        target.anchor.insertBefore(
+          card,
+          target.anchor.firstChild
+        );
+      } else if (target.anchor) {
+        target.anchor.appendChild(card);
+      } else {
+        document.body.appendChild(card);
+      }
+    }
+
+    function openParentAssignmentManagement4J() {
+      closeParentAssignmentManagement4J();
+
+      renderParentAssignmentManagementLoading4J();
+
+      loadParentAssignmentManagementContext4J(function (context) {
+        renderParentAssignmentManagementPanel4J(context || {});
+      }, true);
+    }
+
+    function renderParentAssignmentManagementLoading4J() {
+      closeParentAssignmentManagement4J();
+
+      var overlay =
+        document.createElement('div');
+
+      overlay.className =
+        'kl-parent-assignment-management-overlay-4j';
+
+      overlay.innerHTML =
+        '<div class="kl-parent-assignment-management-panel-4j">' +
+          '<div class="kl-parent-assignment-management-empty-4j">' +
+            '<h4>Đang tải bài đã giao...</h4>' +
+            '<p>Vui lòng chờ trong giây lát.</p>' +
+          '</div>' +
+        '</div>';
+
+      document.body.appendChild(overlay);
+    }
+
+    function renderParentAssignmentManagementPanel4J(context) {
+      closeParentAssignmentManagement4J();
+
+      var overlay =
+        document.createElement('div');
+
+      overlay.className =
+        'kl-parent-assignment-management-overlay-4j';
+
+      overlay.setAttribute('data-phase', '4J');
+
+      if (!context.success) {
+        overlay.innerHTML =
+          '<div class="kl-parent-assignment-management-panel-4j">' +
+            renderParentAssignmentHeader4J({}) +
+            '<div class="kl-parent-assignment-management-empty-4j">' +
+              '<h4>Chưa mở được danh sách bài đã giao</h4>' +
+              '<p>' +
+                escapeHtml4J(
+                  context.errorMessage ||
+                  'Vui lòng thử lại sau.'
+                ) +
+              '</p>' +
+            '</div>' +
+          '</div>';
+
+        document.body.appendChild(overlay);
+        return;
+      }
+
+      var management =
+        context.parentAssignmentManagement || {};
+
+      overlay.innerHTML =
+        '<div class="kl-parent-assignment-management-panel-4j" role="dialog" aria-modal="true">' +
+          renderParentAssignmentHeader4J(context) +
+          renderParentAssignmentSummary4J(context) +
+          renderParentAssignmentFilters4J() +
+          renderParentAssignmentCards4J(management.items || []) +
+          renderParentAssignmentReadOnlyNote4J() +
+        '</div>';
+
+      document.body.appendChild(overlay);
+    }
+
+    function renderParentAssignmentHeader4J(context) {
+      var child =
+        context.child || {};
+
+      return (
+        '<div class="kl-parent-assignment-management-head-4j">' +
+          '<div>' +
+            '<div class="kl-parent-assignment-management-badge-4j">Parent Assignment Management • Read-only</div>' +
+            '<h3>Quản lý bài đã giao</h3>' +
+            '<p>' +
+              escapeHtml4J(child.displayName || 'Bé') +
+              ' — theo dõi bài phụ huynh đã giao cho con.' +
+            '</p>' +
+          '</div>' +
+          '<button type="button" class="kl-parent-assignment-management-close-4j" data-action="close-parent-assignment-management-4j">×</button>' +
+        '</div>'
+      );
+    }
+
+    function renderParentAssignmentSummary4J(context) {
+      var summary =
+        context.contextSummary || {};
+
+      return (
+        '<div class="kl-parent-assignment-management-summary-4j">' +
+          '<div>' +
+            '<span>Tổng bài đã giao</span>' +
+            '<strong>' +
+              escapeHtml4J(summary.assignmentCount || 0) +
+            '</strong>' +
+          '</div>' +
+          '<div>' +
+            '<span>Đang học</span>' +
+            '<strong>' +
+              escapeHtml4J(summary.inProgressCount || 0) +
+            '</strong>' +
+          '</div>' +
+          '<div>' +
+            '<span>Đã hoàn thành</span>' +
+            '<strong>' +
+              escapeHtml4J(summary.completedCount || 0) +
+            '</strong>' +
+          '</div>' +
+          '<div>' +
+            '<span>Quá hạn</span>' +
+            '<strong>' +
+              escapeHtml4J(summary.overdueCount || 0) +
+            '</strong>' +
+          '</div>' +
+        '</div>'
+      );
+    }
+
+    function renderParentAssignmentFilters4J() {
+      return (
+        '<div class="kl-parent-assignment-management-filters-4j">' +
+          '<button type="button" class="is-active" data-action="filter-parent-assignment-4j" data-filter="ALL">Tất cả</button>' +
+          '<button type="button" data-action="filter-parent-assignment-4j" data-filter="ACTIVE">Đã giao</button>' +
+          '<button type="button" data-action="filter-parent-assignment-4j" data-filter="IN_PROGRESS">Đang học</button>' +
+          '<button type="button" data-action="filter-parent-assignment-4j" data-filter="COMPLETED">Đã xong</button>' +
+          '<button type="button" data-action="filter-parent-assignment-4j" data-filter="OVERDUE">Quá hạn</button>' +
+        '</div>'
+      );
+    }
+
+    function renderParentAssignmentCards4J(items) {
+      items =
+        items || [];
+
+      if (!items.length) {
+        return (
+          '<div class="kl-parent-assignment-management-empty-4j">' +
+            '<h4>Chưa có bài đã giao</h4>' +
+            '<p>Khi phụ huynh giao bài trong phần Lập kế hoạch học, bài sẽ xuất hiện ở đây.</p>' +
+          '</div>'
+        );
+      }
+
+      var html =
+        '<div class="kl-parent-assignment-management-list-4j">';
+
+      for (var i = 0; i < items.length; i++) {
+        html +=
+          renderParentAssignmentCard4J(items[i]);
+      }
+
+      html +=
+        '</div>';
+
+      return html;
+    }
+
+    function renderParentAssignmentCard4J(item) {
+      var filter =
+        'ACTIVE';
+
+      if (item.flags && item.flags.isCompleted) {
+        filter = 'COMPLETED';
+      } else if (item.flags && item.flags.isOverdue) {
+        filter = 'OVERDUE';
+      } else if (item.flags && item.flags.isInProgress) {
+        filter = 'IN_PROGRESS';
+      }
+
+      var progress =
+        item.progress || {};
+
+      var progressPercent =
+        Math.max(
+          0,
+          Math.min(
+            100,
+            Number(progress.progressPercent || 0)
+          )
+        );
+
+      return (
+        '<article class="kl-parent-assignment-management-card-4j" data-filter="' +
+          escapeHtml4J(filter) +
+        '">' +
+          '<div class="kl-parent-assignment-management-card-top-4j">' +
+            '<div class="kl-parent-assignment-management-card-icon-4j">' +
+              iconForAssignment4J(filter) +
+            '</div>' +
+            '<div>' +
+              '<div class="kl-parent-assignment-management-status-4j is-' +
+                escapeHtml4J(filter.toLowerCase()) +
+              '">' +
+                escapeHtml4J(item.statusLabel || item.status || 'Đã giao') +
+              '</div>' +
+              '<h4>' +
+                escapeHtml4J(item.lessonTitle || item.lessonId || 'Bài học') +
+              '</h4>' +
+              '<p>' +
+                escapeHtml4J(item.subjectName || item.subjectCode || '') +
+              '</p>' +
+            '</div>' +
+          '</div>' +
+          '<div class="kl-parent-assignment-management-meta-4j">' +
+            '<span>Mã bài: <strong>' +
+              escapeHtml4J(item.lessonId || '') +
+            '</strong></span>' +
+            '<span>Hạn: <strong>' +
+              escapeHtml4J(item.dueDate || 'Chưa đặt') +
+            '</strong></span>' +
+            '<span>Tiến độ: <strong>' +
+              escapeHtml4J(progress.progressLabel || 'Chưa có tiến độ') +
+            '</strong></span>' +
+          '</div>' +
+          '<div class="kl-parent-assignment-management-progress-4j">' +
+            '<div class="kl-parent-assignment-management-progress-bar-4j">' +
+              '<span style="width:' + escapeHtml4J(progressPercent) + '%"></span>' +
+            '</div>' +
+            '<small>' +
+              escapeHtml4J(progressPercent) +
+              '% hoàn thành</small>' +
+          '</div>' +
+          '<div class="kl-parent-assignment-management-readonly-4j">' +
+            'Read-only: không xóa, không hủy, không reset tiến độ.' +
+          '</div>' +
+        '</article>'
+      );
+    }
+
+    function iconForAssignment4J(filter) {
+      if (filter === 'COMPLETED') return '✅';
+      if (filter === 'OVERDUE') return '⏰';
+      if (filter === 'IN_PROGRESS') return '🚀';
+      return '📘';
+    }
+
+    function renderParentAssignmentReadOnlyNote4J() {
+      return (
+        '<div class="kl-parent-assignment-management-note-4j">' +
+          '<strong>Chế độ an toàn MVP</strong>' +
+          '<p>4J chỉ cho phụ huynh xem bài đã giao. Không xóa assignment, không sửa tiến độ, không sửa câu trả lời của bé.</p>' +
+        '</div>'
+      );
+    }
+
+    function applyParentAssignmentFilter4J(filter) {
+      filter =
+        String(filter || 'ALL').toUpperCase();
+
+      var buttons =
+        Array.prototype.slice.call(
+          document.querySelectorAll(
+            '.kl-parent-assignment-management-filters-4j button'
+          )
+        );
+
+      for (var i = 0; i < buttons.length; i++) {
+        var buttonFilter =
+          String(buttons[i].getAttribute('data-filter') || 'ALL').toUpperCase();
+
+        if (buttonFilter === filter) {
+          buttons[i].classList.add('is-active');
+        } else {
+          buttons[i].classList.remove('is-active');
+        }
+      }
+
+      var cards =
+        Array.prototype.slice.call(
+          document.querySelectorAll(
+            '.kl-parent-assignment-management-card-4j'
+          )
+        );
+
+      for (var j = 0; j < cards.length; j++) {
+        var cardFilter =
+          String(cards[j].getAttribute('data-filter') || 'ACTIVE').toUpperCase();
+
+        if (filter === 'ALL' || cardFilter === filter) {
+          cards[j].style.display = '';
+        } else {
+          cards[j].style.display = 'none';
+        }
+      }
+    }
+
+    function closeParentAssignmentManagement4J() {
+      var existing =
+        document.querySelector(
+          '.kl-parent-assignment-management-overlay-4j'
+        );
+
+      if (existing && existing.parentNode) {
+        existing.parentNode.removeChild(existing);
+      }
+    }
+
+    document.addEventListener(
+      'click',
+      function (event) {
+        var actionEl =
+          event.target.closest
+            ? event.target.closest('[data-action]')
+            : null;
+
+        if (!actionEl) {
+          return;
+        }
+
+        var action =
+          actionEl.getAttribute('data-action');
+
+        if (action === 'open-parent-assignment-management-4j') {
+          event.preventDefault();
+          event.stopPropagation();
+          openParentAssignmentManagement4J();
+          return;
+        }
+
+        if (action === 'close-parent-assignment-management-4j') {
+          event.preventDefault();
+          event.stopPropagation();
+          closeParentAssignmentManagement4J();
+          return;
+        }
+
+        if (action === 'filter-parent-assignment-4j') {
+          event.preventDefault();
+          event.stopPropagation();
+          applyParentAssignmentFilter4J(
+            actionEl.getAttribute('data-filter') || 'ALL'
+          );
+          return;
+        }
+      },
+      true
+    );
+
+    function scheduleEnsureParentAssignmentManagement4J() {
+      if (KIDLEARN_PARENT_ASSIGNMENT_MANAGEMENT_UI_4J.timer) {
+        return;
+      }
+
+      KIDLEARN_PARENT_ASSIGNMENT_MANAGEMENT_UI_4J.timer =
+        setTimeout(function () {
+          KIDLEARN_PARENT_ASSIGNMENT_MANAGEMENT_UI_4J.timer =
+            null;
+
+          KIDLEARN_PARENT_ASSIGNMENT_MANAGEMENT_UI_4J.attempts +=
+            1;
+
+          ensureParentAssignmentManagementEntry4J();
+
+          if (
+            !document.querySelector(
+              '.kl-parent-assignment-management-entry-4j'
+            ) &&
+            KIDLEARN_PARENT_ASSIGNMENT_MANAGEMENT_UI_4J.attempts <
+              KIDLEARN_PARENT_ASSIGNMENT_MANAGEMENT_UI_4J.maxAttempts
+          ) {
+            scheduleEnsureParentAssignmentManagement4J();
+          }
+        }, 700);
+    }
+
+    var observer4J =
+      new MutationObserver(function () {
+        scheduleEnsureParentAssignmentManagement4J();
+      });
+
+    observer4J.observe(
+      document.documentElement,
+      {
+        childList: true,
+        subtree: true
+      }
+    );
+
+    if (document.readyState === 'loading') {
+      document.addEventListener(
+        'DOMContentLoaded',
+        scheduleEnsureParentAssignmentManagement4J
+      );
+    } else {
+      scheduleEnsureParentAssignmentManagement4J();
+    }
+
+    window.ensureParentAssignmentManagementEntry4J =
+      ensureParentAssignmentManagementEntry4J;
+
+    window.openParentAssignmentManagement4J =
+      openParentAssignmentManagement4J;
+
+    window.renderParentAssignmentManagementPanel4J =
+      renderParentAssignmentManagementPanel4J;
+
+    window.applyParentAssignmentFilter4J =
+      applyParentAssignmentFilter4J;
+  })();
+</script>
+
+<style>
+  /**
+   * ================================================================
+   * KIDLEARN V3 - 4J Parent Assignment Management UI
+   * Inline CSS to reduce file count.
+   * ================================================================
+   */
+
+  .kl-parent-assignment-management-entry-4j {
+    width: 100%;
+    margin: 0 0 18px;
+    border-radius: 30px;
+    padding: 4px;
+    background: linear-gradient(135deg, #EEF2FF, #ECFDF5);
+    border: 1px solid #C7D2FE;
+    box-shadow: 0 18px 38px rgba(79, 70, 229, .12);
+  }
+
+  .kl-parent-assignment-management-entry-inner-4j {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 14px;
+    align-items: center;
+    padding: 18px;
+    border-radius: 26px;
+    background: rgba(255, 255, 255, .94);
+  }
+
+  .kl-parent-assignment-management-entry-icon-4j {
+    display: grid;
+    place-items: center;
+    width: 58px;
+    height: 58px;
+    border-radius: 22px;
+    background: #E0E7FF;
+    font-size: 28px;
+  }
+
+  .kl-parent-assignment-management-entry-content-4j h3 {
+    margin: 7px 0 4px;
+    color: #4338CA;
+    font-family: var(--kl-font-heading);
+    font-size: 22px;
+    font-weight: 950;
+  }
+
+  .kl-parent-assignment-management-entry-content-4j p {
+    margin: 0;
+    color: #475569;
+    font-size: 14px;
+    font-weight: 850;
+  }
+
+  .kl-parent-assignment-management-badge-4j {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 5px 9px;
+    background: #E0E7FF;
+    color: #4338CA;
+    font-size: 11px;
+    font-weight: 950;
+  }
+
+  .kl-parent-assignment-management-mini-stats-4j {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .kl-parent-assignment-management-mini-stats-4j span {
+    display: inline-flex;
+    gap: 4px;
+    border-radius: 999px;
+    padding: 6px 9px;
+    background: #F8FAFC;
+    color: #475569;
+    border: 1px solid #E2E8F0;
+    font-size: 12px;
+    font-weight: 850;
+  }
+
+  .kl-parent-assignment-management-mini-stats-4j strong {
+    color: #0F172A;
+    font-weight: 950;
+  }
+
+  .kl-parent-assignment-management-open-4j {
+    appearance: none;
+    border: 0;
+    border-radius: 999px;
+    padding: 12px 16px;
+    background: #4F46E5;
+    color: #FFFFFF;
+    font-family: var(--kl-font-heading);
+    font-size: 14px;
+    font-weight: 950;
+    cursor: pointer;
+    box-shadow: 0 14px 26px rgba(79, 70, 229, .22);
+  }
+
+  .kl-parent-assignment-management-overlay-4j {
+    position: fixed;
+    inset: 0;
+    z-index: 10005;
+    display: grid;
+    place-items: center;
+    padding: 18px;
+    background: rgba(15, 23, 42, .52);
+    backdrop-filter: blur(8px);
+  }
+
+  .kl-parent-assignment-management-panel-4j {
+    width: min(980px, 100%);
+    max-height: min(86vh, 840px);
+    overflow: auto;
+    border-radius: 32px;
+    background: #FFFFFF;
+    border: 1px solid #C7D2FE;
+    box-shadow: 0 28px 72px rgba(15, 23, 42, .30);
+    padding: 22px;
+  }
+
+  .kl-parent-assignment-management-head-4j {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    align-items: flex-start;
+    margin-bottom: 16px;
+  }
+
+  .kl-parent-assignment-management-head-4j h3 {
+    margin: 8px 0 4px;
+    color: #4338CA;
+    font-family: var(--kl-font-heading);
+    font-size: 28px;
+    font-weight: 950;
+  }
+
+  .kl-parent-assignment-management-head-4j p {
+    margin: 0;
+    color: #64748B;
+    font-size: 14px;
+    font-weight: 800;
+  }
+
+  .kl-parent-assignment-management-close-4j {
+    appearance: none;
+    border: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 999px;
+    background: #F1F5F9;
+    color: #334155;
+    font-size: 24px;
+    font-weight: 900;
+    cursor: pointer;
+  }
+
+  .kl-parent-assignment-management-summary-4j {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .kl-parent-assignment-management-summary-4j div {
+    border-radius: 20px;
+    padding: 13px;
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+  }
+
+  .kl-parent-assignment-management-summary-4j span {
+    display: block;
+    color: #64748B;
+    font-size: 12px;
+    font-weight: 850;
+  }
+
+  .kl-parent-assignment-management-summary-4j strong {
+    display: block;
+    margin-top: 4px;
+    color: #0F172A;
+    font-size: 20px;
+    font-weight: 950;
+  }
+
+  .kl-parent-assignment-management-filters-4j {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 0 0 14px;
+  }
+
+  .kl-parent-assignment-management-filters-4j button {
+    appearance: none;
+    border: 1px solid #CBD5E1;
+    border-radius: 999px;
+    padding: 8px 11px;
+    background: #FFFFFF;
+    color: #475569;
+    font-size: 12px;
+    font-weight: 950;
+    cursor: pointer;
+  }
+
+  .kl-parent-assignment-management-filters-4j button.is-active {
+    background: #4F46E5;
+    border-color: #4F46E5;
+    color: #FFFFFF;
+  }
+
+  .kl-parent-assignment-management-list-4j {
+    display: grid;
+    gap: 12px;
+  }
+
+  .kl-parent-assignment-management-card-4j {
+    display: grid;
+    gap: 12px;
+    border-radius: 26px;
+    padding: 16px;
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+  }
+
+  .kl-parent-assignment-management-card-top-4j {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 12px;
+    align-items: start;
+  }
+
+  .kl-parent-assignment-management-card-icon-4j {
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 18px;
+    background: #E0E7FF;
+    font-size: 24px;
+  }
+
+  .kl-parent-assignment-management-status-4j {
+    display: inline-flex;
+    width: fit-content;
+    border-radius: 999px;
+    padding: 4px 8px;
+    background: #E0E7FF;
+    color: #4338CA;
+    font-size: 10px;
+    font-weight: 950;
+  }
+
+  .kl-parent-assignment-management-status-4j.is-completed {
+    background: #D1FAE5;
+    color: #047857;
+  }
+
+  .kl-parent-assignment-management-status-4j.is-overdue {
+    background: #FEE2E2;
+    color: #B91C1C;
+  }
+
+  .kl-parent-assignment-management-status-4j.is-in_progress {
+    background: #DBEAFE;
+    color: #1D4ED8;
+  }
+
+  .kl-parent-assignment-management-card-4j h4 {
+    margin: 7px 0 3px;
+    color: #0F172A;
+    font-family: var(--kl-font-heading);
+    font-size: 18px;
+    font-weight: 950;
+  }
+
+  .kl-parent-assignment-management-card-4j p {
+    margin: 0;
+    color: #64748B;
+    font-size: 13px;
+    font-weight: 800;
+  }
+
+  .kl-parent-assignment-management-meta-4j {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .kl-parent-assignment-management-meta-4j span {
+    border-radius: 999px;
+    padding: 6px 9px;
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    color: #64748B;
+    font-size: 12px;
+    font-weight: 850;
+  }
+
+  .kl-parent-assignment-management-meta-4j strong {
+    color: #0F172A;
+    font-weight: 950;
+  }
+
+  .kl-parent-assignment-management-progress-4j {
+    display: grid;
+    gap: 6px;
+  }
+
+  .kl-parent-assignment-management-progress-bar-4j {
+    height: 10px;
+    border-radius: 999px;
+    background: #E2E8F0;
+    overflow: hidden;
+  }
+
+  .kl-parent-assignment-management-progress-bar-4j span {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+    background: #4F46E5;
+  }
+
+  .kl-parent-assignment-management-progress-4j small {
+    color: #64748B;
+    font-size: 12px;
+    font-weight: 850;
+  }
+
+  .kl-parent-assignment-management-readonly-4j {
+    border-radius: 16px;
+    padding: 9px 10px;
+    background: #FFFFFF;
+    border: 1px dashed #CBD5E1;
+    color: #64748B;
+    font-size: 12px;
+    font-weight: 850;
+  }
+
+  .kl-parent-assignment-management-empty-4j {
+    border-radius: 24px;
+    padding: 22px;
+    background: #F8FAFC;
+    border: 1px dashed #CBD5E1;
+    text-align: center;
+  }
+
+  .kl-parent-assignment-management-empty-4j h4 {
+    margin: 0 0 8px;
+    color: #334155;
+    font-family: var(--kl-font-heading);
+    font-size: 20px;
+    font-weight: 950;
+  }
+
+  .kl-parent-assignment-management-empty-4j p {
+    margin: 0;
+    color: #64748B;
+    font-size: 14px;
+    font-weight: 800;
+  }
+
+  .kl-parent-assignment-management-note-4j {
+    margin-top: 14px;
+    border-radius: 22px;
+    padding: 14px;
+    background: #EEF2FF;
+    border: 1px solid #C7D2FE;
+    color: #3730A3;
+  }
+
+  .kl-parent-assignment-management-note-4j strong {
+    display: block;
+    font-size: 14px;
+    font-weight: 950;
+  }
+
+  .kl-parent-assignment-management-note-4j p {
+    margin: 5px 0 0;
+    font-size: 13px;
+    font-weight: 850;
+  }
+
+  @media (max-width: 760px) {
+    .kl-parent-assignment-management-entry-inner-4j {
+      grid-template-columns: 1fr;
+    }
+
+    .kl-parent-assignment-management-open-4j {
+      width: 100%;
+    }
+
+    .kl-parent-assignment-management-summary-4j {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 520px) {
+    .kl-parent-assignment-management-summary-4j {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

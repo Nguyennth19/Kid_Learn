@@ -1,0 +1,480 @@
+<script>
+  /**
+   * KIDLEARN_CHILD_RETRY_HOME_UI_4F4B
+   * Phase 4F-4B — Child Home Retry Card UI Read-only
+   */
+
+  (function () {
+    var KIDLEARN_CHILD_RETRY_HOME_UI_4F4B = {
+      phase: '4F-4B',
+      marker: 'KIDLEARN_CHILD_RETRY_HOME_UI_4F4B',
+      contextLoaded: false,
+      contextLoading: false,
+      context: null,
+      injectTimer: null,
+      panelOpen: false
+    };
+
+    window.KIDLEARN_CHILD_RETRY_HOME_UI_4F4B =
+      KIDLEARN_CHILD_RETRY_HOME_UI_4F4B;
+
+    function escapeHtml4F4B(value) {
+      return String(value === null || value === undefined ? '' : value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function isLikelyChildView4F4B() {
+      var bodyText =
+        document.body ? document.body.innerText || '' : '';
+
+      var upper =
+        bodyText.toUpperCase();
+
+      if (
+        upper.indexOf('PARENT') !== -1 ||
+        upper.indexOf('PHỤ HUYNH') !== -1 ||
+        upper.indexOf('BÀI VIẾT TAY CHỜ DUYỆT') !== -1
+      ) {
+        return false;
+      }
+
+      if (
+        upper.indexOf('LICH_KHE') !== -1 ||
+        upper.indexOf('BÉ') !== -1 ||
+        upper.indexOf('HỌC TIẾP') !== -1 ||
+        upper.indexOf('MÔN HỌC') !== -1
+      ) {
+        return true;
+      }
+
+      var hasSubjectCards =
+        document.querySelectorAll('.kl-subject-card, .kl-course-card, [data-subject-code]').length > 0;
+
+      return hasSubjectCards;
+    }
+
+    function loadChildRetryContext4F4B(callback, force) {
+      if (
+        KIDLEARN_CHILD_RETRY_HOME_UI_4F4B.contextLoaded &&
+        !force
+      ) {
+        if (callback) callback();
+        return;
+      }
+
+      if (
+        KIDLEARN_CHILD_RETRY_HOME_UI_4F4B.contextLoading
+      ) {
+        if (callback) {
+          setTimeout(callback, 600);
+        }
+        return;
+      }
+
+      if (
+        typeof google === 'undefined' ||
+        !google.script ||
+        !google.script.run
+      ) {
+        KIDLEARN_CHILD_RETRY_HOME_UI_4F4B.contextLoaded = true;
+        KIDLEARN_CHILD_RETRY_HOME_UI_4F4B.context = {
+          success: true,
+          retryQueue: {
+            retryCount: 0,
+            items: [],
+            emptyState: {
+              show: true,
+              title: 'Chưa có bài cần làm lại',
+              message: 'Khi phụ huynh yêu cầu làm lại, bài sẽ xuất hiện ở đây.'
+            }
+          }
+        };
+
+        if (callback) callback();
+        return;
+      }
+
+      KIDLEARN_CHILD_RETRY_HOME_UI_4F4B.contextLoading = true;
+
+      google.script.run
+        .withSuccessHandler(function (context) {
+          KIDLEARN_CHILD_RETRY_HOME_UI_4F4B.contextLoading = false;
+          KIDLEARN_CHILD_RETRY_HOME_UI_4F4B.contextLoaded = true;
+          KIDLEARN_CHILD_RETRY_HOME_UI_4F4B.context = context || {};
+
+          if (callback) callback();
+        })
+        .withFailureHandler(function (error) {
+          KIDLEARN_CHILD_RETRY_HOME_UI_4F4B.contextLoading = false;
+          KIDLEARN_CHILD_RETRY_HOME_UI_4F4B.contextLoaded = true;
+          KIDLEARN_CHILD_RETRY_HOME_UI_4F4B.context = {
+            success: false,
+            errorMessage:
+              error && error.message
+                ? error.message
+                : String(error || 'Không đọc được bài cần làm lại.')
+          };
+
+          if (callback) callback();
+        })
+        .kidlearnV3_getChildRetryContext4F4AV3({
+          childId: 'CHD_V2_CHILD_DEFAULT',
+          limit: 20
+        });
+    }
+
+    function findChildHomeTarget4F4B() {
+      var selectors = [
+        '.kl-child-home-grid',
+        '.kl-home-grid',
+        '.kl-dashboard-grid',
+        '.kl-course-grid',
+        '.kl-product-home',
+        '.kl-page-content',
+        '.kl-main-content',
+        'main',
+        '#app'
+      ];
+
+      for (var i = 0; i < selectors.length; i++) {
+        var el =
+          document.querySelector(selectors[i]);
+
+        if (el) return el;
+      }
+
+      return document.body;
+    }
+
+    function ensureChildRetryHomeCard4F4B() {
+      if (!isLikelyChildView4F4B()) {
+        return;
+      }
+
+      loadChildRetryContext4F4B(function () {
+        var context =
+          KIDLEARN_CHILD_RETRY_HOME_UI_4F4B.context || {};
+
+        if (!context.success) {
+          return;
+        }
+
+        var retryQueue =
+          context.retryQueue || {};
+
+        if (!retryQueue.retryCount || retryQueue.retryCount <= 0) {
+          removeChildRetryEntry4F4B();
+          return;
+        }
+
+        renderChildRetryHomeCard4F4B(context);
+      });
+    }
+
+    function removeChildRetryEntry4F4B() {
+      var existing =
+        document.querySelector('.kl-child-retry-entry-4f4b');
+
+      if (existing && existing.parentNode) {
+        existing.parentNode.removeChild(existing);
+      }
+    }
+
+    function renderChildRetryHomeCard4F4B(context) {
+      var target =
+        findChildHomeTarget4F4B();
+
+      if (!target) return;
+
+      var existing =
+        document.querySelector('.kl-child-retry-entry-4f4b');
+
+      var retryQueue =
+        context.retryQueue || {};
+
+      var retryCount =
+        Number(retryQueue.retryCount || 0);
+
+      var firstItem =
+        retryQueue.items && retryQueue.items.length
+          ? retryQueue.items[0]
+          : null;
+
+      var subtitle =
+        firstItem && firstItem.uiText
+          ? firstItem.uiText.subtitle
+          : 'Có bài viết tay cần làm lại';
+
+      var reason =
+        firstItem && firstItem.uiText
+          ? firstItem.uiText.reason
+          : 'Phụ huynh yêu cầu bé làm lại bài này.';
+
+      var html =
+        '<div class="kl-child-retry-entry-inner-4f4b">' +
+          '<div class="kl-child-retry-icon-4f4b">✍️</div>' +
+          '<div class="kl-child-retry-content-4f4b">' +
+            '<div class="kl-child-retry-badge-4f4b">' +
+              escapeHtml4F4B(retryCount) + ' bài cần làm lại' +
+            '</div>' +
+            '<h3>Bài cần làm lại</h3>' +
+            '<p>' + escapeHtml4F4B(subtitle) + '</p>' +
+            '<small>' + escapeHtml4F4B(reason) + '</small>' +
+          '</div>' +
+          '<button type="button" class="kl-child-retry-open-4f4b" data-action="open-child-retry-panel-4f4b">' +
+            'Xem bài cần làm lại' +
+          '</button>' +
+        '</div>';
+
+      if (!existing) {
+        existing =
+          document.createElement('section');
+
+        existing.className =
+          'kl-child-retry-entry-4f4b';
+
+        existing.setAttribute(
+          'data-phase',
+          '4F-4B'
+        );
+
+        existing.innerHTML = html;
+
+        if (target.firstChild) {
+          target.insertBefore(existing, target.firstChild);
+        } else {
+          target.appendChild(existing);
+        }
+      } else {
+        existing.innerHTML = html;
+      }
+    }
+
+    function openChildRetryPanel4F4B() {
+      loadChildRetryContext4F4B(function () {
+        var context =
+          KIDLEARN_CHILD_RETRY_HOME_UI_4F4B.context || {};
+
+        renderChildRetryPanel4F4B(context);
+      }, true);
+    }
+
+    function renderChildRetryPanel4F4B(context) {
+      closeChildRetryPanel4F4B();
+
+      var overlay =
+        document.createElement('div');
+
+      overlay.className =
+        'kl-child-retry-panel-overlay-4f4b';
+
+      overlay.setAttribute(
+        'data-phase',
+        '4F-4B'
+      );
+
+      var retryQueue =
+        context.retryQueue || {};
+
+      var items =
+        retryQueue.items || [];
+
+      var bodyHtml = '';
+
+      if (!context.success) {
+        bodyHtml =
+          '<div class="kl-child-retry-empty-4f4b">' +
+            '<h4>Chưa mở được danh sách</h4>' +
+            '<p>' + escapeHtml4F4B(context.errorMessage || 'Vui lòng thử lại sau.') + '</p>' +
+          '</div>';
+      } else if (!items.length) {
+        bodyHtml =
+          '<div class="kl-child-retry-empty-4f4b">' +
+            '<h4>Chưa có bài cần làm lại</h4>' +
+            '<p>Khi phụ huynh yêu cầu làm lại, bài sẽ xuất hiện ở đây.</p>' +
+          '</div>';
+      } else {
+        bodyHtml =
+          '<div class="kl-child-retry-list-4f4b">' +
+            items.map(renderRetryItem4F4B).join('') +
+          '</div>';
+      }
+
+      overlay.innerHTML =
+        '<div class="kl-child-retry-panel-4f4b" role="dialog" aria-modal="true">' +
+          '<div class="kl-child-retry-panel-head-4f4b">' +
+            '<div>' +
+              '<div class="kl-child-retry-badge-4f4b">4F-4B Read-only</div>' +
+              '<h3>Bài cần làm lại</h3>' +
+              '<p>Bé xem danh sách bài phụ huynh yêu cầu làm lại.</p>' +
+            '</div>' +
+            '<button type="button" class="kl-child-retry-close-4f4b" data-action="close-child-retry-panel-4f4b">×</button>' +
+          '</div>' +
+          bodyHtml +
+        '</div>';
+
+      document.body.appendChild(overlay);
+
+      KIDLEARN_CHILD_RETRY_HOME_UI_4F4B.panelOpen = true;
+    }
+
+    function renderRetryItem4F4B(item) {
+      item = item || {};
+
+      var uiText =
+        item.uiText || {};
+
+      return (
+        '<article class="kl-child-retry-card-4f4b" ' +
+          'data-response-id="' + escapeHtml4F4B(item.responseId || '') + '" ' +
+          'data-lesson-id="' + escapeHtml4F4B(item.lessonId || '') + '">' +
+
+          '<div class="kl-child-retry-card-main-4f4b">' +
+            '<div class="kl-child-retry-badge-4f4b">' +
+              escapeHtml4F4B(item.reviewStatus || 'REVIEWED_RETRY') +
+            '</div>' +
+            '<h4>' + escapeHtml4F4B(uiText.title || 'Bài cần làm lại') + '</h4>' +
+            '<p>' + escapeHtml4F4B(uiText.subtitle || item.lessonTitle || '') + '</p>' +
+            '<small>' + escapeHtml4F4B(uiText.reason || 'Phụ huynh yêu cầu bé làm lại bài này.') + '</small>' +
+          '</div>' +
+
+          '<button type="button" class="kl-child-retry-open-4f4b" ' +
+            'data-action="open-retry-lesson-placeholder-4f4b" ' +
+            'data-response-id="' + escapeHtml4F4B(item.responseId || '') + '" ' +
+            'data-lesson-id="' + escapeHtml4F4B(item.lessonId || '') + '">' +
+            escapeHtml4F4B(uiText.buttonLabel || 'Làm lại bài này') +
+          '</button>' +
+
+          '<div class="kl-child-retry-note-4f4b">' +
+            '4F-4B: Nút này chưa mở lesson thật. Sẽ nối ở 4F-4C.' +
+          '</div>' +
+        '</article>'
+      );
+    }
+
+    function closeChildRetryPanel4F4B() {
+      var existing =
+        document.querySelector('.kl-child-retry-panel-overlay-4f4b');
+
+      if (existing && existing.parentNode) {
+        existing.parentNode.removeChild(existing);
+      }
+
+      KIDLEARN_CHILD_RETRY_HOME_UI_4F4B.panelOpen = false;
+    }
+
+    function showRetryRoutingPlaceholder4F4B(button) {
+      var card =
+        button.closest('.kl-child-retry-card-4f4b');
+
+      if (!card) return;
+
+      var note =
+        card.querySelector('.kl-child-retry-note-4f4b');
+
+      var lessonId =
+        button.getAttribute('data-lesson-id') || '';
+
+      if (note) {
+        note.innerHTML =
+          '<strong>Đã chọn bài làm lại.</strong><br>' +
+          'Lesson ID: ' + escapeHtml4F4B(lessonId) + '<br>' +
+          '4F-4C sẽ mở Lesson Player thật.';
+      }
+    }
+
+    document.addEventListener(
+      'click',
+      function (event) {
+        var actionEl =
+          event.target.closest('[data-action]');
+
+        if (!actionEl) return;
+
+        var action =
+          actionEl.getAttribute('data-action');
+
+        if (action === 'open-child-retry-panel-4f4b') {
+          event.preventDefault();
+          event.stopPropagation();
+          openChildRetryPanel4F4B();
+          return;
+        }
+
+        if (action === 'close-child-retry-panel-4f4b') {
+          event.preventDefault();
+          event.stopPropagation();
+          closeChildRetryPanel4F4B();
+          return;
+        }
+
+        if (action === 'open-retry-lesson-placeholder-4f4b') {
+          event.preventDefault();
+          event.stopPropagation();
+          showRetryRoutingPlaceholder4F4B(actionEl);
+          return;
+        }
+      },
+      true
+    );
+
+    function scheduleEnsureChildRetryHomeCard4F4B(force) {
+      if (force) {
+        KIDLEARN_CHILD_RETRY_HOME_UI_4F4B.contextLoaded = false;
+      }
+
+      if (
+        KIDLEARN_CHILD_RETRY_HOME_UI_4F4B.injectTimer
+      ) {
+        return;
+      }
+
+      KIDLEARN_CHILD_RETRY_HOME_UI_4F4B.injectTimer =
+        setTimeout(function () {
+          KIDLEARN_CHILD_RETRY_HOME_UI_4F4B.injectTimer = null;
+          ensureChildRetryHomeCard4F4B();
+        }, 700);
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener(
+        'DOMContentLoaded',
+        function () {
+          scheduleEnsureChildRetryHomeCard4F4B(false);
+        }
+      );
+    } else {
+      scheduleEnsureChildRetryHomeCard4F4B(false);
+    }
+
+    var observer4F4B =
+      new MutationObserver(function () {
+        scheduleEnsureChildRetryHomeCard4F4B(false);
+      });
+
+    observer4F4B.observe(
+      document.documentElement,
+      {
+        childList: true,
+        subtree: true
+      }
+    );
+
+    window.ensureChildRetryHomeCard4F4B =
+      ensureChildRetryHomeCard4F4B;
+
+    window.renderChildRetryHomeCard4F4B =
+      renderChildRetryHomeCard4F4B;
+
+    window.openChildRetryPanel4F4B =
+      openChildRetryPanel4F4B;
+
+    window.refreshChildRetryHomeCard4F4B = function () {
+      scheduleEnsureChildRetryHomeCard4F4B(true);
+    };
+  })();
+</script>

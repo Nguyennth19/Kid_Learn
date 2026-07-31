@@ -1,0 +1,532 @@
+<script>
+  /**
+   * KIDLEARN_LESSON_INTERACTION_DRY_RUN_4C5
+   * Phase 4C-5 — Lesson Activity Interaction Dry-run
+   */
+
+  (function () {
+    var KIDLEARN_LESSON_INTERACTION_DRY_RUN_4C5 = {
+      phase: '4C-5',
+      mode: 'DRY_RUN_ONLY',
+      marker: 'KIDLEARN_LESSON_INTERACTION_DRY_RUN_4C5'
+    };
+
+    window.KIDLEARN_LESSON_INTERACTION_DRY_RUN_4C5 =
+      KIDLEARN_LESSON_INTERACTION_DRY_RUN_4C5;
+
+    function escapeHtml4C5(value) {
+      return String(value === null || value === undefined ? '' : value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function normalizeText4C5(value) {
+      return String(value || '')
+        .trim()
+        .toUpperCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/\s+/g, '')
+        .replace(/-/g, '_');
+    }
+
+    function resolveSubjectKeyFromLesson4C5(lessonId) {
+      var text =
+        normalizeText4C5(lessonId);
+
+      if (text.indexOf('TV_') >= 0 || text.indexOf('VIET') >= 0) {
+        return 'VIETNAMESE';
+      }
+
+      if (text.indexOf('ENG_') >= 0 || text.indexOf('ENGLISH') >= 0) {
+        return 'ENGLISH';
+      }
+
+      if (text.indexOf('SCI_') >= 0 || text.indexOf('SCIENCE') >= 0) {
+        return 'SCIENCE';
+      }
+
+      return 'MATH';
+    }
+
+    function parseLessonIdFromActivityId4C5(activityId) {
+      activityId =
+        String(activityId || '');
+
+      var index =
+        activityId.indexOf('_ACT_');
+
+      if (index > 0) {
+        return activityId.substring(0, index);
+      }
+
+      return '';
+    }
+
+    function getCurrentLessonId4C5(activityId) {
+      var lessonId =
+        parseLessonIdFromActivityId4C5(activityId);
+
+      if (lessonId) return lessonId;
+
+      var breadcrumb =
+        document.querySelector('.kl-lesson-breadcrumb-4c4');
+
+      if (breadcrumb) {
+        return String(breadcrumb.textContent || '').trim();
+      }
+
+      return '';
+    }
+
+    function detectAnswerMode4C5(activityCard) {
+      if (!activityCard) return 'UNKNOWN';
+
+      var answerModeEl =
+        activityCard.querySelector('[data-answer-mode]');
+
+      if (answerModeEl) {
+        return String(
+          answerModeEl.getAttribute('data-answer-mode') || 'UNKNOWN'
+        ).trim().toUpperCase();
+      }
+
+      if (activityCard.querySelector('.kl-answer-options-4c4')) {
+        return 'MULTIPLE_CHOICE';
+      }
+
+      if (activityCard.querySelector('.kl-button-input-wrap-4c4')) {
+        return 'BUTTON_INPUT';
+      }
+
+      if (activityCard.querySelector('.kl-text-input-wrap-4c4')) {
+        return 'TEXT_INPUT';
+      }
+
+      if (activityCard.querySelector('.kl-handwriting-wrap-4c4')) {
+        return 'HANDWRITE_INPUT';
+      }
+
+      return 'UNKNOWN';
+    }
+
+    function canvasHasInk4C5(canvas) {
+      if (!canvas) return false;
+
+      try {
+        var ctx =
+          canvas.getContext('2d');
+
+        var data =
+          ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+
+        for (var i = 0; i < data.length; i += 4) {
+          var r = data[i];
+          var g = data[i + 1];
+          var b = data[i + 2];
+          var a = data[i + 3];
+
+          if (a > 0 && !(r > 245 && g > 245 && b > 245)) {
+            return true;
+          }
+        }
+      } catch (error) {
+        return false;
+      }
+
+      return false;
+    }
+
+    function collectAnswerPayload4C5(activityId) {
+      activityId =
+        String(activityId || '');
+
+      var activityCard =
+        document.querySelector(
+          '.kl-activity-card-4c4[data-activity-id="' +
+          activityId.replace(/"/g, '\\"') +
+          '"]'
+        );
+
+      if (!activityCard) {
+        activityCard =
+          document.querySelector('.kl-activity-card-4c4');
+      }
+
+      var answerMode =
+        detectAnswerMode4C5(activityCard);
+
+      var answerText = '';
+      var selectedOptionId = '';
+      var selectedOptionLabel = '';
+      var answerMeta = {};
+      var canvasHasInk = false;
+      var canvasDataUrlLength = 0;
+
+      if (answerMode === 'MULTIPLE_CHOICE') {
+        var selected =
+          activityCard
+            ? activityCard.querySelector('.kl-answer-option-4c4.is-selected')
+            : null;
+
+        if (selected) {
+          selectedOptionId =
+            selected.getAttribute('data-option-id') || '';
+
+          selectedOptionLabel =
+            selected.getAttribute('data-option-label') ||
+            selected.textContent ||
+            '';
+
+          answerText =
+            selectedOptionLabel;
+        }
+      }
+
+      if (answerMode === 'BUTTON_INPUT') {
+        var display =
+          document.getElementById('buttonAnswerDisplay4C4');
+
+        answerText =
+          display
+            ? String(display.textContent || '').trim()
+            : '';
+
+        if (
+          answerText === 'Con bấm nút để nhập đáp án'
+        ) {
+          answerText = '';
+        }
+      }
+
+      if (answerMode === 'TEXT_INPUT') {
+        var textInput =
+          document.getElementById('textAnswer4C4');
+
+        answerText =
+          textInput
+            ? String(textInput.value || '').trim()
+            : '';
+      }
+
+      if (answerMode === 'HANDWRITE_INPUT') {
+        var canvas =
+          document.getElementById('lessonHandwritingCanvas4C4');
+
+        canvasHasInk =
+          canvasHasInk4C5(canvas);
+
+        try {
+          canvasDataUrlLength =
+            canvas && canvas.toDataURL
+              ? String(canvas.toDataURL('image/png') || '').length
+              : 0;
+        } catch (error) {
+          canvasDataUrlLength = 0;
+        }
+
+        answerText =
+          canvasHasInk
+            ? '[HANDWRITING_CANVAS_DRY_RUN]'
+            : '';
+
+        answerMeta = {
+          canvasHasInk: canvasHasInk,
+          canvasDataUrlLength: canvasDataUrlLength,
+          note:
+            '4C-5 does not upload or store handwriting image.'
+        };
+      }
+
+      var lessonId =
+        getCurrentLessonId4C5(activityId);
+
+      var subjectCode =
+        resolveSubjectKeyFromLesson4C5(lessonId);
+
+      return {
+        childId: 'CHD_V2_CHILD_DEFAULT',
+        lessonId: lessonId,
+        activityId: activityId,
+        subjectCode: subjectCode,
+        answerMode: answerMode,
+        answerText: answerText,
+        selectedOptionId: selectedOptionId,
+        selectedOptionLabel: selectedOptionLabel,
+        canvasHasInk: canvasHasInk,
+        canvasDataUrlLength: canvasDataUrlLength,
+        answerMeta: answerMeta
+      };
+    }
+
+    function ensureDryRunBadge4C5() {
+      var player =
+        document.querySelector('.kl-lesson-player-4c4');
+
+      if (!player) return null;
+
+      var badge =
+        document.getElementById('lessonDryRunBadge4C5');
+
+      if (!badge) {
+        badge =
+          document.createElement('div');
+
+        badge.id =
+          'lessonDryRunBadge4C5';
+
+        badge.className =
+          'kl-dryrun-badge-4c5';
+
+        badge.textContent =
+          'Dry-run: chưa lưu dữ liệu thật';
+
+        player.insertBefore(badge, player.firstChild);
+      }
+
+      return badge;
+    }
+
+    function showDryRunFeedback4C5(message, type, detail) {
+      ensureDryRunBadge4C5();
+
+      var box =
+        document.getElementById('lessonFeedback4C4');
+
+      if (!box) {
+        var card =
+          document.querySelector('.kl-activity-card-4c4') ||
+          document.querySelector('.kl-lesson-step-card-4c4');
+
+        if (card) {
+          box =
+            document.createElement('div');
+
+          box.id =
+            'lessonFeedback4C4';
+
+          card.appendChild(box);
+        }
+      }
+
+      if (!box) return;
+
+      box.className =
+        'kl-lesson-feedback-4c4 kl-dryrun-feedback-4c5';
+
+      if (type === 'success') {
+        box.classList.add('is-success');
+      } else if (type === 'warning') {
+        box.classList.add('is-warning');
+      } else {
+        box.classList.add('is-info');
+      }
+
+      box.innerHTML =
+        '<strong>' +
+          escapeHtml4C5(message || 'Dry-run hoàn tất.') +
+        '</strong>' +
+        (
+          detail
+            ? '<span>' + escapeHtml4C5(detail) + '</span>'
+            : ''
+        );
+    }
+
+    function callDryRunServer4C5(functionName, payload, onSuccess) {
+      if (
+        typeof google === 'undefined' ||
+        !google.script ||
+        !google.script.run
+      ) {
+        showDryRunFeedback4C5(
+          'Không gọi được server dry-run.',
+          'warning',
+          'Thiếu google.script.run trong môi trường hiện tại.'
+        );
+        return;
+      }
+
+      google.script.run
+        .withSuccessHandler(function (response) {
+          if (onSuccess) {
+            onSuccess(response);
+          }
+        })
+        .withFailureHandler(function (error) {
+          showDryRunFeedback4C5(
+            'Dry-run chưa thành công.',
+            'warning',
+            error && error.message
+              ? error.message
+              : String(error || 'Unknown error')
+          );
+        })[functionName](payload || {});
+    }
+
+    function dryRunStartLesson4C5(lessonId) {
+      var subjectCode =
+        resolveSubjectKeyFromLesson4C5(lessonId);
+
+      callDryRunServer4C5(
+        'kidlearnV3_dryRunStartLesson4C5V3',
+        {
+          childId: 'CHD_V2_CHILD_DEFAULT',
+          lessonId: lessonId || '',
+          subjectCode: subjectCode
+        },
+        function () {
+          ensureDryRunBadge4C5();
+        }
+      );
+    }
+
+    function dryRunSaveAnswerDraft4C5(activityId) {
+      var payload =
+        collectAnswerPayload4C5(activityId);
+
+      callDryRunServer4C5(
+        'kidlearnV3_dryRunSaveAnswerDraft4C5V3',
+        payload,
+        function (response) {
+          showDryRunFeedback4C5(
+            response.childMessage || 'Đã nhận bản nháp dry-run.',
+            'info',
+            'Không ghi Google Sheet.'
+          );
+        }
+      );
+    }
+
+    function dryRunSubmitAnswer4C5(activityId) {
+      var payload =
+        collectAnswerPayload4C5(activityId);
+
+      callDryRunServer4C5(
+        'kidlearnV3_dryRunSubmitAnswer4C5V3',
+        payload,
+        function (response) {
+          showDryRunFeedback4C5(
+            response.childMessage || 'Đã gửi câu trả lời dry-run.',
+            response.success ? 'success' : 'warning',
+            'Không ghi DATA_Responses.'
+          );
+        }
+      );
+    }
+
+    function dryRunCompleteLesson4C5() {
+      var activityCard =
+        document.querySelector('.kl-activity-card-4c4');
+
+      var activityId =
+        activityCard
+          ? activityCard.getAttribute('data-activity-id') || ''
+          : '';
+
+      var lessonId =
+        getCurrentLessonId4C5(activityId);
+
+      var subjectCode =
+        resolveSubjectKeyFromLesson4C5(lessonId);
+
+      var steps =
+        document.querySelectorAll('.kl-lesson-step-card-4c4');
+
+      callDryRunServer4C5(
+        'kidlearnV3_dryRunCompleteLesson4C5V3',
+        {
+          childId: 'CHD_V2_CHILD_DEFAULT',
+          lessonId: lessonId || '',
+          subjectCode: subjectCode,
+          completedStepCount: steps ? steps.length : 0
+        },
+        function (response) {
+          showDryRunFeedback4C5(
+            response.childMessage || 'Hoàn thành dry-run.',
+            'success',
+            'Không ghi DATA_LessonProgress.'
+          );
+        }
+      );
+    }
+
+    document.addEventListener(
+      'click',
+      function (event) {
+        var actionEl =
+          event.target.closest('[data-action]');
+
+        if (!actionEl) return;
+
+        var action =
+          actionEl.getAttribute('data-action');
+
+        if (action === 'lesson-open-4c2') {
+          var lessonId =
+            actionEl.getAttribute('data-lesson-id') || '';
+
+          setTimeout(function () {
+            dryRunStartLesson4C5(lessonId);
+          }, 900);
+
+          return;
+        }
+
+        if (action === 'lesson-submit-demo-4c4') {
+          var activityId =
+            actionEl.getAttribute('data-activity-id') || '';
+
+          setTimeout(function () {
+            dryRunSubmitAnswer4C5(activityId);
+          }, 80);
+
+          return;
+        }
+
+        if (action === 'lesson-next-step-4c4') {
+          var currentActivity =
+            document.querySelector('.kl-activity-card-4c4');
+
+          if (currentActivity) {
+            dryRunSaveAnswerDraft4C5(
+              currentActivity.getAttribute('data-activity-id') || ''
+            );
+          }
+
+          return;
+        }
+
+        if (action === 'lesson-complete-demo-4c4') {
+          setTimeout(function () {
+            dryRunCompleteLesson4C5();
+          }, 80);
+
+          return;
+        }
+      },
+      true
+    );
+
+    window.collectAnswerPayload4C5 =
+      collectAnswerPayload4C5;
+
+    window.dryRunStartLesson4C5 =
+      dryRunStartLesson4C5;
+
+    window.dryRunSaveAnswerDraft4C5 =
+      dryRunSaveAnswerDraft4C5;
+
+    window.dryRunSubmitAnswer4C5 =
+      dryRunSubmitAnswer4C5;
+
+    window.dryRunCompleteLesson4C5 =
+      dryRunCompleteLesson4C5;
+
+    window.showDryRunFeedback4C5 =
+      showDryRunFeedback4C5;
+  })();
+</script>

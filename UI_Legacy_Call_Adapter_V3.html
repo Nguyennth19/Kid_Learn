@@ -1,0 +1,169 @@
+<script>
+/**
+ * ================================================================
+ * KIDLEARN V3 - LEGACY CALL ADAPTER CLIENT
+ * Step: 3I.8
+ * ================================================================
+ *
+ * File này dùng để thay các lệnh google.script.run cũ trong UI DEV.
+ *
+ * UI DEV gọi:
+ * - KidlearnV3LegacyCalls.getHome(...)
+ * - KidlearnV3LegacyCalls.getSubjects(...)
+ * - KidlearnV3LegacyCalls.getChildren(...)
+ * - KidlearnV3LegacyCalls.getAssignments(...)
+ */
+
+window.KidlearnV3LegacyCalls = (function() {
+  var SERVER = {
+    home: 'kidlearnV3_getHomeDataV3',
+    subjects: 'kidlearnV3_getSubjectsDataV3',
+    children: 'kidlearnV3_getChildrenDataV3',
+    assignments: 'kidlearnV3_getAssignmentsDataV3'
+  };
+
+  function callServer(functionName, request) {
+    return new Promise(function(resolve, reject) {
+      if (
+        !window.google ||
+        !google.script ||
+        !google.script.run
+      ) {
+        reject({
+          success: false,
+          message: 'google.script.run không khả dụng.'
+        });
+
+        return;
+      }
+
+      var runner =
+        google.script.run
+          .withSuccessHandler(function(response) {
+            resolve(response);
+          })
+          .withFailureHandler(function(error) {
+            reject({
+              success: false,
+              message:
+                error && error.message
+                  ? error.message
+                  : String(error || 'Unknown error')
+            });
+          });
+
+      runner[functionName](request || {});
+    });
+  }
+
+  function unwrap(response) {
+    if (!response) {
+      throw new Error('Response trống.');
+    }
+
+    if (response.success !== true) {
+      var message =
+        response.error && response.error.message
+          ? response.error.message
+          : 'Service trả về success=false.';
+
+      throw new Error(message);
+    }
+
+    return response.data || {};
+  }
+
+  function getHome(onSuccess, onError, request) {
+    return callAndHandle(
+      SERVER.home,
+      request || {},
+      onSuccess,
+      onError
+    );
+  }
+
+  function getSubjects(onSuccess, onError, request) {
+    return callAndHandle(
+      SERVER.subjects,
+      request || {},
+      onSuccess,
+      onError
+    );
+  }
+
+  function getChildren(onSuccess, onError, request) {
+    return callAndHandle(
+      SERVER.children,
+      request || {},
+      onSuccess,
+      onError
+    );
+  }
+
+  function getAssignments(onSuccess, onError, request) {
+    return callAndHandle(
+      SERVER.assignments,
+      request || {},
+      onSuccess,
+      onError
+    );
+  }
+
+  function callAndHandle(
+    functionName,
+    request,
+    onSuccess,
+    onError
+  ) {
+    return callServer(
+      functionName,
+      request || {}
+    )
+      .then(function(response) {
+        if (response.success !== true) {
+          throw new Error(
+            getResponseMessage(response)
+          );
+        }
+
+        if (typeof onSuccess === 'function') {
+          onSuccess(
+            response.data || {},
+            response
+          );
+        }
+
+        return response;
+      })
+      .catch(function(error) {
+        if (typeof onError === 'function') {
+          onError(error);
+          return null;
+        }
+
+        throw error;
+      });
+  }
+
+  function getResponseMessage(response) {
+    if (
+      response &&
+      response.error &&
+      response.error.message
+    ) {
+      return response.error.message;
+    }
+
+    return 'Không rõ lỗi từ server.';
+  }
+
+  return {
+    callServer: callServer,
+    unwrap: unwrap,
+    getHome: getHome,
+    getSubjects: getSubjects,
+    getChildren: getChildren,
+    getAssignments: getAssignments
+  };
+})();
+</script>

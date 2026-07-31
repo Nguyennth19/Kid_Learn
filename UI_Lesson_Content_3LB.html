@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f5f7fb;
+      color: #111827;
+    }
+
+    .app {
+      padding: 18px;
+    }
+
+    .header {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 16px 18px;
+      box-shadow: 0 1px 5px rgba(0,0,0,0.08);
+      margin-bottom: 16px;
+    }
+
+    .title {
+      font-size: 24px;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+
+    .subtitle {
+      color: #6b7280;
+      font-size: 13px;
+    }
+
+    .toolbar {
+      margin-top: 14px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      border: 0;
+      border-radius: 10px;
+      padding: 9px 12px;
+      cursor: pointer;
+      background: #2563eb;
+      color: #ffffff;
+      font-weight: 700;
+    }
+
+    button.secondary {
+      background: #6b7280;
+    }
+
+    button.safe {
+      background: #059669;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr 330px;
+      gap: 16px;
+    }
+
+    .panel {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 1px 5px rgba(0,0,0,0.08);
+    }
+
+    .lesson-title {
+      font-size: 22px;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+
+    .meta {
+      color: #6b7280;
+      font-size: 13px;
+      margin-bottom: 12px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: #ecfeff;
+      color: #155e75;
+      font-size: 12px;
+      margin-right: 5px;
+    }
+
+    .block {
+      border-left: 5px solid #2563eb;
+      background: #f9fafb;
+      border-radius: 14px;
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+
+    .block-title {
+      font-size: 17px;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    .block-body {
+      line-height: 1.55;
+      white-space: pre-wrap;
+    }
+
+    .activity {
+      margin-top: 10px;
+      border-left: 4px solid #9333ea;
+      background: #faf5ff;
+      border-radius: 12px;
+      padding: 10px;
+    }
+
+    .activity-title {
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .empty {
+      background: #f9fafb;
+      border-radius: 14px;
+      padding: 18px;
+      color: #6b7280;
+    }
+
+    .status {
+      white-space: pre-wrap;
+      background: #111827;
+      color: #e5e7eb;
+      border-radius: 14px;
+      padding: 12px;
+      font-size: 12px;
+      max-height: 300px;
+      overflow: auto;
+      margin-top: 16px;
+    }
+
+    .side-title {
+      font-weight: 800;
+      margin-bottom: 10px;
+    }
+
+    .small {
+      font-size: 12px;
+      color: #6b7280;
+    }
+
+    .toc-item {
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 9px;
+      margin-bottom: 8px;
+      cursor: pointer;
+    }
+
+    .toc-item:hover {
+      background: #f3f4f6;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <div class="header">
+      <div class="title">KIDLEARN V3 - Lesson Content 3L-B</div>
+      <div class="subtitle">
+        Optimized read-only lesson content renderer.
+      </div>
+
+      <div class="toolbar">
+        <button onclick="loadPayload()">Refresh</button>
+        <button class="secondary" onclick="preview3LB()">Preview</button>
+        <button class="secondary" onclick="status3LB()">Status</button>
+        <button class="safe" onclick="smoke3LB()">Smoke Test</button>
+        <button class="safe" onclick="markReady3LB()">Mark Ready</button>
+      </div>
+    </div>
+
+    <div class="layout">
+      <div class="panel">
+        <div id="lesson"></div>
+        <div id="blocks"></div>
+      </div>
+
+      <div class="panel">
+        <div class="side-title">Mục lục</div>
+        <div id="toc"></div>
+
+        <hr>
+
+        <div class="side-title">Diagnostics</div>
+        <div id="diagnostics" class="small"></div>
+      </div>
+    </div>
+
+    <div id="status" class="status">Loading...</div>
+  </div>
+
+  <?!= kidlearnV3_uiInclude_('UI_Lesson_Content_3LB_Client_V3'); ?>
+
+  <script>
+    var currentPayload = null;
+
+    function setStatus(value) {
+      document.getElementById('status').textContent =
+        typeof value === 'string'
+          ? value
+          : JSON.stringify(value, null, 2);
+    }
+
+    function showError(error) {
+      setStatus({
+        success: false,
+        error: error && error.message ? error.message : String(error)
+      });
+    }
+
+    function loadPayload() {
+      setStatus('Loading Lesson Content 3L-B...');
+
+      KidlearnV3LessonContent3LB
+        .getPayload({})
+        .then(function(payload) {
+          currentPayload = payload;
+          render(payload);
+          setStatus(payload);
+        })
+        .catch(showError);
+    }
+
+    function render(payload) {
+      renderLesson(payload);
+      renderBlocks(payload);
+      renderToc(payload);
+      renderDiagnostics(payload);
+    }
+
+    function renderLesson(payload) {
+      var lesson = payload.lesson || {};
+      var el = document.getElementById('lesson');
+
+      el.innerHTML =
+        '<span class="badge">READ ONLY</span>' +
+        '<span class="badge">3L-B</span>' +
+        '<span class="badge">' +
+          escapeHtml(String(lesson.estimatedMinutes || 0)) +
+          ' phút</span>' +
+        '<div class="lesson-title">' +
+          escapeHtml(lesson.lessonTitle || lesson.lessonId || 'Bài học') +
+        '</div>' +
+        '<div class="meta">Lesson ID: ' +
+          escapeHtml(lesson.lessonId || '-') +
+        '</div>';
+    }
+
+    function renderBlocks(payload) {
+      var blocks = payload.blocks || [];
+      var el = document.getElementById('blocks');
+
+      if (!blocks.length) {
+        el.innerHTML =
+          '<div class="empty">' +
+          escapeHtml(
+            payload.emptyState && payload.emptyState.message
+              ? payload.emptyState.message
+              : 'Chưa có nội dung bài học.'
+          ) +
+          '</div>';
+        return;
+      }
+
+      el.innerHTML =
+        blocks.map(function(block, index) {
+          var activities = block.activities || [];
+
+          return (
+            '<div class="block" id="block_' + index + '">' +
+              '<div class="block-title">' +
+                escapeHtml(block.title || block.blockType || 'Nội dung') +
+              '</div>' +
+              '<div class="meta">' +
+                escapeHtml(block.blockType || '') +
+                ' · order ' +
+                escapeHtml(String(block.displayOrder || index + 1)) +
+              '</div>' +
+              '<div class="block-body">' +
+                escapeHtml(block.body || '') +
+              '</div>' +
+              activities.map(function(activity) {
+                return (
+                  '<div class="activity">' +
+                    '<div class="activity-title">' +
+                      escapeHtml(activity.activityType || 'Activity') +
+                    '</div>' +
+                    '<div>' +
+                      escapeHtml(activity.prompt || '') +
+                    '</div>' +
+                    '<div class="small">READ ONLY preview. Interaction nối ở 3L-C.</div>' +
+                  '</div>'
+                );
+              }).join('') +
+            '</div>'
+          );
+        }).join('');
+    }
+
+    function renderToc(payload) {
+      var blocks = payload.blocks || [];
+      var el = document.getElementById('toc');
+
+      if (!blocks.length) {
+        el.innerHTML =
+          '<div class="small">Chưa có mục lục.</div>';
+        return;
+      }
+
+      el.innerHTML =
+        blocks.map(function(block, index) {
+          return (
+            '<div class="toc-item" onclick="scrollToBlock(' + index + ')">' +
+              '<b>' + escapeHtml(String(index + 1)) + '.</b> ' +
+              escapeHtml(block.title || block.blockType || 'Block') +
+              '<br><span class="small">' +
+              escapeHtml(block.blockType || '') +
+              '</span>' +
+            '</div>'
+          );
+        }).join('');
+    }
+
+    function renderDiagnostics(payload) {
+      var d = payload.diagnostics || {};
+      document.getElementById('diagnostics').innerHTML =
+        'Lessons: ' + escapeHtml(String(d.lessonsCount || 0)) + '<br>' +
+        'Blocks: ' + escapeHtml(String(d.lessonBlocksCount || 0)) + '<br>' +
+        'Activities: ' + escapeHtml(String(d.activitiesCount || 0)) + '<br>' +
+        'Renderable: ' + escapeHtml(String(d.renderableBlockCount || 0));
+    }
+
+    function scrollToBlock(index) {
+      var el = document.getElementById('block_' + index);
+      if (el) {
+        el.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        });
+      }
+    }
+
+    function preview3LB() {
+      KidlearnV3LessonContent3LB
+        .preview()
+        .then(setStatus)
+        .catch(showError);
+    }
+
+    function status3LB() {
+      KidlearnV3LessonContent3LB
+        .status()
+        .then(setStatus)
+        .catch(showError);
+    }
+
+    function smoke3LB() {
+      KidlearnV3LessonContent3LB
+        .smokeTest()
+        .then(setStatus)
+        .catch(showError);
+    }
+
+    function markReady3LB() {
+      KidlearnV3LessonContent3LB
+        .markReady()
+        .then(setStatus)
+        .catch(showError);
+    }
+
+    function escapeHtml(value) {
+      return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    loadPayload();
+  </script>
+</body>
+</html>

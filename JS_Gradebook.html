@@ -1,0 +1,218 @@
+<!-- 
+  File: JS_Gradebook.html
+  Mô tả: Controller xử lý nghiệp vụ cho trang Bảng Điểm. Tích hợp Chart.js
+-->
+<!-- Nhúng thư viện Chart.js qua CDN để vẽ biểu đồ -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+const GradebookController = {
+  
+  pieChartInstance: null,
+  lineChartInstance: null,
+
+  // Từ điển Icon và Màu sắc tương ứng với tên môn học
+  subjectTheme: {
+    "Toán học": { icon: "📗", color: "text-green-600" },
+    "Tiếng Việt": { icon: "📕", color: "text-red-500" },
+    "Tiếng Anh": { icon: "🔠", color: "text-blue-500" },
+    "Khoa học": { icon: "🔬", color: "text-indigo-500" },
+    "Lịch sử & Địa lý": { icon: "🌐", color: "text-purple-500" },
+    "Âm nhạc": { icon: "🎵", color: "text-pink-500" },
+    "Mỹ thuật": { icon: "🎨", color: "text-teal-500" },
+    "Thể dục": { icon: "🏃", color: "text-orange-500" },
+    "Default": { icon: "📘", color: "text-slate-600" }
+  },
+
+  /**
+   * Khởi tạo và gọi API lấy dữ liệu
+   */
+  init: function() {
+    this.fetchData();
+  },
+
+  fetchData: async function() {
+    const token = AuthService.getToken();
+    if (!token) return;
+
+    // Reset Table UI to Loading
+    document.getElementById('gb-table-body').innerHTML = `
+      <tr>
+        <td colspan="7" class="p-12 text-center">
+          <div class="loader-spinner !border-indigo-500 mb-3"></div>
+          <p class="text-slate-500 font-medium text-sm">Đang tải bảng điểm...</p>
+        </td>
+      </tr>`;
+
+    try {
+      const sem = document.getElementById('gb-filter-semester').value;
+      const year = document.getElementById('gb-filter-year').value;
+
+      const payload = { token: token, semester: sem, year: year };
+      const response = await NetworkService.call('api_getGradebookData', payload);
+      
+      const data = response.data;
+      this.renderTable(data.scores);
+      this.renderSummary(data.summary);
+      this.renderCharts(data);
+      
+    } catch (err) {
+      console.error("[Gradebook] Fetch Error:", err);
+      document.getElementById('gb-table-body').innerHTML = `
+        <tr><td colspan="7" class="p-8 text-center text-red-500 font-medium">Lỗi tải dữ liệu: ${err.message}</td></tr>`;
+    }
+  },
+
+  /**
+   * Render bảng điểm chi tiết
+   */
+  renderTable: function(scores) {
+    const tbody = document.getElementById('gb-table-body');
+    tbody.innerHTML = '';
+
+    if (!scores || scores.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-slate-500">Chưa có dữ liệu điểm số cho học kỳ này.</td></tr>`;
+      return;
+    }
+
+    scores.forEach((item, index) => {
+      // Nhận diện Icon theo tên môn
+      const theme = this.subjectTheme[item.subject] || this.subjectTheme["Default"];
+      
+      // Xử lý Badge Đánh giá (Màu sắc)
+      let evalBadge = '';
+      const evalText = (item.evaluation || "").trim();
+      const evalLower = evalText.toLowerCase();
+      
+      if (evalLower === "xuất sắc") evalBadge = `<span class="bg-purple-100 text-purple-700 border border-purple-200 px-3 py-1 rounded-lg text-xs font-bold flex items-center gap-1 justify-center mx-auto w-max">${evalText} 🤩</span>`;
+      else if (evalLower === "tốt") evalBadge = `<span class="bg-green-100 text-green-700 border border-green-200 px-3 py-1 rounded-lg text-xs font-bold flex items-center gap-1 justify-center mx-auto w-max">${evalText} 😀</span>`;
+      else if (evalLower === "khá") evalBadge = `<span class="bg-blue-100 text-blue-700 border border-blue-200 px-3 py-1 rounded-lg text-xs font-bold flex items-center gap-1 justify-center mx-auto w-max">${evalText} 🙂</span>`;
+      else if (evalLower === "đạt") evalBadge = `<span class="bg-yellow-100 text-yellow-700 border border-yellow-200 px-3 py-1 rounded-lg text-xs font-bold flex items-center gap-1 justify-center mx-auto w-max">${evalText} 😐</span>`;
+      else evalBadge = `<span class="bg-red-100 text-red-700 border border-red-200 px-3 py-1 rounded-lg text-xs font-bold flex items-center gap-1 justify-center mx-auto w-max">${evalText || "Chưa có"}</span>`;
+
+      // Tạo Row HTML
+      const tr = document.createElement('tr');
+      tr.className = "hover:bg-indigo-50/30 transition-colors text-center text-sm font-medium text-slate-700";
+      tr.innerHTML = `
+        <td class="p-4 text-slate-400">${index + 1}</td>
+        <td class="p-4 text-left flex items-center gap-3">
+          <span class="text-xl">${theme.icon}</span> 
+          <span class="font-bold text-slate-800">${item.subject}</span>
+        </td>
+        <td class="p-4">${item.scoreProcess || '-'}</td>
+        <td class="p-4">${item.scoreQuiz || '-'}</td>
+        <td class="p-4">${item.scoreTest || '-'}</td>
+        <td class="p-4 border-l border-slate-100 bg-slate-50/50 font-extrabold ${theme.color} text-base">${item.scoreFinal || '-'}</td>
+        <td class="p-4">${evalBadge}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  },
+
+  /**
+   * Render dòng Tổng kết (Footer bảng)
+   */
+  renderSummary: function(summary) {
+    document.getElementById('gb-avg-score').textContent = summary.average || "--";
+    document.getElementById('gb-avg-grade').textContent = summary.grade || "--";
+    document.getElementById('gb-pie-avg').textContent = summary.average || "--";
+  },
+
+  /**
+   * Dùng Chart.js để vẽ 2 biểu đồ
+   */
+  renderCharts: function(data) {
+    // 1. Dọn dẹp Canvas cũ (Cần thiết cho SPA để tránh lỗi "Canvas is already in use")
+    if (this.pieChartInstance) this.pieChartInstance.destroy();
+    if (this.lineChartInstance) this.lineChartInstance.destroy();
+
+    const stats = data.summary.stats;
+    const chartData = [stats.xuatSac, stats.tot, stats.kha, stats.dat, stats.chuaDat];
+    const chartColors = ['#a855f7', '#22c55e', '#3b82f6', '#facc15', '#ef4444']; // Purple, Green, Blue, Yellow, Red
+
+    // Render Legend Text UI
+    const legendEl = document.getElementById('gb-pie-legend');
+    legendEl.innerHTML = `
+      <li class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-purple-500"></span> Xuất sắc (${stats.xuatSac})</li>
+      <li class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-green-500"></span> Tốt (${stats.tot})</li>
+      <li class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span> Khá (${stats.kha})</li>
+      <li class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-yellow-400"></span> Đạt (${stats.dat})</li>
+      <li class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-red-500"></span> Chưa đạt (${stats.chuaDat})</li>
+    `;
+
+    // Biểu đồ Pie (Donut)
+    const ctxPie = document.getElementById('gb-pie-chart').getContext('2d');
+    this.pieChartInstance = new Chart(ctxPie, {
+      type: 'doughnut',
+      data: {
+        labels: ['Xuất sắc', 'Tốt', 'Khá', 'Đạt', 'Chưa đạt'],
+        datasets: [{
+          data: chartData,
+          backgroundColor: chartColors,
+          borderWidth: 0,
+          cutout: '75%' // Tạo khoảng trống ở giữa để điền số
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false }, // Ẩn legend mặc định, dùng legend tự tạo bằng HTML
+          tooltip: {
+            callbacks: { label: function(context) { return " " + context.label + ": " + context.raw + " môn"; } }
+          }
+        }
+      }
+    });
+
+    // Biểu đồ Line (Tiến bộ)
+    const progData = data.progressHistory;
+    const ctxLine = document.getElementById('gb-line-chart').getContext('2d');
+    
+    // Tạo màu Gradient cho Line Chart
+    let gradient = ctxLine.createLinearGradient(0, 0, 0, 400);
+    gradient.addColorStop(0, 'rgba(34, 197, 94, 0.2)'); // green-500 nhạt
+    gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+
+    this.lineChartInstance = new Chart(ctxLine, {
+      type: 'line',
+      data: {
+        labels: progData.labels,
+        datasets: [{
+          label: 'Điểm Trung Bình',
+          data: progData.data,
+          borderColor: '#22c55e', // green-500
+          backgroundColor: gradient,
+          borderWidth: 3,
+          pointBackgroundColor: '#ffffff',
+          pointBorderColor: '#22c55e',
+          pointBorderWidth: 2,
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          fill: true,
+          tension: 0.4 // Làm cong đường nét
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { 
+            beginAtZero: false, 
+            min: 5, 
+            max: 10,
+            grid: { color: '#f1f5f9', drawBorder: false }, // slate-100
+            ticks: { font: { size: 10 }, color: '#94a3b8' } 
+          },
+          x: { 
+            grid: { display: false, drawBorder: false },
+            ticks: { font: { size: 10 }, color: '#94a3b8' } 
+          }
+        },
+        interaction: { intersect: false, mode: 'index' },
+      }
+    });
+  }
+};
+</script>

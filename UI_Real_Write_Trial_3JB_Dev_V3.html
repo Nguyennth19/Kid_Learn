@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+
+  <style>
+    body {
+      margin: 0;
+      background: #f8fafc;
+      color: #0f172a;
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+    }
+
+    .page {
+      padding: 20px;
+    }
+
+    h1 {
+      margin: 0 0 6px;
+      font-size: 24px;
+    }
+
+    .muted {
+      color: #64748b;
+    }
+
+    .status {
+      padding: 12px 14px;
+      border-radius: 12px;
+      background: #e2e8f0;
+      margin: 16px 0;
+      white-space: pre-wrap;
+    }
+
+    .status.good {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .status.warn {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .status.bad {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #dbeafe;
+      color: #1d4ed8;
+      font-weight: 700;
+      font-size: 12px;
+      margin-right: 6px;
+    }
+
+    .danger {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .good-badge {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .section {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      margin-bottom: 16px;
+      overflow: hidden;
+    }
+
+    .section-head {
+      padding: 14px;
+      border-bottom: 1px solid #e2e8f0;
+      font-weight: 700;
+    }
+
+    .section-body {
+      padding: 14px;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-top: 10px;
+    }
+
+    input {
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      padding: 9px 10px;
+      min-width: 300px;
+    }
+
+    button {
+      border: none;
+      border-radius: 10px;
+      padding: 9px 12px;
+      background: #2563eb;
+      color: #ffffff;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    button.secondary {
+      background: #475569;
+    }
+
+    button.warning {
+      background: #d97706;
+    }
+
+    button.danger-button {
+      background: #dc2626;
+    }
+
+    pre {
+      margin: 0;
+      background: #0f172a;
+      color: #e2e8f0;
+      padding: 12px;
+      border-radius: 12px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: 360px;
+      overflow: auto;
+      font-size: 12px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin: 16px 0;
+    }
+
+    .card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 14px;
+    }
+
+    .label {
+      color: #64748b;
+      font-size: 12px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .value {
+      font-size: 16px;
+      font-weight: 700;
+      word-break: break-word;
+    }
+
+    .two {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    @media (max-width: 900px) {
+      .grid,
+      .two {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <?!= kidlearnV3_uiInclude_('UI_Real_Write_Trial_3JB_Client_V3'); ?>
+
+  <div class="page">
+    <h1>KIDLEARN V3 - UI Real Write Trial 3J-B</h1>
+    <div class="muted">
+      3J.12 + 3J.13 + 3J.14. Trial này chỉ ghi thật 01 dòng vào LOG_Audit, sau đó auto reset về DRY_RUN.
+    </div>
+
+    <div style="margin-top: 12px;">
+      <span class="badge">3J-B</span>
+      <span class="badge danger">REAL WRITE CONTROLLED</span>
+      <span class="badge good-badge">AUTO RESET</span>
+    </div>
+
+    <div id="status" class="status">
+      Đang khởi tạo UI Real Write Trial 3J-B...
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div class="label">3J-B Status</div>
+        <div class="value" id="trialStatus">-</div>
+      </div>
+
+      <div class="card">
+        <div class="label">Controlled Write</div>
+        <div class="value" id="controlledWrite">-</div>
+      </div>
+
+      <div class="card">
+        <div class="label">Safe Write</div>
+        <div class="value" id="safeWrite">-</div>
+      </div>
+
+      <div class="card">
+        <div class="label">Last Transaction</div>
+        <div class="value" id="transactionId">-</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-head">
+        Step 1 — Preview / Status
+      </div>
+
+      <div class="section-body">
+        <div class="toolbar">
+          <button onclick="KidlearnUiRealTrial3JBPage.preview()">Preview 3J-B</button>
+          <button class="secondary" onclick="KidlearnUiRealTrial3JBPage.loadStatus()">Get Status</button>
+          <button class="secondary" onclick="KidlearnUiRealTrial3JBPage.reset()">Reset to DRY_RUN</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-head">
+        Step 2 — ARM Controlled Write
+      </div>
+
+      <div class="section-body">
+        <div class="muted">
+          Nhập đúng: <strong>ARM_UI_REAL_WRITE_3J_B</strong>
+        </div>
+
+        <div class="toolbar">
+          <input id="armText" placeholder="ARM_UI_REAL_WRITE_3J_B">
+          <button class="warning" onclick="KidlearnUiRealTrial3JBPage.arm()">ARM</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-head">
+        Step 3 — ENABLE Controlled Write
+      </div>
+
+      <div class="section-body">
+        <div class="muted">
+          Nhập đúng: <strong>ENABLE_UI_REAL_WRITE_3J_B</strong>
+        </div>
+
+        <div class="toolbar">
+          <input id="enableText" placeholder="ENABLE_UI_REAL_WRITE_3J_B">
+          <button class="danger-button" onclick="KidlearnUiRealTrial3JBPage.enable()">ENABLE</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-head">
+        Step 4 — Run 01 UI Real Write Trial
+      </div>
+
+      <div class="section-body">
+        <div class="muted">
+          Nhập đúng: <strong>CONFIRM_UI_REAL_WRITE_3J_B</strong>.
+          Nút này chỉ ghi 01 dòng LOG_Audit và auto reset về DRY_RUN.
+        </div>
+
+        <div class="toolbar">
+          <input id="trialText" placeholder="CONFIRM_UI_REAL_WRITE_3J_B">
+          <button class="danger-button" onclick="KidlearnUiRealTrial3JBPage.executeTrial()">RUN UI REAL WRITE TRIAL</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-head">
+        Step 5 — Review / Close Phase 3J
+      </div>
+
+      <div class="section-body">
+        <div class="toolbar">
+          <button onclick="KidlearnUiRealTrial3JBPage.review()">Run Post-UI Review</button>
+          <button onclick="KidlearnUiRealTrial3JBPage.markReviewReady()">Mark Review Ready</button>
+          <button class="warning" onclick="KidlearnUiRealTrial3JBPage.closePhase3J()">Close Phase 3J</button>
+          <button class="secondary" onclick="KidlearnUiRealTrial3JBPage.assertClosed()">Assert Phase 3J Closed</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="two">
+      <div class="section">
+        <div class="section-head">
+          Event Log
+        </div>
+
+        <div class="section-body">
+          <div id="eventLog">Chưa có event.</div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-head">
+          Last Response
+        </div>
+
+        <div class="section-body">
+          <pre id="lastResponse">Chưa có response.</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    window.KidlearnUiRealTrial3JBPage = (function() {
+      var events = [];
+
+      function init() {
+        loadStatus()
+          .catch(function(error) {
+            setStatus(
+              'Khởi tạo lỗi: ' +
+              String(error.message || error),
+              'bad'
+            );
+          });
+      }
+
+      function preview() {
+        return run(
+          'PREVIEW',
+          KidlearnV3UiRealTrial3JB.preview()
+        );
+      }
+
+      function loadStatus() {
+        return KidlearnV3UiRealTrial3JB
+          .getStatus()
+          .then(function(response) {
+            setLastResponse(response);
+            renderStatus(response);
+
+            if (!response.success) {
+              throw new Error(
+                getError(response)
+              );
+            }
+
+            setStatus(
+              'Status loaded.',
+              'good'
+            );
+
+            addEvent(
+              'STATUS',
+              'Loaded 3J-B status.'
+            );
+
+            return response;
+          });
+      }
+
+      function arm() {
+        var text =
+          document
+            .getElementById('armText')
+            .value
+            .trim();
+
+        return run(
+          'ARM',
+          KidlearnV3UiRealTrial3JB.arm(text)
+        ).then(loadStatus);
+      }
+
+      function enable() {
+        var text =
+          document
+            .getElementById('enableText')
+            .value
+            .trim();
+
+        return run(
+          'ENABLE',
+          KidlearnV3UiRealTrial3JB.enable(text)
+        ).then(loadStatus);
+      }
+
+      function executeTrial() {
+        var text =
+          document
+            .getElementById('trialText')
+            .value
+            .trim();
+
+        return run(
+          'RUN_UI_REAL_WRITE_TRIAL',
+          KidlearnV3UiRealTrial3JB.executeTrial(text)
+        ).then(loadStatus);
+      }
+
+      function reset() {
+        return run(
+          'RESET_TO_DRY_RUN',
+          KidlearnV3UiRealTrial3JB.reset()
+        ).then(loadStatus);
+      }
+
+      function review() {
+        return run(
+          'POST_UI_REVIEW',
+          KidlearnV3UiRealTrial3JB.review()
+        ).then(loadStatus);
+      }
+
+      function markReviewReady() {
+        return run(
+          'MARK_REVIEW_READY',
+          KidlearnV3UiRealTrial3JB.markReviewReady()
+        ).then(loadStatus);
+      }
+
+      function closePhase3J() {
+        return run(
+          'CLOSE_PHASE_3J',
+          KidlearnV3UiRealTrial3JB.closePhase3J()
+        ).then(loadStatus);
+      }
+
+      function assertClosed() {
+        return run(
+          'ASSERT_PHASE_3J_CLOSED',
+          KidlearnV3UiRealTrial3JB.assertClosed()
+        );
+      }
+
+      function run(label, promise) {
+        setStatus(
+          'Đang chạy ' + label + '...',
+          ''
+        );
+
+        return promise
+          .then(function(response) {
+            setLastResponse(response);
+
+            if (!response.success) {
+              throw new Error(
+                getError(response)
+              );
+            }
+
+            setStatus(
+              label + ' thành công.',
+              'good'
+            );
+
+            addEvent(
+              label,
+              'Success.'
+            );
+
+            return response;
+          })
+          .catch(function(error) {
+            setStatus(
+              label + ' lỗi: ' +
+              String(error.message || error),
+              'bad'
+            );
+
+            addEvent(
+              label,
+              'ERROR: ' + String(error.message || error)
+            );
+
+            throw error;
+          });
+      }
+
+      function renderStatus(response) {
+        setText(
+          'trialStatus',
+          response.status || '-'
+        );
+
+        setText(
+          'transactionId',
+          response.lastTransactionId || '-'
+        );
+
+        var cw =
+          response.controlledWriteStatus || {};
+
+        setText(
+          'controlledWrite',
+          String(cw.status || '-') +
+          ' / safe=' +
+          String(cw.safeWriteMode || '-')
+        );
+
+        var sw =
+          response.safeWriteStatus || {};
+
+        setText(
+          'safeWrite',
+          String(sw.mode || '-') +
+          ' / enabled=' +
+          String(sw.enabled)
+        );
+      }
+
+      function setStatus(message, type) {
+        var element =
+          document.getElementById('status');
+
+        element.className =
+          'status ' + (type || '');
+
+        element.textContent =
+          message;
+      }
+
+      function setText(id, value) {
+        var element =
+          document.getElementById(id);
+
+        if (element) {
+          element.textContent =
+            value;
+        }
+      }
+
+      function setLastResponse(response) {
+        document.getElementById('lastResponse').textContent =
+          JSON.stringify(
+            response,
+            null,
+            2
+          );
+      }
+
+      function addEvent(action, message) {
+        events.unshift({
+          at: new Date().toISOString(),
+          action: action,
+          message: message
+        });
+
+        if (events.length > 20) {
+          events.pop();
+        }
+
+        renderEvents();
+      }
+
+      function renderEvents() {
+        var element =
+          document.getElementById('eventLog');
+
+        if (!events.length) {
+          element.innerHTML =
+            'Chưa có event.';
+          return;
+        }
+
+        var html = '';
+
+        for (var i = 0; i < events.length; i++) {
+          var item =
+            events[i];
+
+          html +=
+            '<div style="border:1px solid #e2e8f0;border-radius:10px;padding:10px;margin-bottom:8px;">' +
+            '<strong>' +
+            escapeHtml(item.action) +
+            '</strong>' +
+            '<div class="muted">' +
+            escapeHtml(item.at) +
+            '</div>' +
+            '<div>' +
+            escapeHtml(item.message) +
+            '</div>' +
+            '</div>';
+        }
+
+        element.innerHTML =
+          html;
+      }
+
+      function getError(response) {
+        if (
+          response &&
+          response.error &&
+          response.error.message
+        ) {
+          return response.error.message;
+        }
+
+        return 'Không rõ lỗi.';
+      }
+
+      function escapeHtml(value) {
+        return String(value || '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+      }
+
+      return {
+        init: init,
+        preview: preview,
+        loadStatus: loadStatus,
+        arm: arm,
+        enable: enable,
+        executeTrial: executeTrial,
+        reset: reset,
+        review: review,
+        markReviewReady: markReviewReady,
+        closePhase3J: closePhase3J,
+        assertClosed: assertClosed
+      };
+    })();
+
+    document.addEventListener(
+      'DOMContentLoaded',
+      function() {
+        KidlearnUiRealTrial3JBPage.init();
+      }
+    );
+  </script>
+</body>
+</html>

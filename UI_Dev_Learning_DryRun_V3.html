@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --primary: #2563eb;
+      --good-bg: #dcfce7;
+      --good-text: #166534;
+      --warn-bg: #fef3c7;
+      --warn-text: #92400e;
+      --bad-bg: #fee2e2;
+      --bad-text: #991b1b;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+    }
+
+    .page {
+      padding: 20px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: flex-start;
+      margin-bottom: 16px;
+    }
+
+    .title {
+      font-size: 24px;
+      font-weight: 700;
+      margin: 0 0 6px;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      margin: 0;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #dbeafe;
+      color: #1d4ed8;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .status {
+      padding: 12px 14px;
+      border-radius: 12px;
+      background: #e2e8f0;
+      color: #334155;
+      margin-bottom: 16px;
+      white-space: pre-wrap;
+    }
+
+    .status.good {
+      background: var(--good-bg);
+      color: var(--good-text);
+    }
+
+    .status.warn {
+      background: var(--warn-bg);
+      color: var(--warn-text);
+    }
+
+    .status.bad {
+      background: var(--bad-bg);
+      color: var(--bad-text);
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    button {
+      border: none;
+      border-radius: 10px;
+      padding: 9px 12px;
+      background: var(--primary);
+      color: #ffffff;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    button.secondary {
+      background: #475569;
+    }
+
+    button.warning {
+      background: #d97706;
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+    }
+
+    .card-label {
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      margin-bottom: 8px;
+    }
+
+    .card-value {
+      font-size: 18px;
+      font-weight: 700;
+      word-break: break-word;
+    }
+
+    .section {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      margin-bottom: 16px;
+      overflow: hidden;
+    }
+
+    .section-head {
+      padding: 14px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .section-title {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .section-body {
+      padding: 14px;
+    }
+
+    .two-cols {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .progress-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    pre {
+      margin: 0;
+      background: #0f172a;
+      color: #e2e8f0;
+      padding: 12px;
+      border-radius: 12px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: 320px;
+      overflow: auto;
+      font-size: 12px;
+    }
+
+    .small {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .event-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .event-item {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px;
+      background: #ffffff;
+    }
+
+    @media (max-width: 900px) {
+      .grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .two-cols {
+        grid-template-columns: 1fr;
+      }
+
+      .topbar {
+        display: block;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <?!= kidlearnV3_uiInclude_('UI_Write_Router_Client_V3'); ?>
+  <?!= kidlearnV3_uiInclude_('UI_Learning_Write_Client_V3'); ?>
+
+  <div class="page">
+    <div class="topbar">
+      <div>
+        <h1 class="title">KIDLEARN V3 - Learning Write DEV</h1>
+        <p class="subtitle">
+          UI học tập DEV đã gắn Write Router V3. Tất cả thao tác ở đây là DRY_RUN.
+        </p>
+      </div>
+
+      <div>
+        <span class="badge" id="badge">3J.4 / DRY_RUN</span>
+      </div>
+    </div>
+
+    <div id="status" class="status">
+      Đang khởi tạo Learning Write UI...
+    </div>
+
+    <div class="toolbar">
+      <button onclick="KidlearnLearningWriteUiV3.loadStatus()">Get Status</button>
+      <button class="secondary" onclick="KidlearnLearningWriteUiV3.loadSampleContext()">Sample Context</button>
+      <button onclick="KidlearnLearningWriteUiV3.startLesson()">Start Lesson</button>
+      <button onclick="KidlearnLearningWriteUiV3.finishLesson()">Finish Lesson</button>
+      <button class="secondary" onclick="KidlearnLearningWriteUiV3.auditEvent()">Audit Event</button>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div class="card-label">Child ID</div>
+        <div class="card-value" id="childId">-</div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Subject ID</div>
+        <div class="card-value" id="subjectId">-</div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Lesson ID</div>
+        <div class="card-value" id="lessonId">-</div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Study Session ID</div>
+        <div class="card-value" id="studySessionId">-</div>
+      </div>
+    </div>
+
+    <div class="two-cols">
+      <div class="section">
+        <div class="section-head">
+          <h3 class="section-title">Lesson Progress Dry-run</h3>
+        </div>
+
+        <div class="section-body">
+          <div class="progress-row">
+            <button onclick="KidlearnLearningWriteUiV3.saveProgress(10)">Save 10%</button>
+            <button onclick="KidlearnLearningWriteUiV3.saveProgress(25)">Save 25%</button>
+            <button onclick="KidlearnLearningWriteUiV3.saveProgress(50)">Save 50%</button>
+            <button onclick="KidlearnLearningWriteUiV3.saveProgress(75)">Save 75%</button>
+            <button onclick="KidlearnLearningWriteUiV3.saveProgress(100)">Save 100%</button>
+          </div>
+          <p class="small">
+            Các nút này gọi LESSON_PROGRESS_SAVE qua Write Router V3.
+          </p>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-head">
+          <h3 class="section-title">Daily Goal Dry-run</h3>
+        </div>
+
+        <div class="section-body">
+          <div class="progress-row">
+            <button onclick="KidlearnLearningWriteUiV3.saveDailyGoal(5)">Goal 5 phút</button>
+            <button onclick="KidlearnLearningWriteUiV3.saveDailyGoal(10)">Goal 10 phút</button>
+            <button onclick="KidlearnLearningWriteUiV3.saveDailyGoal(20)">Goal 20 phút</button>
+          </div>
+          <p class="small">
+            Các nút này gọi DAILY_GOAL_SAVE qua Write Router V3.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-head">
+        <h3 class="section-title">Assignment Dry-run</h3>
+      </div>
+
+      <div class="section-body">
+        <div class="grid">
+          <div class="card">
+            <div class="card-label">Assignment ID</div>
+            <div class="card-value" id="assignmentId">-</div>
+          </div>
+
+          <div class="card">
+            <div class="card-label">Assignment Test</div>
+            <div class="card-value" id="assignmentStatus">READY</div>
+          </div>
+        </div>
+
+        <div class="progress-row">
+          <button class="warning" onclick="KidlearnLearningWriteUiV3.assignmentStart()">Assignment Start</button>
+          <button class="warning" onclick="KidlearnLearningWriteUiV3.assignmentProgress()">Assignment Progress 50%</button>
+          <button class="warning" onclick="KidlearnLearningWriteUiV3.assignmentComplete()">Assignment Complete</button>
+        </div>
+
+        <p class="small">
+          Nếu chưa có assignmentId mẫu, nhóm nút này sẽ báo skipped.
+        </p>
+      </div>
+    </div>
+
+    <div class="two-cols">
+      <div class="section">
+        <div class="section-head">
+          <h3 class="section-title">Event Log</h3>
+        </div>
+
+        <div class="section-body">
+          <div id="eventLog" class="event-list">
+            Chưa có event.
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-head">
+          <h3 class="section-title">Last Router Response</h3>
+        </div>
+
+        <div class="section-body">
+          <pre id="lastResponse">Chưa có response.</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    window.KidlearnLearningWriteUiV3 = (function() {
+      var state = {
+        sampleContext: {},
+        studySessionId: '',
+        startedAt: null,
+        eventLog: []
+      };
+
+      function init() {
+        state.studySessionId =
+          KidlearnV3LearningWrite.makeDryRunSessionId();
+
+        setText(
+          'studySessionId',
+          state.studySessionId
+        );
+
+        loadStatus()
+          .then(function() {
+            return loadSampleContext();
+          })
+          .catch(function(error) {
+            setStatus(
+              'Khởi tạo lỗi: ' +
+              String(error.message || error),
+              'bad'
+            );
+          });
+      }
+
+      function loadStatus() {
+        setStatus(
+          'Đang lấy Write Router status...',
+          ''
+        );
+
+        return KidlearnV3LearningWrite
+          .getStatus()
+          .then(function(response) {
+            setLastResponse(response);
+
+            if (!response.success) {
+              throw new Error(
+                getErrorMessage(response)
+              );
+            }
+
+            var data =
+              response.data || {};
+
+            document.getElementById('badge').textContent =
+              '3J.4 / DRY_RUN_ONLY=' +
+              String(data.dryRunOnly);
+
+            setStatus(
+              'Write Router status loaded.',
+              'good'
+            );
+
+            addEvent(
+              'STATUS',
+              'Loaded Write Router status.'
+            );
+
+            return response;
+          });
+      }
+
+      function loadSampleContext() {
+        setStatus(
+          'Đang lấy sample context...',
+          ''
+        );
+
+        return KidlearnV3LearningWrite
+          .getSampleContext()
+          .then(function(response) {
+            setLastResponse(response);
+
+            if (!response.success) {
+              throw new Error(
+                getErrorMessage(response)
+              );
+            }
+
+            state.sampleContext =
+              response.data.sampleContext || {};
+
+            if (!state.sampleContext.lessonId) {
+              state.sampleContext.lessonId =
+                'DRY_RUN_LESSON_ID';
+            }
+
+            setText(
+              'childId',
+              state.sampleContext.childId || '-'
+            );
+
+            setText(
+              'subjectId',
+              state.sampleContext.subjectId || '-'
+            );
+
+            setText(
+              'lessonId',
+              state.sampleContext.lessonId || '-'
+            );
+
+            setText(
+              'assignmentId',
+              state.sampleContext.assignmentId || '-'
+            );
+
+            setStatus(
+              'Sample context loaded.',
+              'good'
+            );
+
+            addEvent(
+              'SAMPLE_CONTEXT',
+              'Loaded sample context.'
+            );
+
+            return response;
+          });
+      }
+
+      function startLesson() {
+        var context =
+          getContext();
+
+        state.startedAt =
+          new Date();
+
+        return runDryRun(
+          'STUDY_START',
+          KidlearnV3LearningWrite.startStudy({
+            studySessionId: state.studySessionId,
+            childId: context.childId || 'DRY_RUN_CHILD_ID',
+            subjectId: context.subjectId || '',
+            lessonId: context.lessonId || 'DRY_RUN_LESSON_ID',
+            startedAt: state.startedAt.toISOString()
+          }),
+          'Start Lesson dry-run thành công.'
+        );
+      }
+
+      function finishLesson() {
+        var duration =
+          300;
+
+        if (state.startedAt) {
+          duration =
+            Math.max(
+              1,
+              Math.floor(
+                (new Date().getTime() - state.startedAt.getTime()) / 1000
+              )
+            );
+        }
+
+        return runDryRun(
+          'STUDY_FINISH',
+          KidlearnV3LearningWrite.finishStudy({
+            studySessionId: state.studySessionId,
+            durationSeconds: duration
+          }),
+          'Finish Lesson dry-run thành công.'
+        );
+      }
+
+      function saveProgress(percent) {
+        var context =
+          getContext();
+
+        return runDryRun(
+          'LESSON_PROGRESS_SAVE_' + percent,
+          KidlearnV3LearningWrite.saveLessonProgress({
+            childId: context.childId || 'DRY_RUN_CHILD_ID',
+            subjectId: context.subjectId || '',
+            lessonId: context.lessonId || 'DRY_RUN_LESSON_ID',
+            progressPercent: percent
+          }),
+          'Lesson progress ' + percent + '% dry-run thành công.'
+        );
+      }
+
+      function saveDailyGoal(minutes) {
+        var context =
+          getContext();
+
+        return runDryRun(
+          'DAILY_GOAL_SAVE_' + minutes,
+          KidlearnV3LearningWrite.saveDailyGoal({
+            childId: context.childId || 'DRY_RUN_CHILD_ID',
+            goalDate: KidlearnV3LearningWrite.today(),
+            targetMinutes: 20,
+            completedMinutes: minutes
+          }),
+          'Daily goal ' + minutes + ' phút dry-run thành công.'
+        );
+      }
+
+      function assignmentStart() {
+        var context =
+          getContext();
+
+        if (!context.assignmentId) {
+          skipAssignment();
+          return Promise.resolve(null);
+        }
+
+        return runDryRun(
+          'ASSIGNMENT_START',
+          KidlearnV3LearningWrite.assignmentStart({
+            assignmentId: context.assignmentId
+          }),
+          'Assignment Start dry-run thành công.'
+        );
+      }
+
+      function assignmentProgress() {
+        var context =
+          getContext();
+
+        if (!context.assignmentId) {
+          skipAssignment();
+          return Promise.resolve(null);
+        }
+
+        return runDryRun(
+          'ASSIGNMENT_PROGRESS',
+          KidlearnV3LearningWrite.assignmentProgress({
+            assignmentId: context.assignmentId,
+            progressPercent: 50
+          }),
+          'Assignment Progress dry-run thành công.'
+        );
+      }
+
+      function assignmentComplete() {
+        var context =
+          getContext();
+
+        if (!context.assignmentId) {
+          skipAssignment();
+          return Promise.resolve(null);
+        }
+
+        return runDryRun(
+          'ASSIGNMENT_COMPLETE',
+          KidlearnV3LearningWrite.assignmentComplete({
+            assignmentId: context.assignmentId
+          }),
+          'Assignment Complete dry-run thành công.'
+        );
+      }
+
+      function auditEvent() {
+        var context =
+          getContext();
+
+        return runDryRun(
+          'AUDIT_EVENT',
+          KidlearnV3LearningWrite.auditEvent({
+            eventType: 'UI_LEARNING_DRY_RUN_EVENT',
+            message: 'Manual audit event from Learning Write UI',
+            entityType: 'UI',
+            entityId: 'UI_Dev_Learning_DryRun_V3',
+            childId: context.childId || ''
+          }),
+          'Audit Event dry-run thành công.'
+        );
+      }
+
+      function runDryRun(action, promise, successMessage) {
+        setStatus(
+          'Đang chạy ' + action + '...',
+          ''
+        );
+
+        return promise
+          .then(function(response) {
+            setLastResponse(response);
+
+            if (!response.success) {
+              throw new Error(
+                getErrorMessage(response)
+              );
+            }
+
+            setStatus(
+              successMessage,
+              'good'
+            );
+
+            addEvent(
+              action,
+              successMessage
+            );
+
+            return response;
+          })
+          .catch(function(error) {
+            var message =
+              String(error.message || error);
+
+            setStatus(
+              action + ' lỗi: ' + message,
+              'bad'
+            );
+
+            addEvent(
+              action,
+              'ERROR: ' + message
+            );
+
+            throw error;
+          });
+      }
+
+      function skipAssignment() {
+        setText(
+          'assignmentStatus',
+          'SKIPPED'
+        );
+
+        setStatus(
+          'Không có assignmentId mẫu. Assignment dry-run được bỏ qua.',
+          'warn'
+        );
+
+        addEvent(
+          'ASSIGNMENT_SKIPPED',
+          'Không có assignmentId mẫu.'
+        );
+
+        setLastResponse({
+          success: false,
+          skipped: true,
+          message: 'Không có assignmentId mẫu.'
+        });
+      }
+
+      function getContext() {
+        if (!state.sampleContext) {
+          state.sampleContext = {};
+        }
+
+        return state.sampleContext;
+      }
+
+      function setStatus(message, type) {
+        var element =
+          document.getElementById('status');
+
+        element.className =
+          'status ' + (type || '');
+
+        element.textContent =
+          message;
+      }
+
+      function setText(id, value) {
+        var element =
+          document.getElementById(id);
+
+        if (element) {
+          element.textContent =
+            value;
+        }
+      }
+
+      function setLastResponse(response) {
+        document.getElementById('lastResponse').textContent =
+          JSON.stringify(
+            response,
+            null,
+            2
+          );
+      }
+
+      function addEvent(action, message) {
+        state.eventLog.unshift({
+          at: new Date().toISOString(),
+          action: action,
+          message: message
+        });
+
+        if (state.eventLog.length > 20) {
+          state.eventLog.pop();
+        }
+
+        renderEventLog();
+      }
+
+      function renderEventLog() {
+        var element =
+          document.getElementById('eventLog');
+
+        if (!state.eventLog.length) {
+          element.innerHTML =
+            'Chưa có event.';
+          return;
+        }
+
+        var html = '';
+
+        for (var i = 0; i < state.eventLog.length; i++) {
+          var item =
+            state.eventLog[i];
+
+          html +=
+            '<div class="event-item">' +
+            '<div><strong>' +
+            escapeHtml(item.action) +
+            '</strong></div>' +
+            '<div class="small">' +
+            escapeHtml(item.at) +
+            '</div>' +
+            '<div>' +
+            escapeHtml(item.message) +
+            '</div>' +
+            '</div>';
+        }
+
+        element.innerHTML =
+          html;
+      }
+
+      function getErrorMessage(response) {
+        if (
+          response &&
+          response.error &&
+          response.error.message
+        ) {
+          return response.error.message;
+        }
+
+        return 'Không rõ lỗi.';
+      }
+
+      function escapeHtml(value) {
+        return String(value || '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+      }
+
+      return {
+        init: init,
+        loadStatus: loadStatus,
+        loadSampleContext: loadSampleContext,
+        startLesson: startLesson,
+        finishLesson: finishLesson,
+        saveProgress: saveProgress,
+        saveDailyGoal: saveDailyGoal,
+        assignmentStart: assignmentStart,
+        assignmentProgress: assignmentProgress,
+        assignmentComplete: assignmentComplete,
+        auditEvent: auditEvent
+      };
+    })();
+
+    document.addEventListener(
+      'DOMContentLoaded',
+      function() {
+        KidlearnLearningWriteUiV3.init();
+      }
+    );
+  </script>
+</body>
+</html>

@@ -1,0 +1,266 @@
+<script>
+  /**
+   * ================================================================
+   * KIDLEARN V3 - Phase 4B-2R-4
+   * Built-in SVG Cute Subject Icons
+   * ================================================================
+   *
+   * Asset strategy:
+   * - Current step: built-in SVG only.
+   * - Future step: approved assets from MST_MediaAssets.
+   * - No external hotlink.
+   */
+
+  (function () {
+    var KIDLEARN_SUBJECT_ASSETS_4B2R4 = {
+      MATH: {
+        assetId: 'subject_math_builtin_svg',
+        label: 'Toán học',
+        svg:
+          '<svg class="kl-asset-svg-4b2r4 kl-svg-subject-icon-4b2r4" viewBox="0 0 96 96" role="img" aria-label="Toán học">' +
+            '<rect x="10" y="12" width="76" height="72" rx="24" fill="#EAF4FF"/>' +
+            '<rect x="23" y="24" width="50" height="42" rx="14" fill="#FFFFFF" stroke="#2F80ED" stroke-width="4"/>' +
+            '<circle cx="34" cy="74" r="7" fill="#38BDF8"/>' +
+            '<circle cx="62" cy="74" r="7" fill="#FBBF24"/>' +
+            '<text x="48" y="52" text-anchor="middle" font-family="Arial, sans-serif" font-size="23" font-weight="900" fill="#1D4ED8">1+2</text>' +
+            '<path d="M30 22 L26 14" stroke="#1D4ED8" stroke-width="4" stroke-linecap="round"/>' +
+            '<path d="M66 22 L70 14" stroke="#1D4ED8" stroke-width="4" stroke-linecap="round"/>' +
+          '</svg>'
+      },
+
+      VIETNAMESE: {
+        assetId: 'subject_vietnamese_builtin_svg',
+        label: 'Tiếng Việt',
+        svg:
+          '<svg class="kl-asset-svg-4b2r4 kl-svg-subject-icon-4b2r4" viewBox="0 0 96 96" role="img" aria-label="Tiếng Việt">' +
+            '<rect x="10" y="12" width="76" height="72" rx="24" fill="#F5F3FF"/>' +
+            '<path d="M22 30 C30 25 40 27 48 34 L48 72 C40 65 30 63 22 68 Z" fill="#FFFFFF" stroke="#8B5CF6" stroke-width="4" stroke-linejoin="round"/>' +
+            '<path d="M74 30 C66 25 56 27 48 34 L48 72 C56 65 66 63 74 68 Z" fill="#FFFFFF" stroke="#8B5CF6" stroke-width="4" stroke-linejoin="round"/>' +
+            '<path d="M35 41 H43" stroke="#A78BFA" stroke-width="4" stroke-linecap="round"/>' +
+            '<path d="M35 52 H43" stroke="#A78BFA" stroke-width="4" stroke-linecap="round"/>' +
+            '<path d="M55 43 L70 28" stroke="#FBBF24" stroke-width="6" stroke-linecap="round"/>' +
+            '<path d="M68 26 L73 31" stroke="#FDBA74" stroke-width="6" stroke-linecap="round"/>' +
+            '<circle cx="29" cy="73" r="5" fill="#C084FC"/>' +
+          '</svg>'
+      },
+
+      ENGLISH: {
+        assetId: 'subject_english_builtin_svg',
+        label: 'Tiếng Anh',
+        svg:
+          '<svg class="kl-asset-svg-4b2r4 kl-svg-subject-icon-4b2r4" viewBox="0 0 96 96" role="img" aria-label="Tiếng Anh">' +
+            '<rect x="10" y="12" width="76" height="72" rx="24" fill="#FDF2F8"/>' +
+            '<circle cx="48" cy="48" r="26" fill="#FFFFFF" stroke="#EC4899" stroke-width="4"/>' +
+            '<text x="48" y="55" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" font-weight="900" fill="#BE185D">ABC</text>' +
+            '<path d="M71 23 L74 30 L82 31 L76 36 L78 44 L71 40 L64 44 L66 36 L60 31 L68 30 Z" fill="#FBBF24"/>' +
+            '<circle cx="26" cy="28" r="6" fill="#F9A8D4"/>' +
+            '<circle cx="27" cy="69" r="5" fill="#38BDF8"/>' +
+            '<path d="M35 70 C42 76 55 76 62 70" stroke="#EC4899" stroke-width="4" stroke-linecap="round"/>' +
+          '</svg>'
+      },
+
+      SCIENCE: {
+        assetId: 'subject_science_builtin_svg',
+        label: 'Khoa học',
+        svg:
+          '<svg class="kl-asset-svg-4b2r4 kl-svg-subject-icon-4b2r4" viewBox="0 0 96 96" role="img" aria-label="Khoa học">' +
+            '<rect x="10" y="12" width="76" height="72" rx="24" fill="#F0FDF4"/>' +
+            '<path d="M40 24 H56" stroke="#15803D" stroke-width="5" stroke-linecap="round"/>' +
+            '<path d="M44 26 V43 L30 67 C27 72 31 78 37 78 H59 C65 78 69 72 66 67 L52 43 V26" fill="#FFFFFF" stroke="#22C55E" stroke-width="4" stroke-linejoin="round"/>' +
+            '<path d="M36 65 H60" stroke="#86EFAC" stroke-width="8" stroke-linecap="round"/>' +
+            '<circle cx="39" cy="58" r="4" fill="#38BDF8"/>' +
+            '<circle cx="57" cy="61" r="5" fill="#FBBF24"/>' +
+            '<path d="M65 26 C72 23 77 26 78 33 C70 34 66 31 65 26 Z" fill="#22C55E"/>' +
+            '<path d="M31 29 C24 25 19 29 19 36 C27 37 31 34 31 29 Z" fill="#86EFAC"/>' +
+          '</svg>'
+      },
+
+      DEFAULT: {
+        assetId: 'subject_default_builtin_svg',
+        label: 'Môn học',
+        svg:
+          '<svg class="kl-asset-svg-4b2r4 kl-svg-subject-icon-4b2r4" viewBox="0 0 96 96" role="img" aria-label="Môn học">' +
+            '<rect x="10" y="12" width="76" height="72" rx="24" fill="#EAF4FF"/>' +
+            '<rect x="26" y="24" width="44" height="48" rx="12" fill="#FFFFFF" stroke="#2F80ED" stroke-width="4"/>' +
+            '<path d="M36 38 H60" stroke="#38BDF8" stroke-width="4" stroke-linecap="round"/>' +
+            '<path d="M36 50 H58" stroke="#38BDF8" stroke-width="4" stroke-linecap="round"/>' +
+            '<path d="M36 62 H52" stroke="#38BDF8" stroke-width="4" stroke-linecap="round"/>' +
+          '</svg>'
+      }
+    };
+
+    window.KIDLEARN_SUBJECT_ASSETS_4B2R4 =
+      KIDLEARN_SUBJECT_ASSETS_4B2R4;
+
+    function normalizeText4B2R4(value) {
+      return String(value || '')
+        .trim()
+        .toUpperCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/\s+/g, '')
+        .replace(/-/g, '_');
+    }
+
+    function resolveSubjectAsset4B2R4(subjectCode, subjectName) {
+      var key =
+        normalizeText4B2R4(subjectCode || '') +
+        ' ' +
+        normalizeText4B2R4(subjectName || '');
+
+      if (
+        key.indexOf('MATH') >= 0 ||
+        key.indexOf('TOAN') >= 0
+      ) {
+        return KIDLEARN_SUBJECT_ASSETS_4B2R4.MATH;
+      }
+
+      if (
+        key.indexOf('VIET') >= 0 ||
+        key.indexOf('TIENGVIET') >= 0
+      ) {
+        return KIDLEARN_SUBJECT_ASSETS_4B2R4.VIETNAMESE;
+      }
+
+      if (
+        key.indexOf('ENGLISH') >= 0 ||
+        key.indexOf('TIENGANH') >= 0 ||
+        key.indexOf('ABC') >= 0
+      ) {
+        return KIDLEARN_SUBJECT_ASSETS_4B2R4.ENGLISH;
+      }
+
+      if (
+        key.indexOf('SCIENCE') >= 0 ||
+        key.indexOf('KHOAHOC') >= 0 ||
+        key.indexOf('KHOA') >= 0
+      ) {
+        return KIDLEARN_SUBJECT_ASSETS_4B2R4.SCIENCE;
+      }
+
+      return KIDLEARN_SUBJECT_ASSETS_4B2R4.DEFAULT;
+    }
+
+    function setSvgIcon4B2R4(element, asset) {
+      if (!element || !asset || !asset.svg) return;
+
+      if (element.getAttribute('data-asset-id') === asset.assetId) {
+        return;
+      }
+
+      element.innerHTML = asset.svg;
+      element.classList.add('has-svg-4b2r4');
+      element.setAttribute('data-asset-id', asset.assetId);
+      element.setAttribute('title', asset.label || 'Môn học');
+    }
+
+    function getText4B2R4(selector) {
+      var el = document.querySelector(selector);
+      return el ? el.textContent || '' : '';
+    }
+
+    function applySubjectAssets4B2R4() {
+      var cards =
+        Array.prototype.slice.call(
+          document.querySelectorAll('[data-subject-card][data-subject-code]')
+        );
+
+      cards.forEach(function (card) {
+        var code =
+          card.getAttribute('data-subject-code') || '';
+
+        var nameEl =
+          card.querySelector('h3');
+
+        var name =
+          nameEl ? nameEl.textContent || '' : '';
+
+        var iconEl =
+          card.querySelector('.kl-subject-icon');
+
+        var asset =
+          resolveSubjectAsset4B2R4(code, name);
+
+        setSvgIcon4B2R4(iconEl, asset);
+      });
+
+      var nextIcon =
+        document.getElementById('nextLessonIcon');
+
+      if (nextIcon) {
+        var nextText =
+          getText4B2R4('#nextLessonTitle') +
+          ' ' +
+          getText4B2R4('#nextLessonSubtitle');
+
+        var nextAsset =
+          resolveSubjectAsset4B2R4('', nextText);
+
+        setSvgIcon4B2R4(nextIcon, nextAsset);
+      }
+
+      var detailIcon =
+        document.getElementById('subjectDetailIcon');
+
+      if (detailIcon) {
+        var detailText =
+          getText4B2R4('#subjectDetailTitle') +
+          ' ' +
+          getText4B2R4('#subjectDetailSubtitle');
+
+        var detailAsset =
+          resolveSubjectAsset4B2R4('', detailText);
+
+        setSvgIcon4B2R4(detailIcon, detailAsset);
+      }
+    }
+
+    window.kidlearnV3_applySubjectAssets4B2R4 =
+      applySubjectAssets4B2R4;
+
+    var scheduled = false;
+
+    function scheduleApplySubjectAssets4B2R4() {
+      if (scheduled) return;
+
+      scheduled = true;
+
+      setTimeout(function () {
+        scheduled = false;
+        applySubjectAssets4B2R4();
+      }, 80);
+    }
+
+    function startObserver4B2R4() {
+      var app =
+        document.getElementById('kidlearnApp');
+
+      if (!app || typeof MutationObserver === 'undefined') {
+        return;
+      }
+
+      var observer =
+        new MutationObserver(function () {
+          scheduleApplySubjectAssets4B2R4();
+        });
+
+      observer.observe(app, {
+        childList: true,
+        subtree: true,
+        characterData: true
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      applySubjectAssets4B2R4();
+      startObserver4B2R4();
+
+      setTimeout(applySubjectAssets4B2R4, 250);
+      setTimeout(applySubjectAssets4B2R4, 800);
+    });
+
+    document.addEventListener('click', function () {
+      setTimeout(applySubjectAssets4B2R4, 120);
+    }, true);
+  })();
+</script>

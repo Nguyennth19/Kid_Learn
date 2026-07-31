@@ -1,0 +1,782 @@
+<script>
+  /**
+   * KIDLEARN_SUBJECT_DASHBOARD_UI_4C2
+   * Phase 4C-2 — Subject Theme Map + Subject Dashboard UI
+   */
+
+  (function () {
+    var KIDLEARN_SUBJECT_DASHBOARD_UI_4C2 = {
+      phase: '4C-2',
+      uiName: 'SUBJECT_THEME_MAP_AND_SUBJECT_DASHBOARD_UI',
+      marker: 'KIDLEARN_SUBJECT_DASHBOARD_UI_4C2'
+    };
+
+    window.KIDLEARN_SUBJECT_DASHBOARD_UI_4C2 =
+      KIDLEARN_SUBJECT_DASHBOARD_UI_4C2;
+
+    var subjectThemeClassMap4C2 = {
+      MATH: 'kl-subject-theme-blue-4c2',
+      VIETNAMESE: 'kl-subject-theme-orange-4c2',
+      ENGLISH: 'kl-subject-theme-green-4c2',
+      SCIENCE: 'kl-subject-theme-red-4c2',
+      DEFAULT: 'kl-subject-theme-blue-4c2'
+    };
+
+    function normalizeText4C2(value) {
+      return String(value || '')
+        .trim()
+        .toUpperCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/\s+/g, '')
+        .replace(/-/g, '_');
+    }
+
+    function resolveSubjectKey4C2(value, name) {
+      var text =
+        normalizeText4C2(value) + ' ' + normalizeText4C2(name);
+
+      if (
+        text.indexOf('MATH') >= 0 ||
+        text.indexOf('TOAN') >= 0 ||
+        text.indexOf('SUB_T') >= 0
+      ) {
+        return 'MATH';
+      }
+
+      if (
+        text.indexOf('VIET') >= 0 ||
+        text.indexOf('TIENGVIET') >= 0 ||
+        text.indexOf('SUB_TV') >= 0
+      ) {
+        return 'VIETNAMESE';
+      }
+
+      if (
+        text.indexOf('ENGLISH') >= 0 ||
+        text.indexOf('TIENGANH') >= 0 ||
+        text.indexOf('SUB_E') >= 0
+      ) {
+        return 'ENGLISH';
+      }
+
+      if (
+        text.indexOf('SCIENCE') >= 0 ||
+        text.indexOf('KHOAHOC') >= 0 ||
+        text.indexOf('SUB_K') >= 0 ||
+        text.indexOf('SUB_S') >= 0
+      ) {
+        return 'SCIENCE';
+      }
+
+      return 'DEFAULT';
+    }
+
+    function resolveSubjectCodeFromInput4C2(subjectInput) {
+      if (!subjectInput) return 'MATH';
+
+      if (typeof subjectInput === 'string') {
+        return resolveSubjectKey4C2(subjectInput, '');
+      }
+
+      return resolveSubjectKey4C2(
+        subjectInput.subjectCode ||
+          subjectInput.subjectKey ||
+          subjectInput.subjectId ||
+          subjectInput.code ||
+          '',
+        subjectInput.subjectName ||
+          subjectInput.name ||
+          subjectInput.title ||
+          ''
+      );
+    }
+
+    function escapeHtml4C2(value) {
+      return String(value === null || value === undefined ? '' : value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function safePercent4C2(value) {
+      var number = Number(value || 0);
+      if (isNaN(number)) number = 0;
+      if (number < 0) number = 0;
+      if (number > 100) number = 100;
+      return Math.round(number);
+    }
+
+    function getSubjectAssetSvg4C2(subjectKey) {
+      var assets =
+        window.KIDLEARN_SUBJECT_ASSETS_4B2R4 || {};
+
+      var asset =
+        assets[subjectKey] ||
+        assets.DEFAULT ||
+        null;
+
+      return asset && asset.svg ? asset.svg : '';
+    }
+
+    function applySubjectIcon4C2(iconEl, subjectKey) {
+      if (!iconEl) return;
+
+      var svg =
+        getSubjectAssetSvg4C2(subjectKey);
+
+      if (svg) {
+        iconEl.innerHTML = svg;
+        iconEl.classList.add('has-svg-4b2r4');
+      }
+    }
+
+    function showScreen4C2(screenId) {
+      var screens = [
+        'childHomeScreen',
+        'coursesScreen',
+        'subjectDetailScreen',
+        'parentHomeScreen',
+        'placeholderScreen'
+      ];
+
+      for (var i = 0; i < screens.length; i++) {
+        var screen =
+          document.getElementById(screens[i]);
+
+        if (!screen) continue;
+
+        if (screens[i] === screenId) {
+          screen.classList.remove('hidden');
+        } else {
+          screen.classList.add('hidden');
+        }
+      }
+
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    }
+
+    function ensureSubjectDashboardRoot4C2() {
+      var screen =
+        document.getElementById('subjectDetailScreen');
+
+      if (!screen) return null;
+
+      var root =
+        document.getElementById('subjectDashboard4C2Root');
+
+      if (!root) {
+        root =
+          document.createElement('div');
+
+        root.id =
+          'subjectDashboard4C2Root';
+
+        root.className =
+          'kl-subject-dashboard-root-4c2';
+
+        screen.appendChild(root);
+      }
+
+      return root;
+    }
+
+    function setSubjectDashboardLoading4C2(subjectKey) {
+      showScreen4C2('subjectDetailScreen');
+
+      var root =
+        ensureSubjectDashboardRoot4C2();
+
+      if (!root) return;
+
+      root.innerHTML =
+        '<div class="kl-subject-dashboard-marker-4c2"></div>' +
+        '<section class="kl-subject-dashboard-4c2 ' +
+          escapeHtml4C2(subjectThemeClassMap4C2[subjectKey] || subjectThemeClassMap4C2.DEFAULT) +
+        '">' +
+          '<div class="kl-subject-loading-4c2">' +
+            '<div class="kl-spinner-4c2"></div>' +
+            '<strong>Đang mở môn học...</strong>' +
+            '<p>Chờ một chút nhé.</p>' +
+          '</div>' +
+        '</section>';
+    }
+
+    function setSubjectDashboardError4C2(message) {
+      showScreen4C2('subjectDetailScreen');
+
+      var root =
+        ensureSubjectDashboardRoot4C2();
+
+      if (!root) return;
+
+      root.innerHTML =
+        '<div class="kl-subject-dashboard-marker-4c2"></div>' +
+        '<section class="kl-subject-dashboard-4c2 kl-subject-theme-blue-4c2">' +
+          '<div class="kl-subject-error-4c2">' +
+            '<strong>Chưa mở được môn học</strong>' +
+            '<p>' + escapeHtml4C2(message || 'Vui lòng thử lại.') + '</p>' +
+          '</div>' +
+        '</section>';
+    }
+
+    function openSubjectDashboard4C2(subjectInput) {
+      var subjectKey =
+        resolveSubjectCodeFromInput4C2(subjectInput);
+
+      setSubjectDashboardLoading4C2(subjectKey);
+
+      if (
+        typeof google === 'undefined' ||
+        !google.script ||
+        !google.script.run
+      ) {
+        setSubjectDashboardError4C2(
+          'Không tìm thấy google.script.run trong môi trường hiện tại.'
+        );
+        return;
+      }
+
+      google.script.run
+        .withSuccessHandler(function (response) {
+          renderSubjectDashboard4C2(response);
+        })
+        .withFailureHandler(function (error) {
+          setSubjectDashboardError4C2(
+            error && error.message
+              ? error.message
+              : String(error || 'Unknown error')
+          );
+        })
+        .kidlearnV3_getSubjectDashboardContext4C1V3({
+          subjectCode: subjectKey
+        });
+    }
+
+    function renderSubjectDashboard4C2(response) {
+      if (!response || response.success !== true || !response.context) {
+        setSubjectDashboardError4C2(
+          response && response.errors
+            ? response.errors.join(' | ')
+            : 'Subject Dashboard context không hợp lệ.'
+        );
+        return;
+      }
+
+      var context =
+        response.context;
+
+      var dashboard =
+        context.subjectDashboard || {};
+
+      var subject =
+        dashboard.subject ||
+        context.selectedSubject ||
+        {};
+
+      var theme =
+        dashboard.theme ||
+        context.selectedTheme ||
+        {};
+
+      var subjectKey =
+        subject.subjectKey ||
+        resolveSubjectKey4C2(
+          subject.subjectCode || '',
+          subject.subjectName || ''
+        );
+
+      var themeClass =
+        subjectThemeClassMap4C2[subjectKey] ||
+        subjectThemeClassMap4C2.DEFAULT;
+
+      var root =
+        ensureSubjectDashboardRoot4C2();
+
+      if (!root) return;
+
+      updateSubjectHeader4C2(subject, dashboard, subjectKey);
+
+      root.innerHTML =
+        '<div class="kl-subject-dashboard-marker-4c2"></div>' +
+        '<section class="kl-subject-dashboard-4c2 ' + escapeHtml4C2(themeClass) + '" ' +
+          'style="' + buildThemeStyle4C2(theme) + '">' +
+          renderSubjectHero4C2(dashboard, subject, theme, subjectKey) +
+          renderSubjectOverview4C2(dashboard) +
+          renderLessonGroups4C2(dashboard.lessonGroups || [], subjectKey) +
+          renderSkillsAndReview4C2(dashboard, context.supportedAnswerModes || []) +
+        '</section>';
+
+      applySubjectThemeClassesToCourseCards4C2();
+
+      if (window.kidlearnV3_applySubjectAssets4B2R4) {
+        setTimeout(window.kidlearnV3_applySubjectAssets4B2R4, 120);
+      }
+    }
+
+    function buildThemeStyle4C2(theme) {
+      return [
+        '--subject-primary:' + (theme.primary || '#2F80ED'),
+        '--subject-pastel:' + (theme.pastel || '#EFF6FF'),
+        '--subject-border:' + (theme.border || '#BFDBFE'),
+        '--subject-text:' + (theme.text || '#1D4ED8'),
+        '--subject-gradient:' + (theme.gradient || 'linear-gradient(135deg,#2F80ED,#38BDF8)')
+      ].join(';');
+    }
+
+    function updateSubjectHeader4C2(subject, dashboard, subjectKey) {
+      var title =
+        document.getElementById('subjectDetailTitle');
+
+      var subtitle =
+        document.getElementById('subjectDetailSubtitle');
+
+      var icon =
+        document.getElementById('subjectDetailIcon');
+
+      var subjectName =
+        subject.subjectName ||
+        'Môn học';
+
+      if (title) {
+        title.textContent =
+          subjectName;
+      }
+
+      if (subtitle) {
+        var summary =
+          dashboard.progressSummary || {};
+
+        subtitle.textContent =
+          'Tiến độ: ' +
+          safePercent4C2(summary.overallProgressPercent) +
+          '% · ' +
+          String(summary.completedLessons || 0) +
+          '/' +
+          String(summary.totalLessons || 0) +
+          ' bài hoàn thành';
+      }
+
+      applySubjectIcon4C2(icon, subjectKey);
+    }
+
+    function renderSubjectHero4C2(dashboard, subject, theme, subjectKey) {
+      var hero =
+        dashboard.hero || {};
+
+      var summary =
+        dashboard.progressSummary || {};
+
+      var iconSvg =
+        getSubjectAssetSvg4C2(subjectKey);
+
+      return (
+        '<div class="kl-subject-hero-4c2">' +
+          '<div class="kl-subject-hero-main-4c2">' +
+            '<div class="kl-subject-hero-icon-4c2 has-svg-4b2r4">' +
+              iconSvg +
+            '</div>' +
+            '<div>' +
+              '<div class="kl-subject-kicker-4c2">Môn học hôm nay</div>' +
+              '<h2>' + escapeHtml4C2(hero.title || subject.subjectName || 'Môn học') + '</h2>' +
+              '<p>' + escapeHtml4C2(hero.greeting || 'Mình học bài nhé!') + '</p>' +
+            '</div>' +
+          '</div>' +
+
+          '<div class="kl-subject-hero-actions-4c2">' +
+            '<button class="kl-primary-btn kl-subject-primary-btn-4c2" ' +
+              'data-action="lesson-open-4c2" ' +
+              'data-lesson-id="' + escapeHtml4C2(hero.primaryLessonId || '') + '">' +
+              escapeHtml4C2(hero.primaryAction || 'Học tiếp') +
+            '</button>' +
+            '<button class="kl-secondary-btn kl-subject-secondary-btn-4c2" ' +
+              'data-action="review-open-4c2">' +
+              'Ôn tập nhanh' +
+            '</button>' +
+          '</div>' +
+
+          '<div class="kl-subject-progress-wrap-4c2">' +
+            '<div class="kl-subject-progress-row-4c2">' +
+              '<span>Tiến độ môn học</span>' +
+              '<strong>' + safePercent4C2(summary.overallProgressPercent) + '%</strong>' +
+            '</div>' +
+            '<div class="kl-progress-track-4c2">' +
+              '<div class="kl-progress-fill-4c2" style="width:' +
+                safePercent4C2(summary.overallProgressPercent) +
+              '%"></div>' +
+            '</div>' +
+          '</div>' +
+        '</div>'
+      );
+    }
+
+    function renderSubjectOverview4C2(dashboard) {
+      var next =
+        dashboard.nextLesson || {};
+
+      var summary =
+        dashboard.progressSummary || {};
+
+      return (
+        '<div class="kl-subject-overview-grid-4c2">' +
+          '<section class="kl-next-lesson-panel-4c2">' +
+            '<div class="kl-panel-heading-4c2">' +
+              '<span>Bài học tiếp theo</span>' +
+              '<strong>' + escapeHtml4C2(next.statusLabel || 'Chưa học') + '</strong>' +
+            '</div>' +
+            '<h3>' + escapeHtml4C2(next.lessonTitle || 'Bài học đầu tiên') + '</h3>' +
+            '<p>' + escapeHtml4C2(next.topicName || 'Chủ đề chung') + ' · ' +
+              escapeHtml4C2(next.estimatedMinutes || 8) + ' phút</p>' +
+            '<button class="kl-primary-btn kl-subject-primary-btn-4c2" ' +
+              'data-action="lesson-open-4c2" ' +
+              'data-lesson-id="' + escapeHtml4C2(next.lessonId || '') + '">' +
+              escapeHtml4C2(next.primaryAction || 'Vào học') +
+            '</button>' +
+          '</section>' +
+
+          '<section class="kl-subject-summary-panel-4c2">' +
+            '<div class="kl-subject-summary-item-4c2">' +
+              '<strong>' + escapeHtml4C2(summary.totalLessons || 0) + '</strong>' +
+              '<span>Tổng bài</span>' +
+            '</div>' +
+            '<div class="kl-subject-summary-item-4c2">' +
+              '<strong>' + escapeHtml4C2(summary.completedLessons || 0) + '</strong>' +
+              '<span>Hoàn thành</span>' +
+            '</div>' +
+            '<div class="kl-subject-summary-item-4c2">' +
+              '<strong>' + escapeHtml4C2(summary.inProgressLessons || 0) + '</strong>' +
+              '<span>Đang học</span>' +
+            '</div>' +
+            '<div class="kl-subject-summary-item-4c2">' +
+              '<strong>' + escapeHtml4C2(summary.notStartedLessons || 0) + '</strong>' +
+              '<span>Chưa học</span>' +
+            '</div>' +
+          '</section>' +
+        '</div>'
+      );
+    }
+
+    function renderLessonGroups4C2(groups, subjectKey) {
+      if (!groups || groups.length === 0) {
+        return (
+          '<section class="kl-section-4c2">' +
+            '<h3>Danh sách bài học</h3>' +
+            '<div class="kl-empty-state-4c2">Chưa có bài học cho môn này.</div>' +
+          '</section>'
+        );
+      }
+
+      var html =
+        '<section class="kl-section-4c2">' +
+          '<div class="kl-section-title-row-4c2">' +
+            '<h3>Danh sách bài học</h3>' +
+            '<span>Chọn bài để bắt đầu</span>' +
+          '</div>';
+
+      for (var i = 0; i < groups.length; i++) {
+        var group =
+          groups[i];
+
+        html +=
+          '<div class="kl-lesson-group-4c2">' +
+            '<h4>' + escapeHtml4C2(group.topicName || 'Chủ đề chung') + '</h4>' +
+            '<div class="kl-lesson-grid-4c2">';
+
+        var lessons =
+          group.lessons || [];
+
+        for (var j = 0; j < lessons.length; j++) {
+          html +=
+            renderLessonCard4C2(lessons[j], subjectKey);
+        }
+
+        html +=
+            '</div>' +
+          '</div>';
+      }
+
+      html +=
+        '</section>';
+
+      return html;
+    }
+
+    function renderLessonCard4C2(lesson, subjectKey) {
+      var statusClass =
+        lesson.status === 'COMPLETED'
+          ? 'is-completed'
+          : lesson.status === 'IN_PROGRESS'
+            ? 'is-progress'
+            : 'is-new';
+
+      return (
+        '<article class="kl-lesson-card-4c2 ' + statusClass + '">' +
+          '<div class="kl-lesson-card-top-4c2">' +
+            '<span class="kl-lesson-status-dot-4c2"></span>' +
+            '<strong>' + escapeHtml4C2(lesson.statusLabel || 'Chưa học') + '</strong>' +
+          '</div>' +
+          '<h5>' + escapeHtml4C2(lesson.lessonTitle || 'Bài học') + '</h5>' +
+          '<p>' + escapeHtml4C2(lesson.topicName || 'Chủ đề chung') + ' · ' +
+            escapeHtml4C2(lesson.estimatedMinutes || 8) + ' phút</p>' +
+          '<div class="kl-mini-progress-4c2">' +
+            '<div style="width:' + safePercent4C2(lesson.progressPercent) + '%"></div>' +
+          '</div>' +
+          '<button class="kl-subject-card-action-4c2" ' +
+            'data-action="lesson-open-4c2" ' +
+            'data-lesson-id="' + escapeHtml4C2(lesson.lessonId || '') + '">' +
+            escapeHtml4C2(lesson.primaryAction || 'Vào học') +
+          '</button>' +
+        '</article>'
+      );
+    }
+
+    function renderSkillsAndReview4C2(dashboard, supportedAnswerModes) {
+      return (
+        '<div class="kl-subject-bottom-grid-4c2">' +
+          renderSkills4C2(dashboard.skills || []) +
+          renderReviewAndAnswerModes4C2(dashboard.reviewItems || [], supportedAnswerModes || []) +
+        '</div>'
+      );
+    }
+
+    function renderSkills4C2(skills) {
+      var html =
+        '<section class="kl-section-4c2 kl-skill-section-4c2">' +
+          '<div class="kl-section-title-row-4c2">' +
+            '<h3>Kỹ năng đang luyện</h3>' +
+            '<span>Học từng chút một</span>' +
+          '</div>' +
+          '<div class="kl-skill-list-4c2">';
+
+      if (!skills || skills.length === 0) {
+        html +=
+          '<div class="kl-empty-state-4c2">Chưa có kỹ năng.</div>';
+      } else {
+        for (var i = 0; i < skills.length; i++) {
+          var skill =
+            skills[i];
+
+          html +=
+            '<div class="kl-skill-card-4c2">' +
+              '<div>' +
+                '<strong>' + escapeHtml4C2(skill.skillName || 'Kỹ năng') + '</strong>' +
+                '<span>' + escapeHtml4C2(skill.label || 'Sắp học') + '</span>' +
+              '</div>' +
+              '<em>' + safePercent4C2(skill.masteryPercent) + '%</em>' +
+            '</div>';
+        }
+      }
+
+      html +=
+          '</div>' +
+        '</section>';
+
+      return html;
+    }
+
+    function renderReviewAndAnswerModes4C2(reviewItems, supportedAnswerModes) {
+      var html =
+        '<section class="kl-section-4c2 kl-review-section-4c2">' +
+          '<div class="kl-section-title-row-4c2">' +
+            '<h3>Ôn tập nhanh</h3>' +
+            '<span>Nhớ lâu hơn</span>' +
+          '</div>';
+
+      if (!reviewItems || reviewItems.length === 0) {
+        html +=
+          '<div class="kl-empty-state-4c2">Chưa có bài cần ôn.</div>';
+      } else {
+        html += '<div class="kl-review-list-4c2">';
+
+        for (var i = 0; i < reviewItems.length; i++) {
+          var item =
+            reviewItems[i];
+
+          html +=
+            '<button class="kl-review-item-4c2" ' +
+              'data-action="lesson-open-4c2" ' +
+              'data-lesson-id="' + escapeHtml4C2(item.lessonId || '') + '">' +
+              '<strong>' + escapeHtml4C2(item.lessonTitle || 'Bài cần ôn') + '</strong>' +
+              '<span>' + escapeHtml4C2(item.reviewReason || 'Ôn nhẹ') + '</span>' +
+            '</button>';
+        }
+
+        html += '</div>';
+      }
+
+      html +=
+        '<div class="kl-answer-mode-preview-4c2">' +
+          '<h4>Chuẩn bị cho Lesson Player</h4>' +
+          '<p>Bước sau sẽ hỗ trợ chọn đáp án, bấm nút, gõ text và viết bằng pen/tay.</p>' +
+          '<div class="kl-answer-mode-chip-row-4c2">' +
+            renderAnswerModeChips4C2(supportedAnswerModes) +
+          '</div>' +
+        '</div>';
+
+      html +=
+        '</section>';
+
+      return html;
+    }
+
+    function renderAnswerModeChips4C2(modes) {
+      if (!modes || modes.length === 0) {
+        return '<span class="kl-answer-mode-chip-4c2">Chọn đáp án</span>';
+      }
+
+      var html = '';
+
+      for (var i = 0; i < modes.length; i++) {
+        html +=
+          '<span class="kl-answer-mode-chip-4c2">' +
+            escapeHtml4C2(modes[i].label || modes[i].answerMode || 'Answer mode') +
+          '</span>';
+      }
+
+      return html;
+    }
+
+    function openLessonFromSubjectDashboard4C2(lessonId) {
+      var root =
+        ensureSubjectDashboardRoot4C2();
+
+      var message =
+        document.getElementById('lessonPlaceholderMessage4C2');
+
+      if (!message && root) {
+        message =
+          document.createElement('div');
+
+        message.id =
+          'lessonPlaceholderMessage4C2';
+
+        message.className =
+          'kl-lesson-placeholder-message-4c2';
+
+        root.insertBefore(message, root.firstChild);
+      }
+
+      if (message) {
+        message.innerHTML =
+          '<strong>Lesson Player sẽ mở ở 4C-4.</strong>' +
+          '<span> Bài đã chọn: ' +
+          escapeHtml4C2(lessonId || 'bài học') +
+          '. Ở 4C-3 mình sẽ chuẩn bị context bài học trước.</span>';
+      }
+    }
+
+    function openReviewFromSubjectDashboard4C2() {
+      var firstReview =
+        document.querySelector(
+          '#subjectDashboard4C2Root [data-action="lesson-open-4c2"]'
+        );
+
+      if (firstReview) {
+        openLessonFromSubjectDashboard4C2(
+          firstReview.getAttribute('data-lesson-id') || ''
+        );
+      }
+    }
+
+    function applySubjectThemeClassesToCourseCards4C2() {
+      var cards =
+        Array.prototype.slice.call(
+          document.querySelectorAll('[data-subject-card]')
+        );
+
+      cards.forEach(function (card) {
+        var code =
+          card.getAttribute('data-subject-code') ||
+          card.getAttribute('data-code') ||
+          '';
+
+        var titleEl =
+          card.querySelector('h3');
+
+        var title =
+          titleEl ? titleEl.textContent || '' : '';
+
+        var key =
+          resolveSubjectKey4C2(code, title);
+
+        card.classList.remove(
+          'subject-blue',
+          'subject-purple',
+          'subject-pink',
+          'subject-green',
+          'subject-orange',
+          'subject-red'
+        );
+
+        if (key === 'MATH') {
+          card.classList.add('subject-blue');
+        } else if (key === 'VIETNAMESE') {
+          card.classList.add('subject-orange');
+        } else if (key === 'ENGLISH') {
+          card.classList.add('subject-green');
+        } else if (key === 'SCIENCE') {
+          card.classList.add('subject-red');
+        } else {
+          card.classList.add('subject-blue');
+        }
+      });
+    }
+
+    document.addEventListener('click', function (event) {
+      var actionEl =
+        event.target.closest('[data-action]');
+
+      if (!actionEl) return;
+
+      var action =
+        actionEl.getAttribute('data-action');
+
+      if (action === 'lesson-open-4c2') {
+        event.preventDefault();
+        openLessonFromSubjectDashboard4C2(
+          actionEl.getAttribute('data-lesson-id') || ''
+        );
+      }
+
+      if (action === 'review-open-4c2') {
+        event.preventDefault();
+        openReviewFromSubjectDashboard4C2();
+      }
+    });
+
+    var originalOpenSubjectDetail4B =
+      window.openSubjectDetail4B;
+
+    window.openSubjectDashboard4C2 =
+      openSubjectDashboard4C2;
+
+    window.renderSubjectDashboard4C2 =
+      renderSubjectDashboard4C2;
+
+    window.openLessonFromSubjectDashboard4C2 =
+      openLessonFromSubjectDashboard4C2;
+
+    window.applySubjectThemeClassesToCourseCards4C2 =
+      applySubjectThemeClassesToCourseCards4C2;
+
+    window.openSubjectDetail4B = function (subjectInput) {
+      openSubjectDashboard4C2(subjectInput);
+    };
+
+    document.addEventListener('DOMContentLoaded', function () {
+      applySubjectThemeClassesToCourseCards4C2();
+
+      setTimeout(applySubjectThemeClassesToCourseCards4C2, 300);
+      setTimeout(applySubjectThemeClassesToCourseCards4C2, 900);
+    });
+
+    document.addEventListener('click', function () {
+      setTimeout(applySubjectThemeClassesToCourseCards4C2, 120);
+    }, true);
+  })();
+</script>

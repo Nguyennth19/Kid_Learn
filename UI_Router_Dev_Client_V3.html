@@ -1,0 +1,87 @@
+<script>
+/**
+ * ================================================================
+ * KIDLEARN V3 - UI ROUTER DEV CLIENT
+ * Step: 3I.7
+ * ================================================================
+ */
+
+window.KidlearnV3UiRouterClient = (function() {
+  function callServer(functionName, request) {
+    return new Promise(function(resolve, reject) {
+      if (
+        !window.google ||
+        !google.script ||
+        !google.script.run
+      ) {
+        reject({
+          success: false,
+          message: 'google.script.run không khả dụng.'
+        });
+
+        return;
+      }
+
+      var runner =
+        google.script.run
+          .withSuccessHandler(function(response) {
+            resolve(response);
+          })
+          .withFailureHandler(function(error) {
+            reject({
+              success: false,
+              message:
+                error && error.message
+                  ? error.message
+                  : String(error || 'Unknown error')
+            });
+          });
+
+      runner[functionName](request || {});
+    });
+  }
+
+  function getInitialState(request) {
+    return callServer(
+      'kidlearnV3_uiRouterGetInitialStateV3',
+      request || {}
+    );
+  }
+
+  function navigate(screen, params) {
+    var request =
+      params || {};
+
+    request.screen =
+      screen || 'HOME';
+
+    return callServer(
+      'kidlearnV3_uiRouterLoadScreenV3',
+      request
+    );
+  }
+
+  function unwrap(response) {
+    if (!response) {
+      throw new Error('Router response trống.');
+    }
+
+    if (response.success !== true) {
+      var message =
+        response.error && response.error.message
+          ? response.error.message
+          : 'Router trả về success=false.';
+
+      throw new Error(message);
+    }
+
+    return response.data;
+  }
+
+  return {
+    getInitialState: getInitialState,
+    navigate: navigate,
+    unwrap: unwrap
+  };
+})();
+</script>

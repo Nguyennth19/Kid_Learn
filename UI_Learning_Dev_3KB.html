@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background: #f6f7fb;
+      color: #1f2937;
+    }
+
+    .app {
+      padding: 18px;
+    }
+
+    .topbar {
+      background: #ffffff;
+      border-radius: 14px;
+      padding: 16px 18px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      margin-bottom: 16px;
+    }
+
+    .title {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .subtitle {
+      color: #6b7280;
+      font-size: 13px;
+    }
+
+    .toolbar {
+      margin-top: 14px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      border: 0;
+      border-radius: 10px;
+      padding: 9px 12px;
+      cursor: pointer;
+      background: #2563eb;
+      color: #ffffff;
+      font-weight: 600;
+    }
+
+    button.secondary {
+      background: #6b7280;
+    }
+
+    button.dryrun {
+      background: #9333ea;
+    }
+
+    button:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 240px 1fr 280px;
+      gap: 16px;
+    }
+
+    .panel {
+      background: #ffffff;
+      border-radius: 14px;
+      padding: 14px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      min-height: 120px;
+    }
+
+    .panel-title {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .card {
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 10px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      background: #ffffff;
+    }
+
+    .card:hover {
+      background: #f3f4f6;
+    }
+
+    .card.active {
+      border-color: #2563eb;
+      background: #eff6ff;
+    }
+
+    .card-title {
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .card-meta {
+      font-size: 12px;
+      color: #6b7280;
+    }
+
+    .player-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .player-meta {
+      color: #6b7280;
+      font-size: 13px;
+      margin-bottom: 12px;
+    }
+
+    .block {
+      border-left: 4px solid #2563eb;
+      background: #f9fafb;
+      padding: 12px;
+      border-radius: 10px;
+      margin-bottom: 10px;
+    }
+
+    .activity {
+      border-left: 4px solid #9333ea;
+      background: #faf5ff;
+      padding: 12px;
+      border-radius: 10px;
+      margin-bottom: 10px;
+    }
+
+    .empty {
+      color: #6b7280;
+      background: #f9fafb;
+      border-radius: 10px;
+      padding: 14px;
+    }
+
+    .status {
+      white-space: pre-wrap;
+      background: #111827;
+      color: #e5e7eb;
+      border-radius: 12px;
+      padding: 12px;
+      font-size: 12px;
+      max-height: 220px;
+      overflow: auto;
+      margin-top: 16px;
+    }
+
+    .badge {
+      display: inline-block;
+      border-radius: 999px;
+      background: #ecfeff;
+      color: #155e75;
+      font-size: 12px;
+      padding: 4px 8px;
+      margin-right: 4px;
+    }
+
+    .warning {
+      background: #fffbeb;
+      color: #92400e;
+      border-radius: 10px;
+      padding: 10px;
+      margin-bottom: 10px;
+      font-size: 13px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div class="title">KIDLEARN V3 - Learning DEV 3K-B</div>
+      <div class="subtitle">
+        Read-only Learning UI + Basic Lesson Player. No real write.
+      </div>
+
+      <div class="toolbar">
+        <button onclick="loadInitial()">Refresh UI</button>
+        <button class="secondary" onclick="preview3KB()">Preview</button>
+        <button class="secondary" onclick="status3KB()">Status</button>
+        <button class="dryrun" onclick="smoke3KB()">Smoke Test</button>
+        <button class="dryrun" onclick="markReady3KB()">Mark 3K-B Ready</button>
+      </div>
+    </div>
+
+    <div id="warnings"></div>
+
+    <div class="grid">
+      <div class="panel">
+        <div class="panel-title">Môn học</div>
+        <div id="subjects"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">Lesson Player DEV</div>
+        <div id="player"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">Bài học / Assignment</div>
+        <div id="lessons"></div>
+        <hr>
+        <div id="assignments"></div>
+      </div>
+    </div>
+
+    <div id="status" class="status">Loading...</div>
+  </div>
+
+  <?!= kidlearnV3_uiInclude_('UI_Learning_Dev_3KB_Client_V3'); ?>
+
+  <script>
+    var currentPayload = null;
+    var currentRequest = {};
+
+    function setStatus(value) {
+      document.getElementById('status').textContent =
+        typeof value === 'string'
+          ? value
+          : JSON.stringify(value, null, 2);
+    }
+
+    function setLoading(message) {
+      setStatus(message || 'Loading...');
+    }
+
+    function showError(error) {
+      setStatus({
+        success: false,
+        error: error && error.message ? error.message : String(error)
+      });
+    }
+
+    function loadInitial(request) {
+      setLoading('Loading Learning UI 3K-B...');
+
+      currentRequest = request || currentRequest || {};
+
+      KidlearnV3Learning3KB
+        .getInitialPayload(currentRequest)
+        .then(function(payload) {
+          currentPayload = payload;
+          render(payload);
+          setStatus(payload);
+        })
+        .catch(showError);
+    }
+
+    function preview3KB() {
+      setLoading('Preview 3K-B...');
+      KidlearnV3Learning3KB
+        .preview()
+        .then(setStatus)
+        .catch(showError);
+    }
+
+    function status3KB() {
+      setLoading('Get status 3K-B...');
+      KidlearnV3Learning3KB
+        .getStatus()
+        .then(setStatus)
+        .catch(showError);
+    }
+
+    function smoke3KB() {
+      setLoading('Smoke test 3K-B...');
+      KidlearnV3Learning3KB
+        .smokeTest()
+        .then(setStatus)
+        .catch(showError);
+    }
+
+    function markReady3KB() {
+      setLoading('Mark 3K-B ready...');
+      KidlearnV3Learning3KB
+        .markReady()
+        .then(setStatus)
+        .catch(showError);
+    }
+
+    function render(payload) {
+      renderWarnings(payload);
+      renderSubjects(payload);
+      renderLessons(payload);
+      renderAssignments(payload);
+      renderPlayer(payload);
+    }
+
+    function renderWarnings(payload) {
+      var el = document.getElementById('warnings');
+      var warnings = [];
+
+      if (
+        payload.lessonPlayer &&
+        payload.lessonPlayer.warnings
+      ) {
+        warnings = payload.lessonPlayer.warnings;
+      }
+
+      if (!warnings.length) {
+        el.innerHTML = '';
+        return;
+      }
+
+      el.innerHTML =
+        '<div class="warning">' +
+        warnings.map(escapeHtml).join('<br>') +
+        '</div>';
+    }
+
+    function renderSubjects(payload) {
+      var el = document.getElementById('subjects');
+      var items =
+        payload.subjectRail && payload.subjectRail.items
+          ? payload.subjectRail.items
+          : [];
+
+      var selectedId =
+        payload.subjectRail
+          ? payload.subjectRail.selectedSubjectId
+          : '';
+
+      if (!items.length) {
+        el.innerHTML =
+          '<div class="empty">Chưa có môn học.</div>';
+        return;
+      }
+
+      el.innerHTML =
+        items.map(function(item) {
+          var active =
+            item.subjectId === selectedId
+              ? ' active'
+              : '';
+
+          return (
+            '<div class="card' + active + '" onclick="selectSubject(\'' +
+            escapeAttr(item.subjectId) +
+            '\')">' +
+              '<div class="card-title">' +
+                escapeHtml(item.subjectName || item.subjectId) +
+              '</div>' +
+              '<div class="card-meta">' +
+                escapeHtml(item.subjectCode || '') +
+              '</div>' +
+            '</div>'
+          );
+        }).join('');
+    }
+
+    function renderLessons(payload) {
+      var el = document.getElementById('lessons');
+      var items =
+        payload.lessonList && payload.lessonList.items
+          ? payload.lessonList.items
+          : [];
+
+      var selectedId =
+        payload.lessonList
+          ? payload.lessonList.selectedLessonId
+          : '';
+
+      if (!items.length) {
+        el.innerHTML =
+          '<div class="panel-title">Bài học</div>' +
+          '<div class="empty">Chưa có bài học.</div>';
+        return;
+      }
+
+      el.innerHTML =
+        '<div class="panel-title">Bài học</div>' +
+        items.map(function(item) {
+          var active =
+            item.lessonId === selectedId
+              ? ' active'
+              : '';
+
+          return (
+            '<div class="card' + active + '" onclick="selectLesson(\'' +
+            escapeAttr(item.lessonId) +
+            '\')">' +
+              '<div class="card-title">' +
+                escapeHtml(item.lessonTitle || item.lessonId) +
+              '</div>' +
+              '<div class="card-meta">' +
+                'Progress: ' +
+                escapeHtml(String(item.progressPercent || 0)) +
+                '%' +
+              '</div>' +
+            '</div>'
+          );
+        }).join('');
+    }
+
+    function renderAssignments(payload) {
+      var el = document.getElementById('assignments');
+      var items =
+        payload.assignmentPanel && payload.assignmentPanel.items
+          ? payload.assignmentPanel.items
+          : [];
+
+      if (!items.length) {
+        el.innerHTML =
+          '<div class="panel-title">Assignment</div>' +
+          '<div class="empty">Chưa có assignment.</div>';
+        return;
+      }
+
+      el.innerHTML =
+        '<div class="panel-title">Assignment</div>' +
+        items.map(function(item) {
+          return (
+            '<div class="card">' +
+              '<div class="card-title">' +
+                escapeHtml(item.title || item.assignmentId) +
+              '</div>' +
+              '<div class="card-meta">' +
+                escapeHtml(item.status || '') +
+              '</div>' +
+            '</div>'
+          );
+        }).join('');
+    }
+
+    function renderPlayer(payload) {
+      var el = document.getElementById('player');
+      var player = payload.lessonPlayer || {};
+
+      if (!player.hasLesson) {
+        el.innerHTML =
+          '<div class="empty">Chưa có lesson để hiển thị.</div>';
+        return;
+      }
+
+      var lesson = player.lesson || {};
+      var blocks = player.blocks || [];
+      var activities = player.activities || [];
+
+      var html =
+        '<div class="player-title">' +
+          escapeHtml(lesson.lessonTitle || lesson.lessonId) +
+        '</div>' +
+        '<div class="player-meta">' +
+          '<span class="badge">READ ONLY</span>' +
+          '<span class="badge">3K-B</span>' +
+          '<span class="badge">' +
+            escapeHtml(String(lesson.estimatedMinutes || 0)) +
+            ' phút</span>' +
+        '</div>' +
+        '<div class="toolbar">' +
+          '<button disabled>Start Lesson</button>' +
+          '<button disabled>Update Progress</button>' +
+          '<button disabled>Finish Lesson</button>' +
+        '</div>' +
+        '<p class="card-meta">Các nút trên chỉ là layout. 3K-C mới gắn action DRY_RUN.</p>';
+
+      if (!blocks.length) {
+        html +=
+          '<div class="empty">Lesson chưa có block nội dung.</div>';
+      } else {
+        html += blocks.map(function(block) {
+          return (
+            '<div class="block">' +
+              '<div class="card-title">' +
+                escapeHtml(block.title || block.blockType || 'Block') +
+              '</div>' +
+              '<div>' +
+                escapeHtml(block.contentText || '') +
+              '</div>' +
+              '<div class="card-meta">' +
+                escapeHtml(block.blockType || '') +
+              '</div>' +
+            '</div>'
+          );
+        }).join('');
+      }
+
+      if (activities.length) {
+        html +=
+          '<div class="panel-title">Activities</div>' +
+          activities.map(function(activity) {
+            return (
+              '<div class="activity">' +
+                '<div class="card-title">' +
+                  escapeHtml(activity.activityType || 'Activity') +
+                '</div>' +
+                '<div>' +
+                  escapeHtml(activity.prompt || '') +
+                '</div>' +
+              '</div>'
+            );
+          }).join('');
+      }
+
+      el.innerHTML = html;
+    }
+
+    function selectSubject(subjectId) {
+      currentRequest = {
+        subjectId: subjectId
+      };
+      loadInitial(currentRequest);
+    }
+
+    function selectLesson(lessonId) {
+      currentRequest.lessonId = lessonId;
+      loadInitial(currentRequest);
+    }
+
+    function escapeHtml(value) {
+      return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function escapeAttr(value) {
+      return escapeHtml(value).replace(/\\/g, '\\\\');
+    }
+
+    loadInitial({});
+  </script>
+</body>
+</html>

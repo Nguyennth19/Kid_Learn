@@ -1,0 +1,639 @@
+<script>
+  <!--
+    KIDLEARN V3 QA MARKER
+    Phase 4D-6P
+    UI Write Gate Stability Patch
+  -->
+  
+  /**
+   * KIDLEARN_UI_CONTROLLED_WRITE_GATE_4D6
+   * Phase 4D-6P — UI Controlled Write Gate Stability Patch
+   *
+   * Fix:
+   * - Không gọi server liên tục trong MutationObserver.
+   * - Không gây vòng lặp DOM mutation -> refresh gate -> mutation.
+   * - Chỉ refresh gate status khi Lesson Player xuất hiện lần đầu.
+   * - Submit/Complete vẫn đi qua write gate.
+   */
+
+  (function () {
+    var KIDLEARN_UI_CONTROLLED_WRITE_GATE_4D6 = {
+      phase: '4D-6P',
+      marker: 'KIDLEARN_UI_CONTROLLED_WRITE_GATE_4D6',
+      gateMode: 'GATE_CLOSED_DRY_RUN_ONLY',
+      statusLoaded: false,
+      statusLoading: false,
+      lastStatusRefreshAt: 0,
+      badgeInserted: false
+    };
+
+    window.KIDLEARN_UI_CONTROLLED_WRITE_GATE_4D6 =
+      KIDLEARN_UI_CONTROLLED_WRITE_GATE_4D6;
+
+    function escapeHtml4D6(value) {
+      return String(value === null || value === undefined ? '' : value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function normalizeText4D6(value) {
+      return String(value || '')
+        .trim()
+        .toUpperCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/\s+/g, '')
+        .replace(/-/g, '_');
+    }
+
+    function resolveSubjectKey4D6(lessonId) {
+      var text = normalizeText4D6(lessonId);
+
+      if (text.indexOf('TV_') >= 0 || text.indexOf('VIET') >= 0) {
+        return 'VIETNAMESE';
+      }
+
+      if (text.indexOf('ENG_') >= 0 || text.indexOf('ENGLISH') >= 0) {
+        return 'ENGLISH';
+      }
+
+      if (text.indexOf('SCI_') >= 0 || text.indexOf('SCIENCE') >= 0) {
+        return 'SCIENCE';
+      }
+
+      return 'MATH';
+    }
+
+    function getLessonIdFromActivityId4D6(activityId) {
+      activityId = String(activityId || '');
+
+      var index = activityId.indexOf('_ACT_');
+
+      if (index > 0) {
+        return activityId.substring(0, index);
+      }
+
+      return '';
+    }
+
+    function getCurrentActivityCard4D6(activityId) {
+      if (activityId) {
+        var selector =
+          '.kl-activity-card-4c4[data-activity-id="' +
+          String(activityId).replace(/"/g, '\\"') +
+          '"]';
+
+        var found = document.querySelector(selector);
+
+        if (found) return found;
+      }
+
+      return document.querySelector('.kl-activity-card-4c4');
+    }
+
+    function detectAnswerMode4D6(activityCard) {
+      if (!activityCard) return 'UNKNOWN';
+
+      if (activityCard.querySelector('.kl-answer-options-4c4')) {
+        return 'MULTIPLE_CHOICE';
+      }
+
+      if (activityCard.querySelector('.kl-button-input-wrap-4c4')) {
+        return 'BUTTON_INPUT';
+      }
+
+      if (activityCard.querySelector('.kl-text-input-wrap-4c4')) {
+        return 'TEXT_INPUT';
+      }
+
+      if (activityCard.querySelector('.kl-handwriting-wrap-4c4')) {
+        return 'HANDWRITE_INPUT';
+      }
+
+      return 'UNKNOWN';
+    }
+
+    function canvasHasInk4D6(canvas) {
+      if (!canvas) return false;
+
+      try {
+        var ctx = canvas.getContext('2d');
+        var data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+
+        for (var i = 0; i < data.length; i += 4) {
+          var r = data[i];
+          var g = data[i + 1];
+          var b = data[i + 2];
+          var a = data[i + 3];
+
+          if (a > 0 && !(r > 245 && g > 245 && b > 245)) {
+            return true;
+          }
+        }
+      } catch (error) {
+        return false;
+      }
+
+      return false;
+    }
+
+    function collectAnswerPayloadForWriteGate4D6(activityId) {
+      if (
+        window.collectAnswerPayload4C5 &&
+        typeof window.collectAnswerPayload4C5 === 'function'
+      ) {
+        var base = window.collectAnswerPayload4C5(activityId);
+
+        base.progressPercent = getCurrentProgressPercent4D6();
+        base.currentStepIndex = getCurrentStepIndex4D6();
+        base.startedAt = getOrCreateLessonStartedAt4D6();
+
+        return base;
+      }
+
+      var activityCard = getCurrentActivityCard4D6(activityId);
+      var answerMode = detectAnswerMode4D6(activityCard);
+
+      var answerText = '';
+      var selectedOptionId = '';
+      var selectedOptionLabel = '';
+      var canvasHasInk = false;
+      var canvasDataUrlLength = 0;
+
+      if (answerMode === 'MULTIPLE_CHOICE') {
+        var selected =
+          activityCard
+            ? activityCard.querySelector('.kl-answer-option-4c4.is-selected')
+            : null;
+
+        if (selected) {
+          selectedOptionId = selected.getAttribute('data-option-id') || '';
+          selectedOptionLabel =
+            selected.getAttribute('data-option-label') ||
+            selected.textContent ||
+            '';
+          answerText = selectedOptionLabel;
+        }
+      }
+
+      if (answerMode === 'BUTTON_INPUT') {
+        var display = document.getElementById('buttonAnswerDisplay4C4');
+
+        answerText = display ? String(display.textContent || '').trim() : '';
+
+        if (answerText === 'Con bấm nút để nhập đáp án') {
+          answerText = '';
+        }
+      }
+
+      if (answerMode === 'TEXT_INPUT') {
+        var input = document.getElementById('textAnswer4C4');
+        answerText = input ? String(input.value || '').trim() : '';
+      }
+
+      if (answerMode === 'HANDWRITE_INPUT') {
+        var canvas = document.getElementById('lessonHandwritingCanvas4C4');
+
+        canvasHasInk = canvasHasInk4D6(canvas);
+
+        try {
+          canvasDataUrlLength =
+            canvas && canvas.toDataURL
+              ? String(canvas.toDataURL('image/png') || '').length
+              : 0;
+        } catch (error) {
+          canvasDataUrlLength = 0;
+        }
+
+        answerText = canvasHasInk ? '[HANDWRITING_CAPTURED_4D6]' : '';
+      }
+
+      var lessonId = getLessonIdFromActivityId4D6(activityId);
+
+      return {
+        childId: 'CHD_V2_CHILD_DEFAULT',
+        lessonId: lessonId,
+        activityId: activityId,
+        subjectCode: resolveSubjectKey4D6(lessonId),
+        answerMode: answerMode,
+        answerText: answerText,
+        selectedOptionId: selectedOptionId,
+        selectedOptionLabel: selectedOptionLabel,
+        expectedAnswer: '',
+        canvasHasInk: canvasHasInk,
+        canvasDataUrlLength: canvasDataUrlLength,
+        progressPercent: getCurrentProgressPercent4D6(),
+        currentStepIndex: getCurrentStepIndex4D6(),
+        startedAt: getOrCreateLessonStartedAt4D6()
+      };
+    }
+
+    function getCurrentProgressPercent4D6() {
+      var text = document.querySelector('.kl-lesson-progress-row-4c4');
+
+      if (!text) return 50;
+
+      var raw = String(text.textContent || '');
+      var match = raw.match(/(\d+)\s*%/);
+
+      if (match) {
+        return Number(match[1]) || 50;
+      }
+
+      return 50;
+    }
+
+    function getCurrentStepIndex4D6() {
+      var current = document.querySelector('.kl-lesson-step-card-4c4');
+
+      if (!current) return 0;
+
+      var text = String(current.textContent || '');
+      var match = text.match(/Bước\s+(\d+)/i);
+
+      if (match) {
+        return Number(match[1]) || 0;
+      }
+
+      return 0;
+    }
+
+    function getOrCreateLessonStartedAt4D6() {
+      if (!window.KIDLEARN_4D6_LESSON_STARTED_AT) {
+        window.KIDLEARN_4D6_LESSON_STARTED_AT = new Date().toISOString();
+      }
+
+      return window.KIDLEARN_4D6_LESSON_STARTED_AT;
+    }
+
+    function getCurrentLessonIdForComplete4D6() {
+      var activityCard = document.querySelector('.kl-activity-card-4c4');
+
+      var activityId =
+        activityCard
+          ? activityCard.getAttribute('data-activity-id') || ''
+          : '';
+
+      return getLessonIdFromActivityId4D6(activityId);
+    }
+
+    function buildCompletePayload4D6() {
+      var lessonId = getCurrentLessonIdForComplete4D6();
+      var startedAt = getOrCreateLessonStartedAt4D6();
+      var now = new Date();
+      var startDate = new Date(startedAt);
+
+      var durationSeconds =
+        Math.max(
+          1,
+          Math.round((now.getTime() - startDate.getTime()) / 1000)
+        );
+
+      var steps = document.querySelectorAll('.kl-lesson-step-card-4c4');
+
+      return {
+        sessionId: window.KIDLEARN_4D6_SESSION_ID || '',
+        childId: 'CHD_V2_CHILD_DEFAULT',
+        lessonId: lessonId,
+        subjectCode: resolveSubjectKey4D6(lessonId),
+        completedStepCount: steps ? steps.length : 0,
+        startedAt: startedAt,
+        completedAt: now.toISOString(),
+        durationSeconds: durationSeconds
+      };
+    }
+
+    function ensureWriteGateBadge4D6() {
+      var player = document.querySelector('.kl-lesson-player-4c4');
+
+      if (!player) return null;
+
+      var badge = document.getElementById('lessonWriteGateBadge4D6');
+
+      if (!badge) {
+        badge = document.createElement('div');
+        badge.id = 'lessonWriteGateBadge4D6';
+        badge.className = 'kl-write-gate-badge-4d6 is-dryrun';
+        badge.textContent = 'Gate: Dry-run only';
+
+        player.insertBefore(badge, player.firstChild);
+      }
+
+      updateWriteGateBadge4D6();
+
+      return badge;
+    }
+
+    function updateWriteGateBadge4D6() {
+      var badge = document.getElementById('lessonWriteGateBadge4D6');
+
+      if (!badge) return;
+
+      var mode = KIDLEARN_UI_CONTROLLED_WRITE_GATE_4D6.gateMode;
+
+      var nextClass =
+        mode === 'OPEN_DEV_CONTROLLED'
+          ? 'kl-write-gate-badge-4d6 is-real'
+          : 'kl-write-gate-badge-4d6 is-dryrun';
+
+      var nextText =
+        mode === 'OPEN_DEV_CONTROLLED'
+          ? 'Gate: DEV real write đang mở'
+          : 'Gate: Dry-run only';
+
+      if (badge.className !== nextClass) {
+        badge.className = nextClass;
+      }
+
+      if (badge.textContent !== nextText) {
+        badge.textContent = nextText;
+      }
+    }
+
+    function showWriteGateFeedback4D6(message, type, detail) {
+      ensureWriteGateBadge4D6();
+
+      var box = document.getElementById('lessonFeedback4C4');
+
+      if (!box) {
+        var card =
+          document.querySelector('.kl-activity-card-4c4') ||
+          document.querySelector('.kl-lesson-step-card-4c4');
+
+        if (card) {
+          box = document.createElement('div');
+          box.id = 'lessonFeedback4C4';
+          card.appendChild(box);
+        }
+      }
+
+      if (!box) return;
+
+      var className = 'kl-write-gate-feedback-4d6';
+
+      if (type === 'real') {
+        className += ' is-real';
+      } else if (type === 'error') {
+        className += ' is-error';
+      } else {
+        className += ' is-dryrun';
+      }
+
+      box.className = className;
+
+      box.innerHTML =
+        '<strong>' +
+          escapeHtml4D6(message || '') +
+        '</strong>' +
+        (
+          detail
+            ? '<span>' + escapeHtml4D6(detail) + '</span>'
+            : ''
+        );
+    }
+
+    function refreshWriteGateStatus4D6(force) {
+      var now = Date.now();
+
+      if (
+        !force &&
+        KIDLEARN_UI_CONTROLLED_WRITE_GATE_4D6.statusLoaded
+      ) {
+        updateWriteGateBadge4D6();
+        return;
+      }
+
+      if (
+        !force &&
+        now - KIDLEARN_UI_CONTROLLED_WRITE_GATE_4D6.lastStatusRefreshAt < 5000
+      ) {
+        return;
+      }
+
+      if (KIDLEARN_UI_CONTROLLED_WRITE_GATE_4D6.statusLoading) {
+        return;
+      }
+
+      if (
+        typeof google === 'undefined' ||
+        !google.script ||
+        !google.script.run
+      ) {
+        return;
+      }
+
+      KIDLEARN_UI_CONTROLLED_WRITE_GATE_4D6.statusLoading = true;
+      KIDLEARN_UI_CONTROLLED_WRITE_GATE_4D6.lastStatusRefreshAt = now;
+
+      google.script.run
+        .withSuccessHandler(function (response) {
+          KIDLEARN_UI_CONTROLLED_WRITE_GATE_4D6.statusLoading = false;
+          KIDLEARN_UI_CONTROLLED_WRITE_GATE_4D6.statusLoaded = true;
+
+          if (response && response.gateMode) {
+            KIDLEARN_UI_CONTROLLED_WRITE_GATE_4D6.gateMode =
+              response.gateMode;
+          }
+
+          updateWriteGateBadge4D6();
+        })
+        .withFailureHandler(function () {
+          KIDLEARN_UI_CONTROLLED_WRITE_GATE_4D6.statusLoading = false;
+        })
+        .kidlearnV3_getUiControlledWriteGate4D6StatusV3();
+    }
+
+    function callWriteGateServer4D6(functionName, payload, onSuccess) {
+      if (
+        typeof google === 'undefined' ||
+        !google.script ||
+        !google.script.run
+      ) {
+        showWriteGateFeedback4D6(
+          'Không gọi được server write gate.',
+          'error',
+          'Thiếu google.script.run trong môi trường hiện tại.'
+        );
+        return;
+      }
+
+      showWriteGateFeedback4D6(
+        'Đang gửi qua write gate...',
+        'dryrun',
+        'Hệ thống đang kiểm tra chế độ ghi dữ liệu.'
+      );
+
+      google.script.run
+        .withSuccessHandler(function (response) {
+          if (response && response.gateMode) {
+            KIDLEARN_UI_CONTROLLED_WRITE_GATE_4D6.gateMode =
+              response.gateMode;
+            KIDLEARN_UI_CONTROLLED_WRITE_GATE_4D6.statusLoaded = true;
+            updateWriteGateBadge4D6();
+          }
+
+          if (onSuccess) {
+            onSuccess(response);
+          }
+        })
+        .withFailureHandler(function (error) {
+          showWriteGateFeedback4D6(
+            'Write gate chưa thành công.',
+            'error',
+            error && error.message
+              ? error.message
+              : String(error || 'Unknown error')
+          );
+        })[functionName](payload || {});
+    }
+
+    function submitAnswerThroughWriteGate4D6(activityId) {
+      var payload = collectAnswerPayloadForWriteGate4D6(activityId);
+
+      callWriteGateServer4D6(
+        'kidlearnV3_submitLessonActivityFromUi4D6V3',
+        payload,
+        function (response) {
+          var isReal =
+            response &&
+            response.actualSheetWritePerformed === true;
+
+          showWriteGateFeedback4D6(
+            response && response.childMessage
+              ? response.childMessage
+              : 'Đã gửi câu trả lời.',
+            isReal ? 'real' : 'dryrun',
+            isReal
+              ? 'Đã ghi DEV Sheet qua cổng kiểm soát.'
+              : 'Gate đang đóng, chưa ghi dữ liệu thật.'
+          );
+        }
+      );
+    }
+
+    function completeLessonThroughWriteGate4D6() {
+      var payload = buildCompletePayload4D6();
+
+      callWriteGateServer4D6(
+        'kidlearnV3_completeLessonFromUi4D6V3',
+        payload,
+        function (response) {
+          var isReal =
+            response &&
+            response.actualSheetWritePerformed === true;
+
+          showWriteGateFeedback4D6(
+            response && response.childMessage
+              ? response.childMessage
+              : 'Đã hoàn thành bài học.',
+            isReal ? 'real' : 'dryrun',
+            isReal
+              ? 'Đã ghi tiến độ và phiên học vào DEV.'
+              : 'Gate đang đóng, hoàn thành chỉ là dry-run.'
+          );
+        }
+      );
+    }
+
+    document.addEventListener(
+      'click',
+      function (event) {
+        var actionEl = event.target.closest('[data-action]');
+
+        if (!actionEl) return;
+
+        var action = actionEl.getAttribute('data-action');
+
+        if (action === 'lesson-open-4c2') {
+          window.KIDLEARN_4D6_LESSON_STARTED_AT =
+            new Date().toISOString();
+
+          setTimeout(function () {
+            ensureWriteGateBadge4D6();
+            refreshWriteGateStatus4D6(true);
+          }, 1200);
+
+          return;
+        }
+
+        if (action === 'lesson-submit-demo-4c4') {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+
+          var activityId =
+            actionEl.getAttribute('data-activity-id') || '';
+
+          submitAnswerThroughWriteGate4D6(activityId);
+
+          return;
+        }
+
+        if (action === 'lesson-complete-demo-4c4') {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+
+          completeLessonThroughWriteGate4D6();
+
+          return;
+        }
+      },
+      true
+    );
+
+    /**
+     * Stable observer:
+     * - Không gọi server trực tiếp mỗi lần DOM thay đổi.
+     * - Chỉ thêm badge nếu Lesson Player xuất hiện.
+     * - Status refresh có throttle riêng.
+     */
+    var observerTimer4D6 = null;
+
+    var observer4D6 =
+      new MutationObserver(function () {
+        if (observerTimer4D6) {
+          return;
+        }
+
+        observerTimer4D6 =
+          setTimeout(function () {
+            observerTimer4D6 = null;
+
+            if (document.querySelector('.kl-lesson-player-4c4')) {
+              ensureWriteGateBadge4D6();
+
+              if (
+                !KIDLEARN_UI_CONTROLLED_WRITE_GATE_4D6.statusLoaded
+              ) {
+                refreshWriteGateStatus4D6(false);
+              }
+            }
+          }, 800);
+      });
+
+    observer4D6.observe(
+      document.documentElement,
+      {
+        childList: true,
+        subtree: true
+      }
+    );
+
+    window.collectAnswerPayloadForWriteGate4D6 =
+      collectAnswerPayloadForWriteGate4D6;
+
+    window.submitAnswerThroughWriteGate4D6 =
+      submitAnswerThroughWriteGate4D6;
+
+    window.completeLessonThroughWriteGate4D6 =
+      completeLessonThroughWriteGate4D6;
+
+    window.showWriteGateFeedback4D6 =
+      showWriteGateFeedback4D6;
+
+    window.refreshWriteGateStatus4D6 =
+      refreshWriteGateStatus4D6;
+  })();
+</script>

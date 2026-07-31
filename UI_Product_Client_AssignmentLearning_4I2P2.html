@@ -1,0 +1,292 @@
+<script>
+  /**
+   * KIDLEARN_ASSIGNMENT_LEARNING_UI_FORCE_CARD_4I2P2
+   * Patch 4I-2P2
+   *
+   * Purpose:
+   * - Force inject "Bài học được giao" card into child home.
+   * - Does not write any DATA sheet.
+   * - Does not write Drive.
+   */
+
+  (function () {
+    var STATE_4I2P2 = {
+      phase: '4I-2P2',
+      marker: 'KIDLEARN_ASSIGNMENT_LEARNING_UI_FORCE_CARD_4I2P2',
+      timer: null,
+      attempts: 0,
+      maxAttempts: 20
+    };
+
+    window.KIDLEARN_ASSIGNMENT_LEARNING_UI_FORCE_CARD_4I2P2 =
+      STATE_4I2P2;
+
+    function escapeHtml4I2P2(value) {
+      return String(value === null || value === undefined ? '' : value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function getBodyText4I2P2() {
+      return document.body
+        ? String(document.body.innerText || '')
+        : '';
+    }
+
+    function isChildHomeVisible4I2P2() {
+      var text =
+        getBodyText4I2P2().toUpperCase();
+
+      if (!text) {
+        return false;
+      }
+
+      var isLogin =
+        text.indexOf('ĐĂNG NHẬP') !== -1 &&
+        text.indexOf('TRANG CHỦ') === -1;
+
+      if (isLogin) {
+        return false;
+      }
+
+      return (
+        text.indexOf('KHU HỌC TẬP CỦA BÉ') !== -1 ||
+        text.indexOf('HÔM NAY BÉ') !== -1 ||
+        text.indexOf('4 MÔN HỌC CHÍNH') !== -1 ||
+        text.indexOf('BÀI HỌC TIẾP THEO') !== -1 ||
+        document.querySelector('.kl-subject-card') ||
+        document.querySelector('.kl-course-card')
+      );
+    }
+
+    function findBestAnchor4I2P2() {
+      var elements =
+        Array.prototype.slice.call(
+          document.querySelectorAll('section, article, div, h1, h2, h3, h4')
+        );
+
+      for (var i = 0; i < elements.length; i++) {
+        var text =
+          String(elements[i].innerText || '').toUpperCase();
+
+        if (
+          text.indexOf('KHU HỌC TẬP CỦA BÉ') !== -1 &&
+          text.indexOf('TRANG CHỦ') !== -1
+        ) {
+          return elements[i];
+        }
+      }
+
+      for (var j = 0; j < elements.length; j++) {
+        var text2 =
+          String(elements[j].innerText || '').toUpperCase();
+
+        if (
+          text2.indexOf('HÔM NAY BÉ') !== -1 ||
+          text2.indexOf('BÀI HỌC TIẾP THEO') !== -1
+        ) {
+          return elements[j];
+        }
+      }
+
+      var subject =
+        document.querySelector('.kl-subject-card, .kl-course-card');
+
+      if (subject) {
+        return subject;
+      }
+
+      return (
+        document.querySelector('main') ||
+        document.querySelector('#app') ||
+        document.body
+      );
+    }
+
+    function buildCard4I2P2() {
+      var card =
+        document.createElement('section');
+
+      card.className =
+        'kl-assignment-learning-entry-4i2 kl-assignment-learning-entry-force-4i2p2';
+
+      card.setAttribute('data-phase', '4I-2P2');
+      card.setAttribute('data-patch', 'FORCE_CARD');
+
+      card.innerHTML =
+        '<div class="kl-assignment-learning-entry-inner-4i2">' +
+          '<div class="kl-assignment-learning-entry-icon-4i2">🎯</div>' +
+          '<div class="kl-assignment-learning-entry-content-4i2">' +
+            '<div class="kl-assignment-learning-badge-4i2">4I-2 Dry-run</div>' +
+            '<h3>Bài học được giao</h3>' +
+            '<p>Học theo kế hoạch phụ huynh đã lập • Chưa ghi dữ liệu</p>' +
+            '<div class="kl-assignment-learning-empty-mini-4i2">' +
+              'Nếu chưa có bài được giao, hệ thống sẽ hiển thị trạng thái trống an toàn.' +
+            '</div>' +
+          '</div>' +
+          '<button type="button" class="kl-assignment-learning-open-4i2" data-action="open-assignment-learning-4i2">' +
+            'Xem bài học' +
+          '</button>' +
+        '</div>';
+
+      var button =
+        card.querySelector('[data-action="open-assignment-learning-4i2"]');
+
+      if (button) {
+        button.addEventListener('click', function (event) {
+          event.preventDefault();
+          event.stopPropagation();
+
+          if (typeof window.openAssignmentLearningPanel4I2 === 'function') {
+            window.openAssignmentLearningPanel4I2();
+            return;
+          }
+
+          alert(
+            'UI 4I-2 đã có card, nhưng function mở panel chưa sẵn sàng. Vui lòng refresh lại Web App.'
+          );
+        });
+      }
+
+      return card;
+    }
+
+    function forceInjectAssignmentLearningCard4I2P2() {
+      if (!isChildHomeVisible4I2P2()) {
+        return {
+          success: false,
+          reason: 'CHILD_HOME_NOT_VISIBLE_YET',
+          attempts: STATE_4I2P2.attempts
+        };
+      }
+
+      var existing =
+        document.querySelector('.kl-assignment-learning-entry-4i2');
+
+      if (existing) {
+        return {
+          success: true,
+          alreadyExists: true,
+          cardFound: true,
+          message: 'Card Bài học được giao đã tồn tại.'
+        };
+      }
+
+      var anchor =
+        findBestAnchor4I2P2();
+
+      if (!anchor) {
+        return {
+          success: false,
+          reason: 'NO_ANCHOR_FOUND'
+        };
+      }
+
+      var card =
+        buildCard4I2P2();
+
+      if (anchor.parentNode && anchor !== document.body) {
+        anchor.parentNode.insertBefore(card, anchor);
+      } else if (document.body.firstChild) {
+        document.body.insertBefore(card, document.body.firstChild);
+      } else {
+        document.body.appendChild(card);
+      }
+
+      return {
+        success: true,
+        inserted: true,
+        cardFound: true,
+        phase: '4I-2P2',
+        message: 'Đã inject card Bài học được giao.'
+      };
+    }
+
+    function scheduleForceInject4I2P2() {
+      if (STATE_4I2P2.timer) {
+        return;
+      }
+
+      STATE_4I2P2.timer =
+        setTimeout(function () {
+          STATE_4I2P2.timer = null;
+          STATE_4I2P2.attempts += 1;
+
+          var result =
+            forceInjectAssignmentLearningCard4I2P2();
+
+          if (
+            !result.success &&
+            STATE_4I2P2.attempts < STATE_4I2P2.maxAttempts
+          ) {
+            scheduleForceInject4I2P2();
+          }
+
+          if (window.console && console.log) {
+            console.log('[4I-2P2 force inject]', result);
+          }
+        }, 700);
+    }
+
+    function debugAssignmentLearning4I2P2() {
+      var result = {
+        success: true,
+        phase: '4I-2P2',
+        childHomeVisible: isChildHomeVisible4I2P2(),
+        cardExists:
+          document.querySelector('.kl-assignment-learning-entry-4i2')
+            ? true
+            : false,
+        originalFunctionExists:
+          typeof window.ensureAssignmentLearningHome4I2 === 'function',
+        openPanelFunctionExists:
+          typeof window.openAssignmentLearningPanel4I2 === 'function',
+        forceFunctionExists:
+          typeof window.forceShowAssignmentLearningHome4I2 === 'function',
+        attempts:
+          STATE_4I2P2.attempts,
+        bodyTextPreview:
+          getBodyText4I2P2().substring(0, 500)
+      };
+
+      console.log('[4I-2P2 debug]', result);
+      return result;
+    }
+
+    window.forceShowAssignmentLearningHome4I2 =
+      function () {
+        return forceInjectAssignmentLearningCard4I2P2();
+      };
+
+    window.debugAssignmentLearning4I2 =
+      function () {
+        return debugAssignmentLearning4I2P2();
+      };
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', scheduleForceInject4I2P2);
+    } else {
+      scheduleForceInject4I2P2();
+    }
+
+    var observer4I2P2 =
+      new MutationObserver(function () {
+        if (
+          !document.querySelector('.kl-assignment-learning-entry-4i2')
+        ) {
+          scheduleForceInject4I2P2();
+        }
+      });
+
+    observer4I2P2.observe(
+      document.documentElement,
+      {
+        childList: true,
+        subtree: true
+      }
+    );
+  })();
+</script>

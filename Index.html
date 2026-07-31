@@ -1,0 +1,242 @@
+<!-- 
+  File: Index.html
+  Mô tả: Lớp vỏ giao diện chính (Shell) của ứng dụng Web App.
+  Bản cập nhật: Đã tích hợp Google Fonts (Be Vietnam Pro, Nunito Sans) và thư viện Phosphor Icons.
+-->
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>KIDLEARN - Student Portal</title>
+  
+  <!-- Google Fonts: Be Vietnam Pro & Nunito Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@600;700;800&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&display=swap" rel="stylesheet">
+
+  <!-- Phosphor Icons (Thư viện icon nét mảnh tinh tế cho UI) -->
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Cấu hình Tailwind Custom Colors & Fonts -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            display: ['"Be Vietnam Pro"', 'sans-serif'], // Dành cho Tiêu đề, Logo, KPI
+            sans: ['"Nunito Sans"', 'sans-serif'],       // Dành cho Nội dung, Bảng, Thẻ
+          },
+          colors: {
+            primary: '#4f46e5', // indigo-600 (Màu tím chủ đạo mới)
+            secondary: '#6366f1', // indigo-500
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Nhúng CSS dùng chung -->
+  <?!= include('CSS_Global'); ?>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased h-screen w-screen overflow-hidden flex">
+  
+  <!-- SPLASH SCREEN -->
+  <div id="splash-screen" class="fixed inset-0 z-50 bg-white flex flex-col items-center justify-center transition-opacity duration-500">
+    <div class="loader-spinner !w-12 !h-12 !border-4 !border-slate-200 !border-t-primary mb-4"></div>
+    <h2 class="text-xl font-display font-extrabold text-primary">KIDLEARN</h2>
+    <p class="text-sm text-slate-500 mt-2 font-sans">Đang tải hệ thống...</p>
+  </div>
+
+  <!-- CONTAINER CHÍNH CỦA ỨNG DỤNG SPA -->
+  <div id="app-root" class="w-full h-full flex spa-hidden">
+    
+    <!-- KHU VỰC LOGIN VIEW -->
+    <div id="view-login" class="w-full h-full flex items-center justify-center bg-slate-100 spa-hidden">
+      <div class="bg-white p-8 rounded-2xl shadow-lg w-full max-w-md border border-slate-100">
+        <div class="text-center mb-8">
+          <h1 class="text-2xl font-display font-bold text-slate-800">Đăng nhập vào Student Portal</h1>
+          <p class="text-sm text-slate-500 mt-1 font-sans">Sử dụng tài khoản do nhà trường cấp</p>
+        </div>
+        
+        <form id="form-login" onsubmit="AuthService.handleLogin(event)">
+          <div class="mb-4">
+            <label class="block text-sm font-display font-semibold text-slate-700 mb-1">Tên đăng nhập / Email</label>
+            <input type="text" id="login-email" class="w-full px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary font-sans" placeholder="vd: student1" required>
+          </div>
+          
+          <div class="mb-6">
+            <label class="block text-sm font-display font-semibold text-slate-700 mb-1">Mật khẩu</label>
+            <input type="password" id="login-password" class="w-full px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary font-sans" placeholder="••••••••" required>
+          </div>
+
+          <div id="login-error-text" class="mb-4 text-sm text-red-500 text-center spa-hidden font-sans font-semibold"></div>
+          
+          <button type="submit" id="btn-login-submit" class="w-full bg-primary hover:bg-indigo-700 text-white font-display font-semibold py-3 px-4 rounded-xl transition duration-200 flex justify-center items-center shadow-sm">
+            Đăng nhập
+          </button>
+        </form>
+        
+        <div class="mt-6 text-center text-xs text-slate-400 font-sans">
+          <p>Hệ thống được bảo vệ bởi chuẩn mã hóa hiện đại</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- KHU VỰC DASHBOARD VIEW -->
+    <div id="view-dashboard" class="w-full h-full flex spa-hidden">
+      
+      <!-- SIDEBAR (Đã cập nhật theo UI Mockup mới) -->
+      <div id="layout-sidebar" class="w-64 bg-white border-r border-slate-100 h-full flex flex-col hidden md:flex z-10 shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
+        <?!= include('View_Sidebar'); ?>
+      </div>
+      
+      <!-- MAIN CONTENT -->
+      <div class="flex-1 flex flex-col h-full bg-slate-50/50 overflow-hidden relative">
+        <!-- HEADER -->
+        <header id="layout-header" class="h-16 bg-white border-b border-slate-100 flex items-center px-6 justify-between z-10">
+          <?!= include('View_Header'); ?>
+        </header>
+        
+        <!-- DASHBOARD CONTENT SCROLLABLE -->
+        <main id="layout-main-content" class="flex-1 overflow-y-auto p-6 relative">
+          
+          <!-- CÁC MÀN HÌNH PHỤ (SUB-VIEWS) CHUYỂN ĐỔI QUA APP_CONTROLLER -->
+          <div id="subview-dashboard" class="h-full spa-hidden">
+             <?!= include('View_DashboardContent'); ?>
+          </div>
+          
+          <div id="subview-courses" class="h-full spa-hidden">
+             <?!= include('View_Courses'); ?>
+          </div>
+          
+          <div id="subview-gradebook" class="h-full spa-hidden">
+             <?!= include('View_Gradebook'); ?>
+          </div>
+
+          <div id="subview-subject-detail" class="h-full spa-hidden">
+             <?!= include('View_SubjectDetail'); ?>
+          </div>
+
+        </main>
+      </div>
+      
+      <!-- RIGHT SIDEBAR (Thao tác nhanh) -->
+      <div id="layout-right-sidebar" class="w-72 bg-white border-l border-slate-100 h-full hidden lg:block overflow-y-auto p-4 z-10 shadow-[-4px_0_24px_rgba(0,0,0,0.02)]">
+        <?!= include('View_RightSidebar'); ?>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Nhúng các Module Javascript Core -->
+  <?!= include('JS_Global'); ?>
+  <?!= include('JS_NetworkService'); ?>
+  <?!= include('JS_Auth'); ?>
+  
+  <!-- Nhúng các Controller xử lý nghiệp vụ -->
+  <?!= include('JS_Dashboard'); ?>
+  <?!= include('JS_Courses'); ?>
+  <?!= include('JS_Gradebook'); ?>
+  <?!= include('JS_SubjectDetail'); ?>
+  
+  <!-- Trình điều khiển ứng dụng trung tâm (AppController) -->
+  <script>
+    const AppController = {
+      init: function() {
+        const token = AuthService.getToken();
+        
+        setTimeout(() => {
+          document.getElementById('splash-screen').classList.add('opacity-0');
+          setTimeout(() => {
+            document.getElementById('splash-screen').classList.add('spa-hidden');
+            document.getElementById('app-root').classList.remove('spa-hidden');
+            
+            if (token) {
+              this.navigateTo('dashboard');
+            } else {
+              this.navigateTo('login');
+            }
+          }, 500);
+        }, 500);
+      },
+
+      /**
+       * Điều hướng SPA (Đổi CSS class ẩn/hiện và kích hoạt Controller)
+       */
+      navigateTo: function(viewName) {
+        document.getElementById('view-login').classList.add('spa-hidden');
+        document.getElementById('view-dashboard').classList.add('spa-hidden');
+        
+        // Quản lý trạng thái Active trên Sidebar
+        this.updateSidebarActiveState(viewName);
+        
+        if (viewName === 'login') {
+          document.getElementById('view-login').classList.remove('spa-hidden');
+        } else {
+          // Bật khung layout chính lên
+          document.getElementById('view-dashboard').classList.remove('spa-hidden');
+          
+          // Ẩn toàn bộ các subview bên trong Main Content
+          document.getElementById('subview-dashboard').classList.add('spa-hidden');
+          document.getElementById('subview-courses').classList.add('spa-hidden');
+          document.getElementById('subview-gradebook').classList.add('spa-hidden');
+          document.getElementById('subview-subject-detail').classList.add('spa-hidden');
+
+          // Hiện đúng subview được gọi và kích hoạt Controller tương ứng
+          if (viewName === 'dashboard') {
+            document.getElementById('subview-dashboard').classList.remove('spa-hidden');
+            if (typeof DashboardController !== 'undefined') DashboardController.init();
+          } 
+          else if (viewName === 'courses') {
+            document.getElementById('subview-courses').classList.remove('spa-hidden');
+            if (typeof CoursesController !== 'undefined') CoursesController.init();
+          }
+          else if (viewName === 'gradebook') {
+            document.getElementById('subview-gradebook').classList.remove('spa-hidden');
+            if (typeof GradebookController !== 'undefined') GradebookController.init();
+          }
+          else if (viewName === 'subject_detail') {
+            document.getElementById('subview-subject-detail').classList.remove('spa-hidden');
+            if (typeof SubjectDetailController !== 'undefined') SubjectDetailController.init();
+          }
+        }
+      },
+
+      /**
+       * Cập nhật UI Menu Sidebar đang Active
+       */
+      updateSidebarActiveState: function(activeView) {
+        const menuItems = document.querySelectorAll('.sidebar-nav-item');
+        menuItems.forEach(item => {
+          // Trả về trạng thái thường
+          item.className = "sidebar-nav-item flex items-center px-4 py-3 text-slate-600 hover:text-indigo-600 rounded-2xl font-sans font-semibold transition-all duration-200 cursor-pointer group";
+          const icon = item.querySelector('i');
+          if (icon) {
+             icon.className = icon.className.replace('ph-fill', 'ph'); // Đổi icon thành nét mảnh
+          }
+        });
+
+        // Tìm thẻ a tương ứng với viewName và gán class Active (Màu tím Pastel)
+        const activeItem = document.getElementById('nav-item-' + activeView);
+        if (activeItem) {
+          activeItem.className = "sidebar-nav-item flex items-center px-4 py-3 bg-indigo-50 text-indigo-700 rounded-2xl font-display font-bold transition-all duration-200 shadow-[inset_0_0_0_1px_rgba(79,70,229,0.1)] cursor-pointer group";
+          const icon = activeItem.querySelector('i');
+          if (icon) {
+             icon.className = icon.className.replace('ph ', 'ph-fill '); // Đổi icon thành nét đậm (fill)
+          }
+        }
+      }
+    };
+
+    // Chạy khi DOM tải xong
+    document.addEventListener('DOMContentLoaded', () => {
+      AppController.init();
+    });
+  </script>
+</body>
+</html>

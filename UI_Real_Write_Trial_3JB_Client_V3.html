@@ -1,0 +1,112 @@
+<script>
+/**
+ * KIDLEARN V3 - UI Real Write Trial 3J-B Client
+ */
+
+window.KidlearnV3UiRealTrial3JB = (function() {
+  function callServer(functionName, payload) {
+    return new Promise(function(resolve, reject) {
+      google.script.run
+        .withSuccessHandler(resolve)
+        .withFailureHandler(function(error) {
+          reject(
+            new Error(
+              error && error.message
+                ? error.message
+                : String(error)
+            )
+          );
+        })[functionName](payload || {});
+    });
+  }
+
+  function getStatus() {
+    return callServer(
+      'kidlearnV3_getUiRealWriteTrial3JBStatusV3',
+      {}
+    );
+  }
+
+  function preview() {
+    return callServer(
+      'kidlearnV3_previewUiRealWriteTrial3JBV3',
+      {}
+    );
+  }
+
+  function arm(confirmText) {
+    return callServer(
+      'kidlearnV3_uiRealWriteTrial3JBArmV3',
+      {
+        confirmText: confirmText
+      }
+    );
+  }
+
+  function enable(confirmText) {
+    return callServer(
+      'kidlearnV3_uiRealWriteTrial3JBEnableV3',
+      {
+        confirmText: confirmText
+      }
+    );
+  }
+
+  function executeTrial(confirmText) {
+    return callServer(
+      'kidlearnV3_uiRealWriteTrial3JBExecuteV3',
+      {
+        confirmText: confirmText
+      }
+    );
+  }
+
+  function reset() {
+    return callServer(
+      'kidlearnV3_resetAfterUiRealWriteTrial3JBV3',
+      {}
+    );
+  }
+
+  function review() {
+    return callServer(
+      'kidlearnV3_runPostUiRealWriteReview3JBV3',
+      {}
+    );
+  }
+
+  function markReviewReady() {
+    return callServer(
+      'kidlearnV3_markPostUiRealWriteReview3JBReadyV3',
+      {}
+    );
+  }
+
+  function closePhase3J() {
+    return callServer(
+      'kidlearnV3_closePhase3JV3',
+      {}
+    );
+  }
+
+  function assertClosed() {
+    return callServer(
+      'kidlearnV3_assertPhase3JClosedV3',
+      {}
+    );
+  }
+
+  return {
+    getStatus: getStatus,
+    preview: preview,
+    arm: arm,
+    enable: enable,
+    executeTrial: executeTrial,
+    reset: reset,
+    review: review,
+    markReviewReady: markReviewReady,
+    closePhase3J: closePhase3J,
+    assertClosed: assertClosed
+  };
+})();
+</script>

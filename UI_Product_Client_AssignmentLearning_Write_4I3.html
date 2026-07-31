@@ -1,0 +1,385 @@
+<script>
+  /**
+   * KIDLEARN_ASSIGNMENT_WRITE_UI_4I3
+   * Phase 4I-3 — Controlled Assignment Status Write + Completion Sync
+   *
+   * Safety:
+   * - Gate closed by default.
+   * - UI calls backend controlled write.
+   * - No DATA write when gate is CLOSED_DRY_RUN_ONLY.
+   */
+
+  (function () {
+    var KIDLEARN_ASSIGNMENT_WRITE_UI_4I3 = {
+      phase: '4I-3',
+      marker: 'KIDLEARN_ASSIGNMENT_WRITE_UI_4I3',
+      timer: null,
+      attempts: 0,
+      maxAttempts: 30
+    };
+
+    window.KIDLEARN_ASSIGNMENT_WRITE_UI_4I3 =
+      KIDLEARN_ASSIGNMENT_WRITE_UI_4I3;
+
+    function escapeHtml4I3(value) {
+      return String(value === null || value === undefined ? '' : value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function patchAssignmentLearningWriteControls4I3() {
+      var panel =
+        document.querySelector('.kl-assignment-learning-panel-4i2');
+
+      if (!panel) {
+        return {
+          success: false,
+          reason: 'NO_ASSIGNMENT_PANEL_4I2'
+        };
+      }
+
+      ensureAssignmentWriteGateBanner4I3(panel);
+
+      var cards =
+        Array.prototype.slice.call(
+          panel.querySelectorAll('.kl-assignment-learning-card-4i2')
+        );
+
+      if (!cards.length) {
+        return {
+          success: true,
+          phase: '4I-3',
+          emptyState: true,
+          patchedCount: 0,
+          message: 'Không có assignment card. Empty state hợp lệ.'
+        };
+      }
+
+      var patched = 0;
+
+      for (var i = 0; i < cards.length; i++) {
+        if (cards[i].querySelector('.kl-assignment-write-control-4i3')) {
+          continue;
+        }
+
+        cards[i].appendChild(
+          buildAssignmentWriteControl4I3(cards[i])
+        );
+
+        patched++;
+      }
+
+      ensureAssignmentWriteResultBox4I3(panel);
+
+      return {
+        success: true,
+        phase: '4I-3',
+        patchedCount: patched,
+        totalCards: cards.length
+      };
+    }
+
+    function ensureAssignmentWriteGateBanner4I3(panel) {
+      if (panel.querySelector('.kl-assignment-write-gate-4i3')) {
+        return;
+      }
+
+      var banner =
+        document.createElement('div');
+
+      banner.className =
+        'kl-assignment-write-gate-4i3';
+
+      banner.innerHTML =
+        '<strong>4I-3 Controlled Write</strong>' +
+        '<span>Gate mặc định đang đóng. Khi gate đóng, các nút bên dưới chỉ chạy dry-run và không ghi dữ liệu.</span>';
+
+      var head =
+        panel.querySelector('.kl-assignment-learning-head-4i2');
+
+      if (head && head.parentNode) {
+        head.parentNode.insertBefore(
+          banner,
+          head.nextSibling
+        );
+      } else {
+        panel.insertBefore(
+          banner,
+          panel.firstChild
+        );
+      }
+    }
+
+    function buildAssignmentWriteControl4I3(card) {
+      var assignmentId =
+        card.getAttribute('data-assignment-id') || '';
+
+      var lessonId =
+        card.getAttribute('data-lesson-id') || '';
+
+      var control =
+        document.createElement('div');
+
+      control.className =
+        'kl-assignment-write-control-4i3';
+
+      control.setAttribute('data-phase', '4I-3');
+
+      control.innerHTML =
+        '<div class="kl-assignment-write-control-text-4i3">' +
+          '<strong>Cập nhật trạng thái bài được giao</strong>' +
+          '<span>START sẽ ghi IN_PROGRESS/STARTED nếu gate mở và enum cho phép.</span>' +
+        '</div>' +
+        '<div class="kl-assignment-write-actions-4i3">' +
+          '<button type="button" class="kl-assignment-write-button-4i3" data-action="assignment-start-write-4i3"' +
+            ' data-assignment-id="' + escapeHtml4I3(assignmentId) + '"' +
+            ' data-lesson-id="' + escapeHtml4I3(lessonId) + '"' +
+          '>' +
+            'Ghi bắt đầu học' +
+          '</button>' +
+          '<button type="button" class="kl-assignment-write-button-4i3 is-complete" data-action="assignment-complete-write-4i3"' +
+            ' data-assignment-id="' + escapeHtml4I3(assignmentId) + '"' +
+            ' data-lesson-id="' + escapeHtml4I3(lessonId) + '"' +
+          '>' +
+            'Sync hoàn thành' +
+          '</button>' +
+        '</div>';
+
+      return control;
+    }
+
+    function ensureAssignmentWriteResultBox4I3(panel) {
+      if (panel.querySelector('.kl-assignment-write-result-4i3')) {
+        return;
+      }
+
+      var box =
+        document.createElement('div');
+
+      box.className =
+        'kl-assignment-write-result-4i3';
+
+      box.setAttribute(
+        'aria-live',
+        'polite'
+      );
+
+      panel.appendChild(box);
+    }
+
+    function setAssignmentWriteResult4I3(type, title, message, detail) {
+      var panel =
+        document.querySelector('.kl-assignment-learning-panel-4i2');
+
+      if (!panel) return;
+
+      ensureAssignmentWriteResultBox4I3(panel);
+
+      var box =
+        panel.querySelector('.kl-assignment-write-result-4i3');
+
+      if (!box) return;
+
+      box.className =
+        'kl-assignment-write-result-4i3 is-' + type;
+
+      box.innerHTML =
+        '<strong>' + escapeHtml4I3(title || '') + '</strong>' +
+        '<p>' + escapeHtml4I3(message || '') + '</p>' +
+        (
+          detail
+            ? '<pre>' + escapeHtml4I3(detail) + '</pre>'
+            : ''
+        );
+    }
+
+    function submitAssignmentStartWrite4I3(button) {
+      submitAssignmentWriteAction4I3(button, 'START');
+    }
+
+    function submitAssignmentCompleteWrite4I3(button) {
+      submitAssignmentWriteAction4I3(button, 'COMPLETE');
+    }
+
+    function submitAssignmentWriteAction4I3(button, actionType) {
+      var assignmentId =
+        button.getAttribute('data-assignment-id') || '';
+
+      var lessonId =
+        button.getAttribute('data-lesson-id') || '';
+
+      setAssignmentWriteResult4I3(
+        'loading',
+        'Đang xử lý 4I-3...',
+        'Hệ thống đang kiểm tra gate và enum trước khi ghi.',
+        ''
+      );
+
+      if (
+        typeof google === 'undefined' ||
+        !google.script ||
+        !google.script.run
+      ) {
+        setAssignmentWriteResult4I3(
+          'error',
+          'Không gọi được Apps Script server.',
+          'Vui lòng refresh lại Web App.',
+          ''
+        );
+
+        return;
+      }
+
+      google.script.run
+        .withSuccessHandler(function (result) {
+          var dryRun =
+            result && result.dryRunOnly === true;
+
+          var written =
+            result && result.actualSheetWritePerformed === true;
+
+          var title =
+            dryRun
+              ? 'Dry-run thành công — chưa ghi dữ liệu'
+              : (
+                written
+                  ? 'Đã ghi trạng thái Assignment'
+                  : 'Không có dữ liệu cần ghi'
+              );
+
+          var message =
+            dryRun
+              ? 'Gate đang đóng. 4I-3 chỉ mô phỏng thao tác.'
+              : (
+                written
+                  ? 'DATA_Assignments đã được cập nhật an toàn trong DEV.'
+                  : 'Không có Assignment hoặc chưa đủ điều kiện để ghi.'
+              );
+
+          setAssignmentWriteResult4I3(
+            result && result.success ? 'success' : 'error',
+            title,
+            message,
+            JSON.stringify({
+              success: result.success,
+              action: result.action,
+              gateMode: result.gateMode,
+              dryRunOnly: result.dryRunOnly,
+              actionType: result.actionType,
+              actualSheetWritePerformed: result.actualSheetWritePerformed,
+              statusWrite: result.statusWrite || null,
+              errors: result.errors || [],
+              warnings: result.warnings || []
+            }, null, 2)
+          );
+        })
+        .withFailureHandler(function (error) {
+          setAssignmentWriteResult4I3(
+            'error',
+            '4I-3 xử lý chưa thành công',
+            error && error.message
+              ? error.message
+              : String(error || 'Unknown error'),
+            ''
+          );
+        })
+        .kidlearnV3_submitAssignmentActionFromUi4I3V3({
+          actionType: actionType,
+          childId: 'CHD_V2_CHILD_DEFAULT',
+          assignmentId: assignmentId,
+          lessonId: lessonId
+        });
+    }
+
+    document.addEventListener(
+      'click',
+      function (event) {
+        var actionEl =
+          event.target.closest
+            ? event.target.closest('[data-action]')
+            : null;
+
+        if (!actionEl) return;
+
+        var action =
+          actionEl.getAttribute('data-action');
+
+        if (action === 'assignment-start-write-4i3') {
+          event.preventDefault();
+          event.stopPropagation();
+          submitAssignmentStartWrite4I3(actionEl);
+          return;
+        }
+
+        if (action === 'assignment-complete-write-4i3') {
+          event.preventDefault();
+          event.stopPropagation();
+          submitAssignmentCompleteWrite4I3(actionEl);
+          return;
+        }
+      },
+      true
+    );
+
+    function schedulePatchAssignmentWrite4I3() {
+      if (KIDLEARN_ASSIGNMENT_WRITE_UI_4I3.timer) {
+        return;
+      }
+
+      KIDLEARN_ASSIGNMENT_WRITE_UI_4I3.timer =
+        setTimeout(function () {
+          KIDLEARN_ASSIGNMENT_WRITE_UI_4I3.timer = null;
+          KIDLEARN_ASSIGNMENT_WRITE_UI_4I3.attempts += 1;
+
+          var result =
+            patchAssignmentLearningWriteControls4I3();
+
+          if (
+            !result.success &&
+            KIDLEARN_ASSIGNMENT_WRITE_UI_4I3.attempts <
+              KIDLEARN_ASSIGNMENT_WRITE_UI_4I3.maxAttempts
+          ) {
+            schedulePatchAssignmentWrite4I3();
+          }
+
+          if (window.console && console.log) {
+            console.log('[4I-3 patch controls]', result);
+          }
+        }, 600);
+    }
+
+    var observer4I3 =
+      new MutationObserver(function () {
+        schedulePatchAssignmentWrite4I3();
+      });
+
+    observer4I3.observe(
+      document.documentElement,
+      {
+        childList: true,
+        subtree: true
+      }
+    );
+
+    if (document.readyState === 'loading') {
+      document.addEventListener(
+        'DOMContentLoaded',
+        schedulePatchAssignmentWrite4I3
+      );
+    } else {
+      schedulePatchAssignmentWrite4I3();
+    }
+
+    window.patchAssignmentLearningWriteControls4I3 =
+      patchAssignmentLearningWriteControls4I3;
+
+    window.submitAssignmentStartWrite4I3 =
+      submitAssignmentStartWrite4I3;
+
+    window.submitAssignmentCompleteWrite4I3 =
+      submitAssignmentCompleteWrite4I3;
+  })();
+</script>

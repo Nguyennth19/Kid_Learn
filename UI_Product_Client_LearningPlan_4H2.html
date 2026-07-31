@@ -1,0 +1,842 @@
+<script>
+  /**
+   * KIDLEARN_LEARNING_PLAN_UI_DRY_RUN_4H2
+   * Phase 4H-2 — Parent Learning Plan UI Dry-run
+   */
+
+  (function () {
+    var KIDLEARN_LEARNING_PLAN_UI_DRY_RUN_4H2 = {
+      phase: '4H-2',
+      marker: 'KIDLEARN_LEARNING_PLAN_UI_DRY_RUN_4H2',
+      context: null,
+      loading: false,
+      panelOpen: false,
+      injectTimer: null
+    };
+
+    window.KIDLEARN_LEARNING_PLAN_UI_DRY_RUN_4H2 =
+      KIDLEARN_LEARNING_PLAN_UI_DRY_RUN_4H2;
+
+    function escapeHtml4H2(value) {
+      return String(value === null || value === undefined ? '' : value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function isLikelyParentView4H2() {
+      var bodyText =
+        document.body ? document.body.innerText || '' : '';
+
+      var upper =
+        bodyText.toUpperCase();
+
+      if (
+        upper.indexOf('PHỤ HUYNH') !== -1 ||
+        upper.indexOf('PARENT') !== -1 ||
+        document.querySelector('.kl-parent-dashboard-entry-4g2') ||
+        document.querySelector('.kl-parent-review-entry-4e5b')
+      ) {
+        return true;
+      }
+
+      return false;
+    }
+
+    function ensureLearningPlanEntry4H2() {
+      if (!isLikelyParentView4H2()) {
+        removeLearningPlanEntry4H2();
+        return;
+      }
+
+      var target =
+        findLearningPlanEntryTarget4H2();
+
+      if (!target) return;
+
+      var existing =
+        document.querySelector('.kl-learning-plan-entry-4h2');
+
+      var html =
+        '<div class="kl-learning-plan-entry-inner-4h2">' +
+          '<div class="kl-learning-plan-entry-icon-4h2">🗓️</div>' +
+          '<div class="kl-learning-plan-entry-content-4h2">' +
+            '<div class="kl-learning-plan-badge-4h2">4H-2 Dry-run</div>' +
+            '<h3>Lập kế hoạch học</h3>' +
+            '<p>Đặt mục tiêu hôm nay, chọn môn ưu tiên và giao bài cho bé.</p>' +
+            '<div class="kl-learning-plan-entry-note-4h2">Bước này chỉ xem trước, chưa ghi dữ liệu.</div>' +
+          '</div>' +
+          '<button type="button" class="kl-learning-plan-open-4h2" data-action="open-learning-plan-4h2">' +
+            'Lập kế hoạch học' +
+          '</button>' +
+        '</div>';
+
+      if (!existing) {
+        existing =
+          document.createElement('section');
+
+        existing.className =
+          'kl-learning-plan-entry-4h2';
+
+        existing.setAttribute(
+          'data-phase',
+          '4H-2'
+        );
+
+        existing.innerHTML = html;
+
+        var parentDashboard =
+          document.querySelector('.kl-parent-dashboard-entry-4g2');
+
+        if (parentDashboard && parentDashboard.parentNode) {
+          parentDashboard.parentNode.insertBefore(
+            existing,
+            parentDashboard.nextSibling
+          );
+        } else if (target.firstChild) {
+          target.insertBefore(existing, target.firstChild);
+        } else {
+          target.appendChild(existing);
+        }
+      } else {
+        existing.innerHTML = html;
+      }
+    }
+
+    function removeLearningPlanEntry4H2() {
+      var existing =
+        document.querySelector('.kl-learning-plan-entry-4h2');
+
+      if (existing && existing.parentNode) {
+        existing.parentNode.removeChild(existing);
+      }
+    }
+
+    function findLearningPlanEntryTarget4H2() {
+      var selectors = [
+        '.kl-parent-home-grid',
+        '.kl-home-grid',
+        '.kl-dashboard-grid',
+        '.kl-product-home',
+        '.kl-page-content',
+        '.kl-main-content',
+        'main',
+        '#app'
+      ];
+
+      for (var i = 0; i < selectors.length; i++) {
+        var el =
+          document.querySelector(selectors[i]);
+
+        if (el) return el;
+      }
+
+      return document.body;
+    }
+
+    function loadLearningPlanContext4H2(callback, force) {
+      if (
+        KIDLEARN_LEARNING_PLAN_UI_DRY_RUN_4H2.context &&
+        !force
+      ) {
+        if (callback) callback(KIDLEARN_LEARNING_PLAN_UI_DRY_RUN_4H2.context);
+        return;
+      }
+
+      if (
+        KIDLEARN_LEARNING_PLAN_UI_DRY_RUN_4H2.loading
+      ) {
+        return;
+      }
+
+      if (
+        typeof google === 'undefined' ||
+        !google.script ||
+        !google.script.run
+      ) {
+        var fallback = {
+          success: false,
+          errorMessage: 'Không gọi được Apps Script server.'
+        };
+
+        KIDLEARN_LEARNING_PLAN_UI_DRY_RUN_4H2.context = fallback;
+
+        if (callback) callback(fallback);
+        return;
+      }
+
+      KIDLEARN_LEARNING_PLAN_UI_DRY_RUN_4H2.loading = true;
+
+      google.script.run
+        .withSuccessHandler(function (result) {
+          KIDLEARN_LEARNING_PLAN_UI_DRY_RUN_4H2.loading = false;
+          KIDLEARN_LEARNING_PLAN_UI_DRY_RUN_4H2.context = result || {};
+
+          if (callback) callback(result || {});
+        })
+        .withFailureHandler(function (error) {
+          KIDLEARN_LEARNING_PLAN_UI_DRY_RUN_4H2.loading = false;
+
+          var result = {
+            success: false,
+            errorMessage:
+              error && error.message
+                ? error.message
+                : String(error || 'Không đọc được Learning Plan Context.')
+          };
+
+          KIDLEARN_LEARNING_PLAN_UI_DRY_RUN_4H2.context = result;
+
+          if (callback) callback(result);
+        })
+        .kidlearnV3_getLearningPlanContext4H1V3({
+          parentId: 'PARENT',
+          childId: 'CHD_V2_CHILD_DEFAULT'
+        });
+    }
+
+    function openLearningPlanPanel4H2() {
+      closeLearningPlanPanel4H2();
+
+      renderLearningPlanLoading4H2();
+
+      loadLearningPlanContext4H2(function (context) {
+        renderLearningPlanPanel4H2(context || {});
+      }, true);
+    }
+
+    function renderLearningPlanLoading4H2() {
+      closeLearningPlanPanel4H2();
+
+      var overlay =
+        document.createElement('div');
+
+      overlay.className =
+        'kl-learning-plan-overlay-4h2';
+
+      overlay.innerHTML =
+        '<div class="kl-learning-plan-panel-4h2">' +
+          '<div class="kl-learning-plan-empty-4h2">' +
+            '<h4>Đang mở kế hoạch học...</h4>' +
+            '<p>Vui lòng chờ trong giây lát.</p>' +
+          '</div>' +
+        '</div>';
+
+      document.body.appendChild(overlay);
+    }
+
+    function renderLearningPlanPanel4H2(context) {
+      closeLearningPlanPanel4H2();
+
+      var overlay =
+        document.createElement('div');
+
+      overlay.className =
+        'kl-learning-plan-overlay-4h2';
+
+      overlay.setAttribute(
+        'data-phase',
+        '4H-2'
+      );
+
+      if (!context.success) {
+        overlay.innerHTML =
+          '<div class="kl-learning-plan-panel-4h2">' +
+            renderLearningPlanHeader4H2({}) +
+            '<div class="kl-learning-plan-empty-4h2">' +
+              '<h4>Chưa mở được kế hoạch học</h4>' +
+              '<p>' + escapeHtml4H2(context.errorMessage || 'Vui lòng thử lại sau.') + '</p>' +
+            '</div>' +
+          '</div>';
+
+        document.body.appendChild(overlay);
+        return;
+      }
+
+      var plan =
+        context.learningPlanContext || {};
+
+      overlay.innerHTML =
+        '<div class="kl-learning-plan-panel-4h2" role="dialog" aria-modal="true">' +
+          renderLearningPlanHeader4H2(plan) +
+          '<div class="kl-learning-plan-form-4h2">' +
+            renderDailyGoalBlock4H2(plan) +
+            renderSubjectBlock4H2(plan) +
+            renderLessonBlock4H2(plan) +
+            renderDryRunActions4H2() +
+            '<div class="kl-learning-plan-dryrun-result-4h2" aria-live="polite"></div>' +
+          '</div>' +
+        '</div>';
+
+      document.body.appendChild(overlay);
+
+      initializeLearningPlanDefaults4H2(plan);
+
+      KIDLEARN_LEARNING_PLAN_UI_DRY_RUN_4H2.panelOpen = true;
+    }
+
+    function renderLearningPlanHeader4H2(plan) {
+      plan =
+        plan || {};
+
+      var child =
+        plan.child || {};
+
+      return (
+        '<div class="kl-learning-plan-head-4h2">' +
+          '<div>' +
+            '<div class="kl-learning-plan-badge-4h2">Learning Plan • Dry-run</div>' +
+            '<h3>Lập kế hoạch học</h3>' +
+            '<p>Phụ huynh đặt mục tiêu và giao bài cho ' +
+              escapeHtml4H2(child.displayName || child.name || 'bé') +
+            '.</p>' +
+          '</div>' +
+          '<button type="button" class="kl-learning-plan-close-4h2" data-action="close-learning-plan-4h2">×</button>' +
+        '</div>'
+      );
+    }
+
+    function renderDailyGoalBlock4H2(plan) {
+      var policy =
+        plan.policy || {};
+
+      var dailyGoalPolicy =
+        policy.dailyGoalPolicy || {};
+
+      var presets =
+        dailyGoalPolicy.allowedPresetMinutes || [10, 20, 30, 45, 60];
+
+      var defaultPlan =
+        plan.defaultPlan || {};
+
+      var current =
+        defaultPlan.dailyGoalMinutes ||
+        dailyGoalPolicy.defaultMinutes ||
+        20;
+
+      var html =
+        '<section class="kl-learning-plan-card-4h2">' +
+          '<div class="kl-learning-plan-card-head-4h2">' +
+            '<div class="kl-learning-plan-card-icon-4h2">⏱️</div>' +
+            '<div>' +
+              '<h4>Mục tiêu hôm nay</h4>' +
+              '<p>Chọn thời lượng học phù hợp cho bé.</p>' +
+            '</div>' +
+          '</div>' +
+          '<div class="kl-learning-plan-minutes-4h2">';
+
+      for (var i = 0; i < presets.length; i++) {
+        html +=
+          '<button type="button" class="kl-learning-plan-minute-4h2" data-action="select-learning-plan-minute-4h2" data-minutes="' +
+            escapeHtml4H2(presets[i]) +
+          '">' +
+            escapeHtml4H2(presets[i]) +
+            ' phút' +
+          '</button>';
+      }
+
+      html +=
+          '</div>' +
+          '<input type="hidden" class="kl-learning-plan-daily-minutes-input-4h2" value="' +
+            escapeHtml4H2(current) +
+          '">' +
+        '</section>';
+
+      return html;
+    }
+
+    function renderSubjectBlock4H2(plan) {
+      var recommendations =
+        plan.subjectRecommendations || {};
+
+      var items =
+        recommendations.items || [];
+
+      if (!items.length) {
+        return (
+          '<section class="kl-learning-plan-card-4h2">' +
+            '<div class="kl-learning-plan-card-head-4h2">' +
+              '<div class="kl-learning-plan-card-icon-4h2">📚</div>' +
+              '<div>' +
+                '<h4>Môn ưu tiên</h4>' +
+                '<p>Chưa có môn học để chọn.</p>' +
+              '</div>' +
+            '</div>' +
+            '<div class="kl-learning-plan-empty-4h2">' +
+              '<h4>Chưa có dữ liệu môn học</h4>' +
+              '<p>Khi có môn học, phụ huynh có thể chọn môn ưu tiên.</p>' +
+            '</div>' +
+          '</section>'
+        );
+      }
+
+      var html =
+        '<section class="kl-learning-plan-card-4h2">' +
+          '<div class="kl-learning-plan-card-head-4h2">' +
+            '<div class="kl-learning-plan-card-icon-4h2">📚</div>' +
+            '<div>' +
+              '<h4>Môn ưu tiên</h4>' +
+              '<p>Chọn môn muốn bé tập trung hôm nay.</p>' +
+            '</div>' +
+          '</div>' +
+          '<div class="kl-learning-plan-subjects-4h2">';
+
+      for (var i = 0; i < items.length; i++) {
+        html +=
+          '<button type="button" class="kl-learning-plan-subject-4h2" data-action="select-learning-plan-subject-4h2" data-subject-code="' +
+            escapeHtml4H2(items[i].subjectCode || '') +
+          '">' +
+            '<strong>' + escapeHtml4H2(items[i].subjectName || items[i].subjectCode || 'Môn học') + '</strong>' +
+            '<span>' + escapeHtml4H2(items[i].reason || 'Môn học trong chương trình') + '</span>' +
+          '</button>';
+      }
+
+      html +=
+          '</div>' +
+          '<input type="hidden" class="kl-learning-plan-subject-input-4h2" value="' +
+            escapeHtml4H2(recommendations.recommendedSubjectCode || '') +
+          '">' +
+        '</section>';
+
+      return html;
+    }
+
+    function renderLessonBlock4H2(plan) {
+      var suggestions =
+        plan.lessonSuggestions || {};
+
+      var items =
+        suggestions.items || [];
+
+      if (!items.length) {
+        return (
+          '<section class="kl-learning-plan-card-4h2">' +
+            '<div class="kl-learning-plan-card-head-4h2">' +
+              '<div class="kl-learning-plan-card-icon-4h2">📝</div>' +
+              '<div>' +
+                '<h4>Bài giao cho bé</h4>' +
+                '<p>Chưa có bài học để giao.</p>' +
+              '</div>' +
+            '</div>' +
+            '<div class="kl-learning-plan-empty-4h2">' +
+              '<h4>Chưa có lesson suggestion</h4>' +
+              '<p>Khi có bài học, phụ huynh có thể chọn bài giao cho bé.</p>' +
+            '</div>' +
+          '</section>'
+        );
+      }
+
+      var html =
+        '<section class="kl-learning-plan-card-4h2">' +
+          '<div class="kl-learning-plan-card-head-4h2">' +
+            '<div class="kl-learning-plan-card-icon-4h2">📝</div>' +
+            '<div>' +
+              '<h4>Bài giao cho bé</h4>' +
+              '<p>Chọn một hoặc nhiều bài. 4H-2 chỉ dry-run.</p>' +
+            '</div>' +
+          '</div>' +
+          '<div class="kl-learning-plan-lessons-4h2">';
+
+      for (var i = 0; i < items.length; i++) {
+        html +=
+          '<label class="kl-learning-plan-lesson-4h2" data-subject-code="' +
+            escapeHtml4H2(items[i].subjectCode || '') +
+          '">' +
+            '<input type="checkbox" value="' +
+              escapeHtml4H2(items[i].lessonId || '') +
+            '">' +
+            '<div>' +
+              '<strong>' + escapeHtml4H2(items[i].lessonTitle || items[i].lessonId || 'Bài học') + '</strong>' +
+              '<p>' +
+                escapeHtml4H2(items[i].reason || '') +
+                ' • Tiến độ: ' +
+                escapeHtml4H2(items[i].progressPercent || 0) +
+                '%' +
+              '</p>' +
+            '</div>' +
+          '</label>';
+      }
+
+      html +=
+          '</div>' +
+        '</section>';
+
+      return html;
+    }
+
+    function renderDryRunActions4H2() {
+      return (
+        '<div class="kl-learning-plan-actions-4h2">' +
+          '<button type="button" class="kl-learning-plan-dryrun-button-4h2" data-action="submit-learning-plan-dryrun-4h2">' +
+            'Xem trước kế hoạch' +
+          '</button>' +
+          '<div class="kl-learning-plan-safe-note-4h2">' +
+            'Dry-run only — chưa ghi Daily Goal hoặc Assignment.' +
+          '</div>' +
+        '</div>'
+      );
+    }
+
+    function initializeLearningPlanDefaults4H2(plan) {
+      var defaultPlan =
+        plan.defaultPlan || {};
+
+      var minute =
+        String(defaultPlan.dailyGoalMinutes || '');
+
+      var minuteButtons =
+        document.querySelectorAll('.kl-learning-plan-minute-4h2');
+
+      for (var i = 0; i < minuteButtons.length; i++) {
+        minuteButtons[i].classList.toggle(
+          'is-active',
+          minuteButtons[i].getAttribute('data-minutes') === minute
+        );
+      }
+
+      var subjectCode =
+        String(defaultPlan.prioritySubjectCode || '');
+
+      var subjectButtons =
+        document.querySelectorAll('.kl-learning-plan-subject-4h2');
+
+      for (var j = 0; j < subjectButtons.length; j++) {
+        subjectButtons[j].classList.toggle(
+          'is-active',
+          subjectButtons[j].getAttribute('data-subject-code') === subjectCode
+        );
+      }
+
+      var selectedLessonIds =
+        defaultPlan.selectedLessonIds || [];
+
+      var selectedMap = {};
+
+      for (var k = 0; k < selectedLessonIds.length; k++) {
+        selectedMap[String(selectedLessonIds[k])] = true;
+      }
+
+      var lessonChecks =
+        document.querySelectorAll('.kl-learning-plan-lesson-4h2 input[type="checkbox"]');
+
+      for (var x = 0; x < lessonChecks.length; x++) {
+        lessonChecks[x].checked =
+          selectedMap[String(lessonChecks[x].value)] === true;
+      }
+
+      filterLessonsBySubject4H2(subjectCode);
+    }
+
+    function selectMinute4H2(button) {
+      var minutes =
+        button.getAttribute('data-minutes') || '';
+
+      var input =
+        document.querySelector('.kl-learning-plan-daily-minutes-input-4h2');
+
+      if (input) {
+        input.value = minutes;
+      }
+
+      var buttons =
+        document.querySelectorAll('.kl-learning-plan-minute-4h2');
+
+      for (var i = 0; i < buttons.length; i++) {
+        buttons[i].classList.toggle(
+          'is-active',
+          buttons[i] === button
+        );
+      }
+    }
+
+    function selectSubject4H2(button) {
+      var code =
+        button.getAttribute('data-subject-code') || '';
+
+      var input =
+        document.querySelector('.kl-learning-plan-subject-input-4h2');
+
+      if (input) {
+        input.value = code;
+      }
+
+      var buttons =
+        document.querySelectorAll('.kl-learning-plan-subject-4h2');
+
+      for (var i = 0; i < buttons.length; i++) {
+        buttons[i].classList.toggle(
+          'is-active',
+          buttons[i] === button
+        );
+      }
+
+      filterLessonsBySubject4H2(code);
+    }
+
+    function filterLessonsBySubject4H2(subjectCode) {
+      var lessons =
+        document.querySelectorAll('.kl-learning-plan-lesson-4h2');
+
+      for (var i = 0; i < lessons.length; i++) {
+        var itemSubject =
+          lessons[i].getAttribute('data-subject-code') || '';
+
+        var show =
+          !subjectCode || !itemSubject || itemSubject === subjectCode;
+
+        lessons[i].style.display =
+          show ? '' : 'none';
+      }
+    }
+
+    function collectLearningPlanPayload4H2() {
+      var minutesInput =
+        document.querySelector('.kl-learning-plan-daily-minutes-input-4h2');
+
+      var subjectInput =
+        document.querySelector('.kl-learning-plan-subject-input-4h2');
+
+      var checked =
+        document.querySelectorAll('.kl-learning-plan-lesson-4h2 input[type="checkbox"]:checked');
+
+      var lessonIds = [];
+
+      for (var i = 0; i < checked.length; i++) {
+        lessonIds.push(checked[i].value);
+      }
+
+      return {
+        parentId:
+          'PARENT',
+        childId:
+          'CHD_V2_CHILD_DEFAULT',
+        dailyGoalMinutes:
+          minutesInput ? Number(minutesInput.value || 0) : 20,
+        prioritySubjectCode:
+          subjectInput ? subjectInput.value || '' : '',
+        selectedLessonIds:
+          lessonIds
+      };
+    }
+
+    function submitLearningPlanDryRun4H2() {
+      var resultBox =
+        document.querySelector('.kl-learning-plan-dryrun-result-4h2');
+
+      if (resultBox) {
+        resultBox.className =
+          'kl-learning-plan-dryrun-result-4h2 is-loading';
+        resultBox.innerHTML =
+          '<strong>Đang xem trước kế hoạch...</strong>';
+      }
+
+      if (
+        typeof google === 'undefined' ||
+        !google.script ||
+        !google.script.run
+      ) {
+        renderLearningPlanDryRunError4H2(
+          'Không gọi được Apps Script server.'
+        );
+        return;
+      }
+
+      var payload =
+        collectLearningPlanPayload4H2();
+
+      google.script.run
+        .withSuccessHandler(function (result) {
+          renderLearningPlanDryRunResult4H2(result || {});
+        })
+        .withFailureHandler(function (error) {
+          renderLearningPlanDryRunError4H2(
+            error && error.message
+              ? error.message
+              : String(error || 'Dry-run failed.')
+          );
+        })
+        .kidlearnV3_previewLearningPlanDraft4H2V3(payload);
+    }
+
+    function renderLearningPlanDryRunResult4H2(result) {
+      var resultBox =
+        document.querySelector('.kl-learning-plan-dryrun-result-4h2');
+
+      if (!resultBox) return;
+
+      var plan =
+        result.draftPlan || {};
+
+      var ops =
+        result.dryRunOperations || {};
+
+      var daily =
+        ops.DATA_DailyGoals || {};
+
+      var assignments =
+        ops.DATA_Assignments || {};
+
+      var warnings =
+        result.warnings || [];
+
+      var html =
+        '<strong>Đã xem trước kế hoạch — chưa ghi dữ liệu.</strong>' +
+        '<div class="kl-learning-plan-dryrun-grid-4h2">' +
+          '<div><span>Daily Goal</span><b>' +
+            escapeHtml4H2(daily.operation || 'CREATE_TODAY_GOAL') +
+          '</b></div>' +
+          '<div><span>Thời lượng</span><b>' +
+            escapeHtml4H2(plan.dailyGoalMinutes || 0) +
+            ' phút</b></div>' +
+          '<div><span>Môn ưu tiên</span><b>' +
+            escapeHtml4H2(plan.prioritySubjectName || plan.prioritySubjectCode || 'Chưa chọn') +
+          '</b></div>' +
+          '<div><span>Assignment</span><b>' +
+            escapeHtml4H2(assignments.operationCount || 0) +
+            ' bài</b></div>' +
+        '</div>';
+
+      if (warnings.length) {
+        html +=
+          '<div class="kl-learning-plan-dryrun-warning-4h2">' +
+            warnings.map(function (item) {
+              return '<p>⚠️ ' + escapeHtml4H2(item) + '</p>';
+            }).join('') +
+          '</div>';
+      }
+
+      html +=
+        '<p class="kl-learning-plan-next-note-4h2">4H-3 mới mở controlled write để ghi vào DEV.</p>';
+
+      resultBox.className =
+        'kl-learning-plan-dryrun-result-4h2 is-success';
+
+      resultBox.innerHTML =
+        html;
+    }
+
+    function renderLearningPlanDryRunError4H2(message) {
+      var resultBox =
+        document.querySelector('.kl-learning-plan-dryrun-result-4h2');
+
+      if (!resultBox) return;
+
+      resultBox.className =
+        'kl-learning-plan-dryrun-result-4h2 is-error';
+
+      resultBox.innerHTML =
+        '<strong>Không preview được kế hoạch.</strong>' +
+        '<p>' + escapeHtml4H2(message || 'Vui lòng thử lại.') + '</p>';
+    }
+
+    function closeLearningPlanPanel4H2() {
+      var existing =
+        document.querySelector('.kl-learning-plan-overlay-4h2');
+
+      if (existing && existing.parentNode) {
+        existing.parentNode.removeChild(existing);
+      }
+
+      KIDLEARN_LEARNING_PLAN_UI_DRY_RUN_4H2.panelOpen = false;
+    }
+
+    document.addEventListener(
+      'click',
+      function (event) {
+        var actionEl =
+          event.target.closest('[data-action]');
+
+        if (!actionEl) return;
+
+        var action =
+          actionEl.getAttribute('data-action');
+
+        if (action === 'open-learning-plan-4h2') {
+          event.preventDefault();
+          event.stopPropagation();
+          openLearningPlanPanel4H2();
+          return;
+        }
+
+        if (action === 'close-learning-plan-4h2') {
+          event.preventDefault();
+          event.stopPropagation();
+          closeLearningPlanPanel4H2();
+          return;
+        }
+
+        if (action === 'select-learning-plan-minute-4h2') {
+          event.preventDefault();
+          event.stopPropagation();
+          selectMinute4H2(actionEl);
+          return;
+        }
+
+        if (action === 'select-learning-plan-subject-4h2') {
+          event.preventDefault();
+          event.stopPropagation();
+          selectSubject4H2(actionEl);
+          return;
+        }
+
+        if (action === 'submit-learning-plan-dryrun-4h2') {
+          event.preventDefault();
+          event.stopPropagation();
+          submitLearningPlanDryRun4H2();
+          return;
+        }
+      },
+      true
+    );
+
+    function scheduleEnsureLearningPlanEntry4H2() {
+      if (
+        KIDLEARN_LEARNING_PLAN_UI_DRY_RUN_4H2.injectTimer
+      ) {
+        return;
+      }
+
+      KIDLEARN_LEARNING_PLAN_UI_DRY_RUN_4H2.injectTimer =
+        setTimeout(function () {
+          KIDLEARN_LEARNING_PLAN_UI_DRY_RUN_4H2.injectTimer = null;
+          ensureLearningPlanEntry4H2();
+        }, 700);
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener(
+        'DOMContentLoaded',
+        scheduleEnsureLearningPlanEntry4H2
+      );
+    } else {
+      scheduleEnsureLearningPlanEntry4H2();
+    }
+
+    var observer4H2 =
+      new MutationObserver(function () {
+        scheduleEnsureLearningPlanEntry4H2();
+      });
+
+    observer4H2.observe(
+      document.documentElement,
+      {
+        childList: true,
+        subtree: true
+      }
+    );
+
+    window.ensureLearningPlanEntry4H2 =
+      ensureLearningPlanEntry4H2;
+
+    window.openLearningPlanPanel4H2 =
+      openLearningPlanPanel4H2;
+
+    window.renderLearningPlanPanel4H2 =
+      renderLearningPlanPanel4H2;
+
+    window.submitLearningPlanDryRun4H2 =
+      submitLearningPlanDryRun4H2;
+  })();
+</script>

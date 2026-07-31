@@ -1,0 +1,155 @@
+<script>
+/**
+ * KIDLEARN V3 - UI Real Write Gate Client
+ * Bundle 3J-A
+ *
+ * Ở 3J-A, mọi request đều DRY_RUN_ONLY.
+ */
+
+window.KidlearnV3UiRealWriteGate = (function() {
+  function callServer(functionName, payload) {
+    return new Promise(function(resolve, reject) {
+      google.script.run
+        .withSuccessHandler(resolve)
+        .withFailureHandler(function(error) {
+          reject(
+            new Error(
+              error && error.message
+                ? error.message
+                : String(error)
+            )
+          );
+        })[functionName](payload || {});
+    });
+  }
+
+  function getStatus() {
+    return callServer(
+      'kidlearnV3_getUiRealWriteGateDevStatusV3',
+      {}
+    );
+  }
+
+  function getSampleContext() {
+    return callServer(
+      'kidlearnV3_uiRealWriteGateGetSampleContextV3',
+      {}
+    );
+  }
+
+  function dispatch(action, payload) {
+    return callServer(
+      'kidlearnV3_uiRealWriteGateDispatchV3',
+      {
+        action: action,
+        confirmText: 'DRY_RUN_ONLY',
+        dryRun: true,
+        realWriteRequested: false,
+        payload: payload || {}
+      }
+    );
+  }
+
+  function auditEvent(payload) {
+    return dispatch(
+      'AUDIT_EVENT',
+      payload || {}
+    );
+  }
+
+  function studyStart(payload) {
+    return dispatch(
+      'STUDY_START',
+      payload || {}
+    );
+  }
+
+  function studyFinish(payload) {
+    return dispatch(
+      'STUDY_FINISH',
+      payload || {}
+    );
+  }
+
+  function lessonProgressSave(payload) {
+    return dispatch(
+      'LESSON_PROGRESS_SAVE',
+      payload || {}
+    );
+  }
+
+  function dailyGoalSave(payload) {
+    return dispatch(
+      'DAILY_GOAL_SAVE',
+      payload || {}
+    );
+  }
+
+  function assignmentStart(payload) {
+    return dispatch(
+      'ASSIGNMENT_START',
+      payload || {}
+    );
+  }
+
+  function assignmentProgress(payload) {
+    return dispatch(
+      'ASSIGNMENT_PROGRESS',
+      payload || {}
+    );
+  }
+
+  function assignmentComplete(payload) {
+    return dispatch(
+      'ASSIGNMENT_COMPLETE',
+      payload || {}
+    );
+  }
+
+  function today() {
+    var date =
+      new Date();
+
+    return (
+      date.getFullYear() +
+      '-' +
+      String(date.getMonth() + 1).padStart(2, '0') +
+      '-' +
+      String(date.getDate()).padStart(2, '0')
+    );
+  }
+
+  function makeId(prefix) {
+    var now =
+      new Date();
+
+    return (
+      prefix +
+      '_' +
+      now.getFullYear() +
+      String(now.getMonth() + 1).padStart(2, '0') +
+      String(now.getDate()).padStart(2, '0') +
+      '_' +
+      String(now.getHours()).padStart(2, '0') +
+      String(now.getMinutes()).padStart(2, '0') +
+      String(now.getSeconds()).padStart(2, '0')
+    );
+  }
+
+  return {
+    getStatus: getStatus,
+    getSampleContext: getSampleContext,
+    dispatch: dispatch,
+    auditEvent: auditEvent,
+    studyStart: studyStart,
+    studyFinish: studyFinish,
+    lessonProgressSave: lessonProgressSave,
+    dailyGoalSave: dailyGoalSave,
+    assignmentStart: assignmentStart,
+    assignmentProgress: assignmentProgress,
+    assignmentComplete: assignmentComplete,
+    today: today,
+    makeId: makeId
+  };
+})();
+</script>

@@ -1,0 +1,39 @@
+<script>
+const UIUtils = {
+  /**
+   * Định dạng số tiền thành chuỗi VND (ví dụ: 5,000,000 ₫)
+   * Phục vụ cho module Học phí
+   */
+  formatCurrency: function(amount) {
+    if (isNaN(amount) || amount === null || amount === undefined) return '0 ₫';
+    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+  },
+
+  /**
+   * Định dạng thời gian
+   */
+  formatDate: function(dateString) {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  },
+
+  /**
+   * Loại bỏ các dấu phân cách để lấy giá trị số nguyên thủy (Clean Number)
+   */
+  cleanNumberInput: function(inputString) {
+    if (!inputString) return 0;
+    return Number(inputString.toString().replace(/[^0-9]/g, ''));
+  },
+
+  /**
+   * Escape HTML để phòng chống XSS khi render chuỗi người dùng nhập
+   * Bổ trợ phòng ngự lớp Frontend [cite: 55]
+   */
+  escapeHTML: function(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+};
+</script>

@@ -1,0 +1,126 @@
+<!-- 
+  File: View_Courses.html
+  Mô tả: Giao diện Khóa học tổng quan với các thẻ môn học, thiết kế mô phỏng theo Mockup 00.
+-->
+<div class="flex flex-col gap-6 max-w-7xl mx-auto w-full h-full pb-10">
+  
+  <!-- Header Phần Khóa Học -->
+  <div class="flex items-center justify-between mb-2">
+    <div>
+      <h1 class="text-3xl font-extrabold text-slate-800 tracking-tight">Khóa học</h1>
+      <p class="text-sm text-slate-500 mt-1 font-medium">Chọn môn học để bắt đầu hành trình khám phá tri thức nhé! ✨</p>
+    </div>
+  </div>
+
+  <!-- Thanh Thống Kê Tổng Quan (Stats Bar) -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4 bg-white p-4 rounded-3xl border border-slate-200 shadow-sm">
+    <!-- Stat 1 -->
+    <div class="flex items-center gap-4 p-2 border-r border-slate-100 last:border-0">
+      <div class="w-12 h-12 rounded-full bg-indigo-50 text-indigo-500 flex items-center justify-center text-2xl shadow-inner">
+        📖
+      </div>
+      <div>
+        <p class="text-xs text-slate-500 font-semibold mb-0.5">Tổng khóa học</p>
+        <p class="text-lg font-extrabold text-slate-800"><span id="vc-stat-total-courses">--</span> <span class="text-xs font-medium text-slate-400">môn học</span></p>
+      </div>
+    </div>
+    <!-- Stat 2 -->
+    <div class="flex items-center gap-4 p-2 border-r border-slate-100 last:border-0">
+      <div class="w-12 h-12 rounded-full bg-green-50 text-green-500 flex items-center justify-center text-2xl shadow-inner">
+        🎯
+      </div>
+      <div>
+        <p class="text-xs text-slate-500 font-semibold mb-0.5">Đã hoàn thành</p>
+        <p class="text-lg font-extrabold text-slate-800"><span id="vc-stat-completed">--</span> <span class="text-xs font-medium text-slate-400">bài học</span></p>
+      </div>
+    </div>
+    <!-- Stat 3 -->
+    <div class="flex items-center gap-4 p-2 border-r border-slate-100 last:border-0">
+      <div class="w-12 h-12 rounded-full bg-yellow-50 text-yellow-500 flex items-center justify-center text-2xl shadow-inner">
+        ⭐
+      </div>
+      <div>
+        <p class="text-xs text-slate-500 font-semibold mb-0.5">Điểm trung bình</p>
+        <p class="text-lg font-extrabold text-slate-800"><span id="vc-stat-avg">--</span> <span class="text-xs font-medium text-slate-400">/ 10</span></p>
+      </div>
+    </div>
+    <!-- Stat 4 -->
+    <div class="flex items-center gap-4 p-2 border-r border-slate-100 last:border-0">
+      <div class="w-12 h-12 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center text-2xl shadow-inner">
+        ⏱️
+      </div>
+      <div>
+        <p class="text-xs text-slate-500 font-semibold mb-0.5">Thời gian học</p>
+        <p class="text-lg font-extrabold text-slate-800" id="vc-stat-time">--h --m <span class="text-xs font-medium text-slate-400">tuần này</span></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lưới Danh Sách Các Môn Học (Render Động qua JS) -->
+  <div id="vc-course-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mt-2">
+    <!-- Khối Loading mặc định -->
+    <div class="col-span-full py-20 flex flex-col items-center justify-center">
+       <div class="loader-spinner !w-10 !h-10 !border-4 !border-indigo-500 mb-4"></div>
+       <p class="text-slate-500 font-medium text-sm">Đang tải danh sách khóa học...</p>
+    </div>
+  </div>
+
+  <!-- Khu vực Gợi Ý Nâng Cao -->
+  <div class="mt-4 bg-white rounded-3xl border border-slate-200 shadow-sm p-6 relative overflow-hidden">
+    <!-- Background Mây lá cây (Mô phỏng chân trang thiết kế) -->
+    <div class="absolute bottom-0 left-0 w-full h-12 bg-green-50 opacity-50 rounded-b-3xl"></div>
+    
+    <div class="flex justify-between items-center mb-6 relative z-10">
+      <h3 class="font-bold text-slate-800 flex items-center gap-2"><span class="text-yellow-400 text-xl">⭐</span> Gợi ý khóa học cho bé</h3>
+      <a href="#" class="text-sm font-semibold text-indigo-600 hover:text-indigo-800 flex items-center gap-1">Xem tất cả <span class="text-lg">→</span></a>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 relative z-10">
+      <!-- Item Gợi ý 1 -->
+      <div class="flex items-center justify-between bg-slate-50 hover:bg-white p-3 rounded-2xl border border-slate-100 hover:border-indigo-200 transition-all cursor-pointer shadow-sm hover:shadow">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-xl">🦁</div>
+          <div>
+            <h4 class="text-sm font-bold text-slate-700 line-clamp-1">Kỹ năng đọc hiểu</h4>
+            <p class="text-xs font-medium text-slate-500">Tiếng Việt</p>
+          </div>
+        </div>
+        <span class="bg-green-100 text-green-700 text-[10px] font-extrabold px-2 py-1 rounded-md">Mới</span>
+      </div>
+      <!-- Item Gợi ý 2 -->
+      <div class="flex items-center justify-between bg-slate-50 hover:bg-white p-3 rounded-2xl border border-slate-100 hover:border-indigo-200 transition-all cursor-pointer shadow-sm hover:shadow">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-xl">🚀</div>
+          <div>
+            <h4 class="text-sm font-bold text-slate-700 line-clamp-1">Toán nâng cao</h4>
+            <p class="text-xs font-medium text-slate-500">Toán học</p>
+          </div>
+        </div>
+        <span class="bg-red-100 text-red-700 text-[10px] font-extrabold px-2 py-1 rounded-md">Hot</span>
+      </div>
+      <!-- Item Gợi ý 3 -->
+      <div class="flex items-center justify-between bg-slate-50 hover:bg-white p-3 rounded-2xl border border-slate-100 hover:border-indigo-200 transition-all cursor-pointer shadow-sm hover:shadow">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center text-xl">🎧</div>
+          <div>
+            <h4 class="text-sm font-bold text-slate-700 line-clamp-1">Từ vựng cơ bản</h4>
+            <p class="text-xs font-medium text-slate-500">Tiếng Anh</p>
+          </div>
+        </div>
+        <span class="bg-green-100 text-green-700 text-[10px] font-extrabold px-2 py-1 rounded-md">Mới</span>
+      </div>
+      <!-- Item Gợi ý 4 -->
+      <div class="flex items-center justify-between bg-slate-50 hover:bg-white p-3 rounded-2xl border border-slate-100 hover:border-indigo-200 transition-all cursor-pointer shadow-sm hover:shadow">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-teal-100 flex items-center justify-center text-xl">🌍</div>
+          <div>
+            <h4 class="text-sm font-bold text-slate-700 line-clamp-1">Trái đất của chúng ta</h4>
+            <p class="text-xs font-medium text-slate-500">Khoa học</p>
+          </div>
+        </div>
+        <span class="bg-slate-200 text-slate-600 text-[10px] font-extrabold px-2 py-1 rounded-md">Nổi bật</span>
+      </div>
+    </div>
+  </div>
+
+</div>

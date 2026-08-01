@@ -1,0 +1,82 @@
+Tôi muốn xây dựng lại ứng dụng KIDLEARN từ đầu trên Google Sheet trắng và Apps Script trắng.
+
+Bối cảnh:
+- Ứng dụng cũ là KIDLEARN V3, web app học tập cho trẻ em bằng Google Apps Script + Google Sheets.
+- Ứng dụng cũ có nhiều file/phase/patched UI nên bị lỗi:
+  1. Login bị kéo giãn, layout nhảy.
+  2. Child screen hiển thị module của parent.
+  3. Parent screen hiển thị module của child.
+  4. Assignment card bị force inject sai vị trí.
+  5. Sidebar không ổn định.
+  6. Console có nguy cơ spam do polling/MutationObserver.
+  7. Nhiều file patch chồng nhau gây khó bảo trì.
+- Tôi muốn làm lại sạch từ đầu, không refactor trực tiếp code cũ.
+
+Yêu cầu:
+1. Hướng dẫn từng bước một thật chi tiết.
+2. Mỗi bước chỉ đưa code khi tôi xác nhận.
+3. Không tạo nhiều patch nhỏ rời rạc.
+4. Không dùng MutationObserver toàn trang.
+5. Không dùng polling vô hạn.
+6. Không force inject module vào body.
+7. Không dò UI bằng innerText.
+8. Không tạo nhiều doGet.
+9. Không ghi dữ liệu nếu chưa có dry-run và confirm.
+10. Luôn có rollback/test/expected output.
+11. Tích hợp luôn responsive layout, sidebar, role-scope ngay từ đầu.
+12. Xây được Google Sheet database từ đầu bằng setup script.
+13. Có validator kiểm tra sheets/headers.
+14. Có demo login cho child và parent.
+15. Có child UI và parent UI tách riêng rõ ràng.
+16. Có smoke test backend và checklist frontend.
+
+Mục tiêu kiến trúc mới:
+- Google Sheet blank ban đầu.
+- Apps Script blank ban đầu.
+- Một doGet duy nhất.
+- Shell sạch:
+  - Login view
+  - App view
+- Role rõ:
+  - CHILD
+  - PARENT
+- Containers rõ:
+  - login root
+  - app root
+  - sidebar
+  - child main
+  - parent main
+- Child chỉ thấy:
+  - Trang chủ bé
+  - 4 môn học
+  - Bài học tiếp theo
+  - Bài được giao
+  - Luyện tập
+  - Thưởng / thư viện nếu có
+- Parent chỉ thấy:
+  - Dashboard phụ huynh
+  - Tiến độ học
+  - Bài viết tay chờ duyệt
+  - Lập kế hoạch học
+  - Quản lý bài đã giao
+- Không để child/parent module tự append vào body.
+
+Tôi sẽ cung cấp file cũ để tham khảo, nhưng yêu cầu:
+- Không copy nguyên xi các file patch lỗi.
+- Dùng code cũ để hiểu schema/logic/UI.
+- Sau đó thiết kế lại file structure mới tối giản hơn.
+
+Quy trình mong muốn:
+Bước 0: Hỏi tôi upload những file cần thiết.
+Bước 1: Đề xuất kiến trúc file mới.
+Bước 2: Tạo Google Sheet trắng và Apps Script trắng.
+Bước 3: Tạo schema/setup sheets.
+Bước 4: Tạo backend services.
+Bước 5: Tạo clean UI shell tích hợp login/app/sidebar/responsive.
+Bước 6: Tạo child UI.
+Bước 7: Tạo parent UI.
+Bước 8: Tạo lesson/assignment/handwriting nếu cần.
+Bước 9: Tạo test suite.
+Bước 10: Deploy web app.
+
+Hãy bắt đầu bằng cách hỏi tôi upload các file cần thiết và đưa checklist chuẩn bị. Không xuất code ngay.

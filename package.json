@@ -1,0 +1,17 @@
+{
+  "name": "kidlearn-clean-rebuild",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "setup:dry-run": "node scripts/setup-firestore.mjs",
+    "emulators": "firebase emulators:start --only auth,firestore,hosting",
+    "firebase:use:dev": "firebase use dev"
+  },
+  "devDependencies": {
+    "firebase-tools": "^14.0.0"
+  }
+}

@@ -1,0 +1,25 @@
+[
+  {
+    "path": "system/config",
+    "data": {
+      "appName": "KIDLEARN",
+      "environment": "DEV",
+      "defaultLanguage": "vi",
+      "timeZone": "Asia/Ho_Chi_Minh",
+      "offlineLiteEnabled": true,
+      "aiContentEnabled": true,
+      "aiApprovalRequired": true,
+      "handwritingManualReview": true,
+      "speechRecognitionEnabled": false,
+      "schemaVersion": "1.0.0"
+    }
+  },
+  {
+    "path": "system/schema",
+    "data": {
+      "version": "1.0.0",
+      "status": "PLANNED",
+      "notes": "Clean rebuild MVP schema; no production write has been performed."
+    }
+  }
+]

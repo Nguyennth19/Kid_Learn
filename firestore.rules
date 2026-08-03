@@ -1,0 +1,11 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Phase 5C safety lock. Access remains closed until role-aware rules
+    // are implemented and verified in the Firebase Emulator.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

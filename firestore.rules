@@ -2,8 +2,150 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Phase 5C safety lock. Access remains closed until role-aware rules
-    // are implemented and verified in the Firebase Emulator.
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function currentUser() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    function isActiveUser() {
+      return isSignedIn()
+        && currentUser().data.status == 'ACTIVE';
+    }
+
+    function hasRole(role) {
+      return isActiveUser()
+        && currentUser().data.role == role;
+    }
+
+    function isParent() {
+      return hasRole('PARENT');
+    }
+
+    function isChild() {
+      return hasRole('CHILD');
+    }
+
+    function isOwnChild(childId) {
+      return isChild()
+        && get(/databases/$(database)/documents/children/$(childId)).data.childUserId
+          == request.auth.uid;
+    }
+
+    function parentAccessId(childId) {
+      return request.auth.uid + '_' + childId;
+    }
+
+    function hasParentAccess(childId) {
+      return isParent()
+        && exists(/databases/$(database)/documents/userChildAccess/$(parentAccessId(childId)))
+        && get(/databases/$(database)/documents/userChildAccess/$(parentAccessId(childId))).data.userId
+          == request.auth.uid
+        && get(/databases/$(database)/documents/userChildAccess/$(parentAccessId(childId))).data.childId
+          == childId
+        && get(/databases/$(database)/documents/userChildAccess/$(parentAccessId(childId))).data.status
+          == 'ACTIVE';
+    }
+
+    function canAccessChild(childId) {
+      return isOwnChild(childId) || hasParentAccess(childId);
+    }
+
+    function isPublishedLesson(lessonId) {
+      return get(/databases/$(database)/documents/lessons/$(lessonId)).data.status
+        == 'PUBLISHED';
+    }
+
+    match /system/{documentId} {
+      allow read: if documentId == 'config' && isActiveUser()
+        || documentId == 'schema' && isParent();
+      allow write: if false;
+    }
+
+    match /users/{userId} {
+      allow read: if isActiveUser() && request.auth.uid == userId;
+      allow write: if false;
+    }
+
+    match /children/{childId} {
+      allow read: if canAccessChild(childId);
+      allow write: if false;
+    }
+
+    match /userChildAccess/{accessId} {
+      allow read: if isActiveUser()
+        && (resource.data.userId == request.auth.uid
+          || isOwnChild(resource.data.childId));
+      allow write: if false;
+    }
+
+    match /subjects/{subjectId} {
+      allow read: if isActiveUser() && resource.data.status == 'ACTIVE';
+      allow write: if false;
+    }
+
+    match /lessons/{lessonId} {
+      allow read: if isParent()
+        || (isChild() && resource.data.status == 'PUBLISHED');
+      allow write: if false;
+
+      match /blocks/{blockId} {
+        allow read: if isParent()
+          || (isChild() && isPublishedLesson(lessonId));
+        allow write: if false;
+      }
+    }
+
+    match /assignments/{assignmentId} {
+      allow read: if canAccessChild(resource.data.childId);
+      allow create: if hasParentAccess(request.resource.data.childId);
+      allow update: if hasParentAccess(resource.data.childId)
+        && request.resource.data.childId == resource.data.childId;
+      allow delete: if hasParentAccess(resource.data.childId);
+    }
+
+    match /lessonProgress/{progressId} {
+      allow read: if canAccessChild(resource.data.childId);
+      allow create: if isOwnChild(request.resource.data.childId);
+      allow update: if isOwnChild(resource.data.childId)
+        && request.resource.data.childId == resource.data.childId
+        && request.resource.data.lessonId == resource.data.lessonId;
+      allow delete: if false;
+    }
+
+    match /studySessions/{sessionId} {
+      allow read: if canAccessChild(resource.data.childId);
+      allow create: if isOwnChild(request.resource.data.childId);
+      allow update: if isOwnChild(resource.data.childId)
+        && request.resource.data.childId == resource.data.childId;
+      allow delete: if false;
+    }
+
+    match /sessions/{sessionId} {
+      allow create: if isActiveUser()
+        && request.resource.data.userId == request.auth.uid;
+      allow read, update, delete: if isActiveUser()
+        && resource.data.userId == request.auth.uid
+        && (request.method != 'update'
+          || request.resource.data.userId == resource.data.userId);
+    }
+
+    match /auditLogs/{logId} {
+      allow create: if isActiveUser()
+        && request.resource.data.userId == request.auth.uid;
+      allow read: if isParent();
+      allow update, delete: if false;
+    }
+
+    match /errorLogs/{logId} {
+      allow create: if isActiveUser()
+        && request.resource.data.userId == request.auth.uid;
+      allow read: if isParent();
+      allow update, delete: if false;
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }

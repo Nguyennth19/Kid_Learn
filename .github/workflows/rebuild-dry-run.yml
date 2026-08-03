@@ -1,0 +1,72 @@
+name: Rebuild Firebase MVP dry run
+
+on:
+  push:
+    branches:
+      - rebuild/firebase-mvp
+    paths:
+      - ".github/workflows/rebuild-dry-run.yml"
+      - "scripts/**"
+      - "package.json"
+      - "firebase.json"
+      - "firestore.rules"
+      - "firestore.indexes.json"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "scripts/**"
+      - "package.json"
+      - "firebase.json"
+      - "firestore.rules"
+      - "firestore.indexes.json"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: rebuild-firebase-mvp-dry-run-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-dry-run:
+    name: Validate locked DRY_RUN
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      KIDLEARN_SETUP_MODE: DRY_RUN
+      FIREBASE_PROJECT: kidlearn-dev-2026
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Validate JSON configuration
+        run: |
+          node -e "JSON.parse(require('fs').readFileSync('package.json', 'utf8'))"
+          node -e "JSON.parse(require('fs').readFileSync('firebase.json', 'utf8'))"
+          node -e "JSON.parse(require('fs').readFileSync('firestore.indexes.json', 'utf8'))"
+          node -e "JSON.parse(require('fs').readFileSync('scripts/seed/system.seed.json', 'utf8'))"
+          node -e "JSON.parse(require('fs').readFileSync('scripts/seed/subjects.seed.json', 'utf8'))"
+
+      - name: Run Firestore setup preview
+        run: node scripts/setup-firestore.mjs | tee dry-run-output.json
+
+      - name: Verify safety assertions
+        run: |
+          node -e "const r=JSON.parse(require('fs').readFileSync('dry-run-output.json','utf8')); if(!r.success || r.mode!=='DRY_RUN' || r.projectId!=='kidlearn-dev-2026' || r.plannedDocumentCount!==6 || r.actualFirestoreWritePerformed!==false || r.actualAuthenticationWritePerformed!==false){console.error(r); process.exit(1)}"
+
+      - name: Write workflow summary
+        run: |
+          echo "## KIDLEARN Phase 5D" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Project guard: kidlearn-dev-2026" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Mode: DRY_RUN" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Planned documents: 6" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Firestore write: false" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Authentication write: false" >> "$GITHUB_STEP_SUMMARY"

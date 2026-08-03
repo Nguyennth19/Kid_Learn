@@ -4,12 +4,79 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#4F46E5">
-    <title>KIDLEARN DEV</title>
+    <meta name="robots" content="noindex,nofollow">
+    <title>KIDLEARN DEV · Smoke Test</title>
+    <link rel="stylesheet" href="./styles.css">
   </head>
   <body>
-    <main>
-      <h1>KIDLEARN DEV</h1>
-      <p>Nền móng Firebase MVP đang được xây dựng.</p>
+    <main class="page">
+      <header class="hero">
+        <p class="eyebrow">KIDLEARN · FIREBASE DEV</p>
+        <h1>Kiểm tra đăng nhập an toàn</h1>
+        <p class="subtitle">
+          Bước 5G chỉ đọc dữ liệu. Trang này không ghi, sửa hoặc xóa Firestore.
+        </p>
+      </header>
+
+      <div class="grid">
+        <section class="card" aria-labelledby="login-title">
+          <h2 id="login-title">Đăng nhập smoke test</h2>
+          <p class="hint">
+            Dùng mã tài khoản gia đình và PIN đã tạo trong Firebase Authentication.
+          </p>
+
+          <form id="login-form">
+            <label for="account-code">Mã tài khoản</label>
+            <input
+              id="account-code"
+              name="accountCode"
+              autocomplete="username"
+              placeholder="PARENT hoặc LICHKHE"
+              required
+            >
+
+            <label for="pin">PIN</label>
+            <input
+              id="pin"
+              name="pin"
+              type="password"
+              inputmode="numeric"
+              autocomplete="current-password"
+              minlength="6"
+              placeholder="••••••"
+              required
+            >
+
+            <div class="actions">
+              <button id="login-button" type="submit">Đăng nhập & kiểm tra</button>
+              <button
+                id="logout-button"
+                class="secondary"
+                type="button"
+                hidden
+              >
+                Đăng xuất
+              </button>
+            </div>
+          </form>
+
+          <p id="status" class="status" role="status" aria-live="polite">
+            Đang khởi tạo…
+          </p>
+        </section>
+
+        <section class="card" aria-labelledby="results-title">
+          <h2 id="results-title">Kết quả kiểm tra</h2>
+          <ul id="results" class="results" aria-live="polite"></ul>
+          <pre id="summary" class="summary" hidden></pre>
+        </section>
+      </div>
+
+      <p class="footer">
+        DEV only · Firebase project: kidlearn-dev-2026 · Read-only smoke test
+      </p>
     </main>
+
+    <script type="module" src="./app.js"></script>
   </body>
 </html>

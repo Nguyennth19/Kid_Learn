@@ -1,0 +1,42 @@
+[
+  {
+    "path": "subjects/SUB_VI",
+    "data": {
+      "subjectId": "SUB_VI",
+      "subjectCode": "VI",
+      "subjectName": "Tiếng Việt",
+      "sortOrder": 1,
+      "status": "ACTIVE"
+    }
+  },
+  {
+    "path": "subjects/SUB_MATH",
+    "data": {
+      "subjectId": "SUB_MATH",
+      "subjectCode": "MATH",
+      "subjectName": "Toán",
+      "sortOrder": 2,
+      "status": "ACTIVE"
+    }
+  },
+  {
+    "path": "subjects/SUB_EN",
+    "data": {
+      "subjectId": "SUB_EN",
+      "subjectCode": "EN",
+      "subjectName": "Tiếng Anh",
+      "sortOrder": 3,
+      "status": "ACTIVE"
+    }
+  },
+  {
+    "path": "subjects/SUB_SCI",
+    "data": {
+      "subjectId": "SUB_SCI",
+      "subjectCode": "SCI",
+      "subjectName": "Khoa học",
+      "sortOrder": 4,
+      "status": "ACTIVE"
+    }
+  }
+]

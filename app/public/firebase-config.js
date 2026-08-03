@@ -1,5 +1,5 @@
 export const firebaseConfig = Object.freeze({
-  apiKey: "AIzaSyAp8xTpF84rQ6ILqB3HyPwzUEhgu97Y5Rc",
+  apiKey: "AIzaSyAp8xTpF84rQ6Ilq83HyPwzUEhgu97Y5Rc",
   authDomain: "kidlearn-dev-2026.firebaseapp.com",
   projectId: "kidlearn-dev-2026",
   storageBucket: "kidlearn-dev-2026.firebasestorage.app",

@@ -1,4 +1,4 @@
-name: Rebuild Firebase MVP dry run
+name: Rebuild Firebase MVP validation
 
 on:
   push:
@@ -7,6 +7,7 @@ on:
     paths:
       - ".github/workflows/rebuild-dry-run.yml"
       - "scripts/**"
+      - "tests/**"
       - "package.json"
       - "firebase.json"
       - "firestore.rules"
@@ -15,7 +16,9 @@ on:
     branches:
       - main
     paths:
+      - ".github/workflows/rebuild-dry-run.yml"
       - "scripts/**"
+      - "tests/**"
       - "package.json"
       - "firebase.json"
       - "firestore.rules"
@@ -26,26 +29,35 @@ permissions:
   contents: read
 
 concurrency:
-  group: rebuild-firebase-mvp-dry-run-${{ github.ref }}
+  group: rebuild-firebase-mvp-validation-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  validate-dry-run:
-    name: Validate locked DRY_RUN
+  validate-rebuild:
+    name: Validate DRY_RUN and Firestore rules
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     env:
       KIDLEARN_SETUP_MODE: DRY_RUN
       FIREBASE_PROJECT: kidlearn-dev-2026
 
     steps:
       - name: Check out source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
-          node-version: "20"
+          node-version: "22"
+
+      - name: Set up Java for Firebase Emulator
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Install test dependencies
+        run: npm install --no-audit --no-fund
 
       - name: Validate JSON configuration
         run: |
@@ -62,11 +74,17 @@ jobs:
         run: |
           node -e "const r=JSON.parse(require('fs').readFileSync('dry-run-output.json','utf8')); if(!r.success || r.mode!=='DRY_RUN' || r.projectId!=='kidlearn-dev-2026' || r.plannedDocumentCount!==6 || r.actualFirestoreWritePerformed!==false || r.actualAuthenticationWritePerformed!==false){console.error(r); process.exit(1)}"
 
+      - name: Test Firestore Security Rules in Emulator
+        run: npm run test:rules
+
       - name: Write workflow summary
+        if: always()
         run: |
-          echo "## KIDLEARN Phase 5D" >> "$GITHUB_STEP_SUMMARY"
+          echo "## KIDLEARN Phase 5E" >> "$GITHUB_STEP_SUMMARY"
           echo "- Project guard: kidlearn-dev-2026" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Mode: DRY_RUN" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Setup mode: DRY_RUN" >> "$GITHUB_STEP_SUMMARY"
           echo "- Planned documents: 6" >> "$GITHUB_STEP_SUMMARY"
           echo "- Firestore write: false" >> "$GITHUB_STEP_SUMMARY"
           echo "- Authentication write: false" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Rules validation: Firebase Emulator only" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Production/DEV rules deployment: not performed" >> "$GITHUB_STEP_SUMMARY"

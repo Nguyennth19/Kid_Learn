@@ -70,7 +70,7 @@ async function findChildForCurrentUser() {
     throw profileError("Không xác định được hồ sơ bé.", "child-link-invalid");
   }
 
-  const item = activeItems[0];
+  const item = snapshot.docs[0];
   return { id: item.id, ...item.data() };
 }
 
@@ -90,7 +90,7 @@ async function findParentAccess() {
     throw profileError("Không tìm thấy liên kết phụ huynh–bé ACTIVE.", "access-not-found");
   }
 
-  const item = snapshot.docs[0];
+  const item = activeItems[0];
   return { id: item.id, ...item.data() };
 }
 

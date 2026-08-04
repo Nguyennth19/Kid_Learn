@@ -16,7 +16,7 @@
 - Existing Google Apps Script V3 files remain preserved for reference.
 - Role-aware Firestore rules are deployed to the DEV project.
 - Unauthenticated access is denied.
-- The Phase 5C setup script only supports `DRY_RUN`.
+- The Phase 5I-B setup script only supports `DRY_RUN`.
 - Real UIDs, PINs, passwords, tokens, and service-account keys are not committed.
 - No application write flow is enabled yet.
 - The Phase 5G hosted smoke page is read-only.
@@ -40,7 +40,7 @@
 | DATA_LessonProgress | lessonProgress/{progressId} |
 | DATA_StudySessions | studySessions/{studySessionId} |
 
-## Phase 5C local verification
+## Phase 5I-B local verification
 
 ```bash
 npm install
@@ -51,7 +51,7 @@ Expected safeguards:
 
 - `mode` is `DRY_RUN`
 - `projectId` is `kidlearn-dev-2026`
-- `plannedDocumentCount` is `6`
+- `plannedDocumentCount` is `12`
 - `actualFirestoreWritePerformed` is `false`
 - `actualAuthenticationWritePerformed` is `false`
 
@@ -93,6 +93,20 @@ The temporary preview channel is verification-only and must not be treated as th
 - The four ACTIVE subjects are rendered from Firestore.
 - No application module imports or calls Firestore write functions.
 
-## Next checkpoint: Phase 5I
+## Phase 5I-B lesson-catalog checkpoint
 
-Add the lesson catalog read flow and role-specific navigation while keeping write operations disabled.
+- Added the Firestore-only catalog grouping `courses/{courseId}`.
+- Added one sample course: Tiếng Việt lớp 2.
+- Added one PUBLISHED sample lesson: “Bảng chữ cái và nguyên âm” (10 minutes).
+- Added four ordered blocks under `lessons/{lessonId}/blocks/{blockId}`.
+- CHILD and PARENT can read only ACTIVE courses.
+- CHILD can read only PUBLISHED lessons and their blocks.
+- PARENT can also read draft lessons and their blocks.
+- Catalog writes remain denied for both roles.
+- The `courses` collection is a Firestore navigation grouping derived from subject and grade metadata. It does not add a fifteenth legacy Google Sheet to the locked 14-sheet MVP mapping.
+
+Detailed schema: [firestore-schema-5i.md](./firestore-schema-5i.md)
+
+## Next checkpoint: Phase 5I-C
+
+Review the final dry-run result and approve or reject a controlled seed deployment to Firebase DEV. No real seed deployment is part of Phase 5I-B.

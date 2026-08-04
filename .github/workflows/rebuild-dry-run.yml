@@ -1,4 +1,4 @@
-name: Rebuild Firebase MVP validation
+name: Rebuild Firebase MVP dry run
 
 on:
   push:
@@ -31,7 +31,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: rebuild-firebase-mvp-validation-${{ github.ref }}
+  group: rebuild-firebase-mvp-dry-run-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -85,6 +85,8 @@ jobs:
           node --check app/public/services/firebase.js
           node --check app/public/services/auth-service.js
           node --check app/public/services/profile-service.js
+          grep -q 'doc(db, "children", appConfig.childId)' app/public/services/profile-service.js
+          ! grep -q 'collection(db, "children")' app/public/services/profile-service.js
           grep -q "kidlearn-dev-2026" app/public/firebase-config.js
           grep -q "Không gian học tập gia đình" app/public/index.html
           grep -q "Read-only smoke test" app/public/smoke.html

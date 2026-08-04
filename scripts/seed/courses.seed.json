@@ -1,0 +1,14 @@
+[
+  {
+    "path": "courses/COURSE_VI_G2",
+    "data": {
+      "courseId": "COURSE_VI_G2",
+      "subjectId": "SUB_VI",
+      "courseCode": "VI_G2",
+      "courseName": "Tiếng Việt lớp 2",
+      "gradeLevel": 2,
+      "sortOrder": 1,
+      "status": "ACTIVE"
+    }
+  }
+]

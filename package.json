@@ -8,9 +8,13 @@
   },
   "scripts": {
     "setup:dry-run": "node scripts/setup-firestore.mjs",
+    "seed:dev": "KIDLEARN_SETUP_MODE=APPLY node scripts/setup-firestore.mjs",
     "test:rules": "firebase emulators:exec --project kidlearn-rules-test --only firestore \"node --test tests/firestore.rules.test.mjs\"",
     "emulators": "firebase emulators:start --only auth,firestore,hosting",
     "firebase:use:dev": "firebase use dev"
+  },
+  "dependencies": {
+    "firebase-admin": "^13.5.0"
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "^5.0.1",

@@ -1,4 +1,5 @@
 import { auth, db, firestoreRead } from "./firebase.js";
+import { appConfig } from "../firebase-config.js";
 
 const ALLOWED_ROLES = new Set(["CHILD", "PARENT"]);
 
@@ -59,19 +60,18 @@ export async function getRoleContext(profile) {
 }
 
 async function findChildForCurrentUser() {
-  const snapshot = await firestoreRead.getDocs(
-    firestoreRead.query(
-      firestoreRead.collection(db, "children"),
-      firestoreRead.where("childUserId", "==", auth.currentUser.uid)
-    )
+  const snapshot = await firestoreRead.getDoc(
+    firestoreRead.doc(db, "children", appConfig.childId)
   );
 
-  if (snapshot.size !== 1) {
+  if (
+    !snapshot.exists() ||
+    snapshot.data().childUserId !== auth.currentUser.uid
+  ) {
     throw profileError("Không xác định được hồ sơ bé.", "child-link-invalid");
   }
 
-  const item = snapshot.docs[0];
-  return { id: item.id, ...item.data() };
+  return { id: snapshot.id, ...snapshot.data() };
 }
 
 async function findParentAccess() {

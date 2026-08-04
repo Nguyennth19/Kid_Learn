@@ -85,16 +85,21 @@ jobs:
           test -f app/public/services/firebase.js
           test -f app/public/services/auth-service.js
           test -f app/public/services/profile-service.js
+          test -f app/public/services/catalog-service.js
           node --check app/public/app.js
           node --check app/public/smoke.js
           node --check app/public/services/firebase.js
           node --check app/public/services/auth-service.js
           node --check app/public/services/profile-service.js
+          node --check app/public/services/catalog-service.js
           node --check scripts/setup-firestore.mjs
           grep -q 'doc(db, "children", appConfig.childId)' app/public/services/profile-service.js
           ! grep -q 'collection(db, "children")' app/public/services/profile-service.js
           grep -q "kidlearn-dev-2026" app/public/firebase-config.js
           grep -q "Không gian học tập gia đình" app/public/index.html
+          grep -q "lesson-player" app/public/index.html
+          grep -q "getLessonBlocks" app/public/services/catalog-service.js
+          grep -q "DISPLAY_ONLY" scripts/seed/lesson-blocks.seed.json
           grep -q "Read-only smoke test" app/public/smoke.html
           ! grep -R -E "addDoc|setDoc|updateDoc|deleteDoc" app/public --include="*.js"
           test -f docs/rebuild/firestore-schema-5i.md
@@ -117,7 +122,7 @@ jobs:
       - name: Write workflow summary
         if: always()
         run: |
-          echo "## KIDLEARN Phase 5I-C preparation" >> "$GITHUB_STEP_SUMMARY"
+          echo "## KIDLEARN Phase 5I-D lesson player" >> "$GITHUB_STEP_SUMMARY"
           echo "- Project guard: kidlearn-dev-2026" >> "$GITHUB_STEP_SUMMARY"
           echo "- CI setup mode: DRY_RUN" >> "$GITHUB_STEP_SUMMARY"
           echo "- Planned documents: 12" >> "$GITHUB_STEP_SUMMARY"
@@ -127,4 +132,6 @@ jobs:
           echo "- Authentication write: false" >> "$GITHUB_STEP_SUMMARY"
           echo "- Rules validation: Firebase Emulator" >> "$GITHUB_STEP_SUMMARY"
           echo "- Application shell mode: read-only" >> "$GITHUB_STEP_SUMMARY"
+          echo "- CHILD catalog navigation: subject → course → lesson" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Lesson player: 4 ordered blocks, display-only interaction" >> "$GITHUB_STEP_SUMMARY"
           echo "- Firebase Hosting deployment: not performed" >> "$GITHUB_STEP_SUMMARY"

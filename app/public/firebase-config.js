@@ -7,10 +7,12 @@ export const firebaseConfig = Object.freeze({
   appId: "1:181102545234:web:6a4fd2c0b93b11001d528b"
 });
 
+export const accountDirectory = Object.freeze({
+  PARENT: "parent@kidlearn.invalid",
+  LICHKHE: "lich-khe@kidlearn.invalid"
+});
+
 export const smokeConfig = Object.freeze({
   childId: "CHILD_001",
-  accounts: Object.freeze({
-    PARENT: "parent@kidlearn.invalid",
-    LICHKHE: "lich-khe@kidlearn.invalid"
-  })
+  accounts: accountDirectory
 });

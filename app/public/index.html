@@ -5,78 +5,85 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#4F46E5">
     <meta name="robots" content="noindex,nofollow">
-    <title>KIDLEARN DEV · Smoke Test</title>
+    <title>KIDLEARN DEV</title>
     <link rel="stylesheet" href="./styles.css">
   </head>
   <body>
-    <main class="page">
-      <header class="hero">
-        <p class="eyebrow">KIDLEARN · FIREBASE DEV</p>
-        <h1>Kiểm tra đăng nhập an toàn</h1>
-        <p class="subtitle">
-          Bước 5G chỉ đọc dữ liệu. Trang này không ghi, sửa hoặc xóa Firestore.
-        </p>
+    <main class="app-page">
+      <header class="app-header">
+        <div>
+          <p class="eyebrow">KIDLEARN · FIREBASE DEV</p>
+          <h1>Không gian học tập gia đình</h1>
+          <p class="subtitle">Khung MVP chỉ đọc dữ liệu · CHILD và PARENT.</p>
+        </div>
+        <button id="logout-button" class="secondary compact" type="button" hidden>Đăng xuất</button>
       </header>
 
-      <div class="grid">
-        <section class="card" aria-labelledby="login-title">
-          <h2 id="login-title">Đăng nhập smoke test</h2>
-          <p class="hint">
-            Dùng mã tài khoản gia đình và PIN đã tạo trong Firebase Authentication.
-          </p>
+      <section id="loading-view" class="card state-card" aria-live="polite">
+        <div class="spinner" aria-hidden="true"></div>
+        <h2>Đang kiểm tra phiên đăng nhập…</h2>
+        <p>Vui lòng chờ trong giây lát.</p>
+      </section>
 
+      <section id="login-view" class="auth-layout" hidden>
+        <div class="welcome-panel">
+          <span class="welcome-icon" aria-hidden="true">✦</span>
+          <h2>Học nhẹ nhàng,<br>tiến bộ mỗi ngày.</h2>
+          <p>Đăng nhập bằng mã tài khoản gia đình và PIN. KIDLEARN sẽ mở đúng giao diện của bé hoặc phụ huynh.</p>
+        </div>
+
+        <div class="card login-card">
+          <h2>Đăng nhập</h2>
+          <p class="hint">Nhập mã tài khoản đã được thiết lập cho gia đình.</p>
           <form id="login-form">
             <label for="account-code">Mã tài khoản</label>
-            <input
-              id="account-code"
-              name="accountCode"
-              autocomplete="username"
-              placeholder="PARENT hoặc LICHKHE"
-              required
-            >
+            <input id="account-code" name="accountCode" autocomplete="username" placeholder="Ví dụ: LICHKHE" required>
 
             <label for="pin">PIN</label>
-            <input
-              id="pin"
-              name="pin"
-              type="password"
-              inputmode="numeric"
-              autocomplete="current-password"
-              minlength="6"
-              placeholder="••••••"
-              required
-            >
+            <input id="pin" name="pin" type="password" inputmode="numeric" autocomplete="current-password" minlength="6" placeholder="••••••" required>
 
-            <div class="actions">
-              <button id="login-button" type="submit">Đăng nhập & kiểm tra</button>
-              <button
-                id="logout-button"
-                class="secondary"
-                type="button"
-                hidden
-              >
-                Đăng xuất
-              </button>
-            </div>
+            <button id="login-button" class="full-button" type="submit">Đăng nhập</button>
           </form>
+          <p id="login-status" class="status" role="status" aria-live="polite"></p>
+          <a class="smoke-link" href="./smoke.html">Mở trang kiểm tra kỹ thuật 5G</a>
+        </div>
+      </section>
 
-          <p id="status" class="status" role="status" aria-live="polite">
-            Đang khởi tạo…
-          </p>
-        </section>
+      <section id="shell-view" hidden>
+        <div class="shell-hero">
+          <div>
+            <p id="role-label" class="role-badge"></p>
+            <h2 id="greeting"></h2>
+            <p id="shell-message" class="subtitle"></p>
+          </div>
+          <div class="read-only-badge">Chế độ hiện tại: chỉ đọc</div>
+        </div>
 
-        <section class="card" aria-labelledby="results-title">
-          <h2 id="results-title">Kết quả kiểm tra</h2>
-          <ul id="results" class="results" aria-live="polite"></ul>
-          <pre id="summary" class="summary" hidden></pre>
-        </section>
-      </div>
+        <div id="subject-grid" class="subject-grid" aria-label="Các môn học"></div>
 
-      <p class="footer">
-        DEV only · Firebase project: kidlearn-dev-2026 · Read-only smoke test
-      </p>
+        <div class="dashboard-grid">
+          <article class="card dashboard-card">
+            <span class="card-icon">✓</span>
+            <h3 id="primary-card-title"></h3>
+            <p id="primary-card-text"></p>
+          </article>
+          <article class="card dashboard-card">
+            <span class="card-icon">↗</span>
+            <h3 id="secondary-card-title"></h3>
+            <p id="secondary-card-text"></p>
+          </article>
+          <article class="card dashboard-card disabled-card">
+            <span class="card-icon">◷</span>
+            <h3>Tính năng tiếp theo</h3>
+            <p>Bài học, bài được giao và tiến độ sẽ được mở ở checkpoint kế tiếp.</p>
+          </article>
+        </div>
+
+        <p id="shell-status" class="status" role="status" aria-live="polite"></p>
+      </section>
+
+      <footer class="footer">DEV · kidlearn-dev-2026 · Không có thao tác ghi Firestore</footer>
     </main>
-
     <script type="module" src="./app.js"></script>
   </body>
 </html>

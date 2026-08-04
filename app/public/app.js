@@ -1,275 +1,125 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.0/firebase-app.js";
-import {
-  browserSessionPersistence,
-  getAuth,
-  setPersistence,
-  signInWithEmailAndPassword,
-  signOut
-} from "https://www.gstatic.com/firebasejs/12.17.0/firebase-auth.js";
-import {
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  getFirestore,
-  query,
-  where
-} from "https://www.gstatic.com/firebasejs/12.17.0/firebase-firestore.js";
+import { prepareAuth, observeSession, signInWithAccountCode, signOutCurrentUser } from "./services/auth-service.js";
+import { getActiveProfile, getActiveSubjects, getRoleContext } from "./services/profile-service.js";
 
-import { firebaseConfig, smokeConfig } from "./firebase-config.js";
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-
+const views = {
+  loading: document.querySelector("#loading-view"),
+  login: document.querySelector("#login-view"),
+  shell: document.querySelector("#shell-view")
+};
 const form = document.querySelector("#login-form");
 const accountCodeInput = document.querySelector("#account-code");
 const pinInput = document.querySelector("#pin");
 const loginButton = document.querySelector("#login-button");
 const logoutButton = document.querySelector("#logout-button");
-const statusBox = document.querySelector("#status");
-const resultsList = document.querySelector("#results");
-const summaryBox = document.querySelector("#summary");
+const loginStatus = document.querySelector("#login-status");
+const shellStatus = document.querySelector("#shell-status");
 
-const results = [];
-
-function setStatus(message, kind = "") {
-  statusBox.textContent = message;
-  statusBox.className = `status ${kind}`.trim();
+function showView(name) {
+  Object.entries(views).forEach(([key, view]) => {
+    view.hidden = key !== name;
+  });
+  logoutButton.hidden = name !== "shell";
 }
 
-function addResult(name, passed, detail) {
-  results.push({ name, passed, detail });
-  const item = document.createElement("li");
-  item.className = `result ${passed ? "pass" : "fail"}`;
-
-  const icon = document.createElement("span");
-  icon.className = "result-icon";
-  icon.textContent = passed ? "✓" : "✕";
-
-  const text = document.createElement("span");
-  const title = document.createElement("strong");
-  title.textContent = name;
-  const description = document.createElement("div");
-  description.textContent = detail;
-
-  text.append(title, description);
-  item.append(icon, text);
-  resultsList.append(item);
-}
-
-function resetResults() {
-  results.length = 0;
-  resultsList.replaceChildren();
-  summaryBox.hidden = true;
-  summaryBox.textContent = "";
-}
-
-function showSummary() {
-  const passed = results.filter((result) => result.passed).length;
-  const failed = results.length - passed;
-  summaryBox.textContent = `Tổng kiểm tra: ${results.length}\nĐạt: ${passed}\nKhông đạt: ${failed}\nChế độ ghi dữ liệu: TẮT`;
-  summaryBox.hidden = false;
+function setMessage(target, message, kind = "") {
+  target.textContent = message;
+  target.className = `status ${kind}`.trim();
 }
 
 function friendlyError(error) {
   const messages = {
     "auth/invalid-credential": "Mã tài khoản hoặc PIN không đúng.",
     "auth/too-many-requests": "Đăng nhập sai quá nhiều lần. Hãy chờ rồi thử lại.",
-    "permission-denied": "Firestore từ chối quyền truy cập."
+    "kidlearn/account-code-not-found": "Mã tài khoản không tồn tại.",
+    "permission-denied": "Tài khoản không có quyền đọc dữ liệu này."
   };
-  return messages[error?.code] || error?.message || "Đã xảy ra lỗi không xác định.";
+  return messages[error?.code] || error?.message || "Không thể hoàn tất yêu cầu.";
 }
 
-async function verifyUnauthenticatedAccessIsDenied() {
-  await signOut(auth);
+function renderSubjects(subjects) {
+  const icons = { VI: "Aa", MATH: "123", EN: "ABC", SCI: "⚗" };
+  const colors = { VI: "coral", MATH: "violet", EN: "blue", SCI: "green" };
+  const grid = document.querySelector("#subject-grid");
+  grid.replaceChildren();
+
+  subjects.forEach((subject) => {
+    const card = document.createElement("article");
+    card.className = `subject-card ${colors[subject.subjectCode] || "blue"}`;
+    const icon = document.createElement("span");
+    icon.className = "subject-icon";
+    icon.textContent = icons[subject.subjectCode] || "★";
+    const name = document.createElement("strong");
+    name.textContent = subject.subjectName;
+    const state = document.createElement("span");
+    state.textContent = "Sẵn sàng";
+    card.append(icon, name, state);
+    grid.append(card);
+  });
+}
+
+function renderShell(profile, context, subjects) {
+  const isChild = profile.role === "CHILD";
+  document.querySelector("#role-label").textContent = isChild ? "GIAO DIỆN CỦA BÉ" : "GIAO DIỆN PHỤ HUYNH";
+  document.querySelector("#greeting").textContent = `Xin chào, ${profile.displayName}!`;
+  document.querySelector("#shell-message").textContent = isChild
+    ? "Hôm nay mình cùng khám phá điều mới nhé."
+    : `Đang quản lý hồ sơ học tập của ${context.child.displayName}.`;
+  document.querySelector("#primary-card-title").textContent = isChild ? "Bài học của con" : "Bài được giao";
+  document.querySelector("#primary-card-text").textContent = isChild
+    ? "Khung bài học đã sẵn sàng để kết nối ở bước tiếp theo."
+    : "Khu vực giao và theo dõi bài sẽ được xây sau khi duyệt khung.";
+  document.querySelector("#secondary-card-title").textContent = isChild ? "Tiến độ của con" : "Tổng quan tiến độ";
+  document.querySelector("#secondary-card-text").textContent = isChild
+    ? `Hồ sơ ${context.child.id} đã liên kết an toàn.`
+    : `Liên kết ${context.access.accessType} đang ${context.access.status}.`;
+  renderSubjects(subjects);
+  setMessage(shellStatus, "Phiên đăng nhập hợp lệ. Chưa bật bất kỳ thao tác ghi dữ liệu nào.", "success");
+  showView("shell");
+}
+
+async function loadShell(user) {
+  showView("loading");
   try {
-    await getDoc(doc(db, "subjects", "SUB_MATH"));
-    addResult(
-      "Khóa người chưa đăng nhập",
-      false,
-      "Người chưa đăng nhập vẫn đọc được dữ liệu."
-    );
+    const [profile, subjects] = await Promise.all([
+      getActiveProfile(user.uid),
+      getActiveSubjects()
+    ]);
+    const context = await getRoleContext(profile);
+    renderShell(profile, context, subjects);
   } catch (error) {
-    addResult(
-      "Khóa người chưa đăng nhập",
-      error.code === "permission-denied",
-      error.code === "permission-denied"
-        ? "Firestore đã từ chối đúng như thiết kế."
-        : friendlyError(error)
-    );
+    await signOutCurrentUser();
+    showView("login");
+    setMessage(loginStatus, friendlyError(error), "error");
   }
-}
-
-async function readActiveSubjects() {
-  const snapshot = await getDocs(
-    query(collection(db, "subjects"), where("status", "==", "ACTIVE"))
-  );
-  return snapshot.docs
-    .map((subjectDoc) => subjectDoc.data())
-    .sort((a, b) => a.sortOrder - b.sortOrder);
-}
-
-async function verifyRoleAccess(userProfile) {
-  const childId = smokeConfig.childId;
-
-  if (userProfile.role === "CHILD") {
-    const childSnapshot = await getDoc(doc(db, "children", childId));
-    const child = childSnapshot.data();
-    const passed =
-      childSnapshot.exists() &&
-      child.childUserId === auth.currentUser.uid;
-
-    addResult(
-      "CHILD đọc hồ sơ của chính mình",
-      passed,
-      passed
-        ? `Đã đọc ${child.displayName} (${childId}).`
-        : "Hồ sơ bé không tồn tại hoặc UID không khớp."
-    );
-    return;
-  }
-
-  if (userProfile.role === "PARENT") {
-    const accessId = `${auth.currentUser.uid}_${childId}`;
-    const accessSnapshot = await getDoc(
-      doc(db, "userChildAccess", accessId)
-    );
-    const access = accessSnapshot.data();
-    const accessPassed =
-      accessSnapshot.exists() &&
-      access.userId === auth.currentUser.uid &&
-      access.childId === childId &&
-      access.status === "ACTIVE";
-
-    addResult(
-      "PARENT đọc liên kết phụ huynh–bé",
-      accessPassed,
-      accessPassed
-        ? `Liên kết ${access.accessType} đang ACTIVE.`
-        : "Không tìm thấy liên kết hợp lệ."
-    );
-
-    if (accessPassed) {
-      const childSnapshot = await getDoc(doc(db, "children", childId));
-      addResult(
-        "PARENT đọc hồ sơ bé đã liên kết",
-        childSnapshot.exists(),
-        childSnapshot.exists()
-          ? `Đã đọc ${childSnapshot.data().displayName} (${childId}).`
-          : "Không tìm thấy hồ sơ bé."
-      );
-    }
-    return;
-  }
-
-  addResult(
-    "Xác minh vai trò",
-    false,
-    `Vai trò không được hỗ trợ: ${userProfile.role || "(trống)"}.`
-  );
-}
-
-async function runAuthenticatedSmokeTest() {
-  const uid = auth.currentUser.uid;
-  const userSnapshot = await getDoc(doc(db, "users", uid));
-
-  if (!userSnapshot.exists()) {
-    throw new Error("Không tìm thấy hồ sơ users tương ứng UID.");
-  }
-
-  const userProfile = userSnapshot.data();
-  addResult(
-    "Đọc hồ sơ người dùng",
-    userProfile.status === "ACTIVE",
-    `${userProfile.displayName} · ${userProfile.role} · ${userProfile.status}`
-  );
-
-  const configSnapshot = await getDoc(doc(db, "system", "config"));
-  addResult(
-    "Đọc cấu hình DEV",
-    configSnapshot.exists() &&
-      configSnapshot.data().environment === "DEV",
-    configSnapshot.exists()
-      ? `${configSnapshot.data().appName} · schema ${configSnapshot.data().schemaVersion}`
-      : "Không tìm thấy system/config."
-  );
-
-  const subjects = await readActiveSubjects();
-  const expectedCodes = ["VI", "MATH", "EN", "SCI"];
-  const actualCodes = subjects.map((subject) => subject.subjectCode);
-  const subjectsPassed =
-    subjects.length === 4 &&
-    expectedCodes.every((code) => actualCodes.includes(code));
-
-  addResult(
-    "Đọc bốn môn ACTIVE",
-    subjectsPassed,
-    subjectsPassed
-      ? subjects.map((subject) => subject.subjectName).join(" · ")
-      : `Tìm thấy ${subjects.length}/4 môn.`
-  );
-
-  await verifyRoleAccess(userProfile);
-}
-
-async function initializeSmokePage() {
-  await setPersistence(auth, browserSessionPersistence);
-  resetResults();
-  setStatus("Đang kiểm tra khóa truy cập công khai…");
-  await verifyUnauthenticatedAccessIsDenied();
-  showSummary();
-  setStatus("Sẵn sàng đăng nhập.", "success");
 }
 
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
-  const accountCode = accountCodeInput.value.trim().toUpperCase();
-  const email = smokeConfig.accounts[accountCode];
-
-  if (!email) {
-    setStatus("Mã tài khoản chỉ nhận PARENT hoặc LICHKHE.", "error");
-    return;
-  }
-
   loginButton.disabled = true;
-  resetResults();
-  setStatus("Đang đăng nhập và kiểm tra quyền…");
+  setMessage(loginStatus, "Đang xác thực…");
 
   try {
-    await verifyUnauthenticatedAccessIsDenied();
-    await signInWithEmailAndPassword(auth, email, pinInput.value);
-    await runAuthenticatedSmokeTest();
-    showSummary();
-
-    const failed = results.filter((result) => !result.passed).length;
-    setStatus(
-      failed === 0
-        ? "Smoke test hoàn tất: tất cả kiểm tra đều đạt."
-        : `Smoke test hoàn tất: có ${failed} kiểm tra chưa đạt.`,
-      failed === 0 ? "success" : "error"
-    );
-
-    logoutButton.hidden = false;
+    await signInWithAccountCode(accountCodeInput.value, pinInput.value);
     pinInput.value = "";
   } catch (error) {
-    addResult("Đăng nhập/đọc dữ liệu DEV", false, friendlyError(error));
-    showSummary();
-    setStatus(friendlyError(error), "error");
+    setMessage(loginStatus, friendlyError(error), "error");
   } finally {
     loginButton.disabled = false;
   }
 });
 
 logoutButton.addEventListener("click", async () => {
-  await signOut(auth);
-  logoutButton.hidden = true;
-  resetResults();
-  await verifyUnauthenticatedAccessIsDenied();
-  showSummary();
-  setStatus("Đã đăng xuất an toàn.", "success");
+  logoutButton.disabled = true;
+  await signOutCurrentUser();
+  logoutButton.disabled = false;
 });
 
-initializeSmokePage().catch((error) => {
-  setStatus(friendlyError(error), "error");
+await prepareAuth();
+observeSession((user) => {
+  if (user) {
+    loadShell(user);
+  } else {
+    showView("login");
+    setMessage(loginStatus, "Sẵn sàng đăng nhập.", "success");
+  }
 });

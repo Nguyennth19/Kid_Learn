@@ -57,6 +57,18 @@ async function seedFixture() {
         name: 'Toán',
         status: 'ACTIVE'
       }),
+      setDoc(doc(db, 'courses', 'COURSE_ACTIVE'), {
+        subjectId: 'SUB_MATH',
+        courseName: 'Toán lớp 2',
+        gradeLevel: 2,
+        status: 'ACTIVE'
+      }),
+      setDoc(doc(db, 'courses', 'COURSE_INACTIVE'), {
+        subjectId: 'SUB_MATH',
+        courseName: 'Toán lớp 2 đã ẩn',
+        gradeLevel: 2,
+        status: 'INACTIVE'
+      }),
       setDoc(doc(db, 'lessons', 'LESSON_PUBLISHED'), {
         subjectId: 'SUB_MATH',
         title: 'Published lesson',
@@ -106,6 +118,23 @@ test('child can read an active subject', async () => {
   await assertSucceeds(getDoc(doc(db, 'subjects', 'SUB_MATH')));
 });
 
+test('unauthenticated request cannot read courses', async () => {
+  const db = testEnv.unauthenticatedContext().firestore();
+  await assertFails(getDoc(doc(db, 'courses', 'COURSE_ACTIVE')));
+});
+
+test('child can read only an active course', async () => {
+  const db = testEnv.authenticatedContext(CHILD_UID).firestore();
+  await assertSucceeds(getDoc(doc(db, 'courses', 'COURSE_ACTIVE')));
+  await assertFails(getDoc(doc(db, 'courses', 'COURSE_INACTIVE')));
+});
+
+test('parent can read only an active course', async () => {
+  const db = testEnv.authenticatedContext(PARENT_UID).firestore();
+  await assertSucceeds(getDoc(doc(db, 'courses', 'COURSE_ACTIVE')));
+  await assertFails(getDoc(doc(db, 'courses', 'COURSE_INACTIVE')));
+});
+
 test('child can read published lesson and its blocks', async () => {
   const db = testEnv.authenticatedContext(CHILD_UID).firestore();
   await assertSucceeds(getDoc(doc(db, 'lessons', 'LESSON_PUBLISHED')));
@@ -122,9 +151,44 @@ test('child cannot read draft lesson or its blocks', async () => {
   );
 });
 
-test('parent can read a draft lesson', async () => {
+test('parent can read a draft lesson and its blocks', async () => {
   const db = testEnv.authenticatedContext(PARENT_UID).firestore();
   await assertSucceeds(getDoc(doc(db, 'lessons', 'LESSON_DRAFT')));
+  await assertSucceeds(
+    getDoc(doc(db, 'lessons', 'LESSON_DRAFT', 'blocks', 'BLOCK_002'))
+  );
+});
+
+test('child cannot write course, lesson or lesson block catalog documents', async () => {
+  const db = testEnv.authenticatedContext(CHILD_UID).firestore();
+  await assertFails(setDoc(doc(db, 'courses', 'COURSE_CHILD_WRITE'), {
+    subjectId: 'SUB_MATH',
+    status: 'ACTIVE'
+  }));
+  await assertFails(setDoc(doc(db, 'lessons', 'LESSON_CHILD_WRITE'), {
+    subjectId: 'SUB_MATH',
+    status: 'PUBLISHED'
+  }));
+  await assertFails(setDoc(
+    doc(db, 'lessons', 'LESSON_PUBLISHED', 'blocks', 'BLOCK_CHILD_WRITE'),
+    { order: 2, type: 'TEXT' }
+  ));
+});
+
+test('parent cannot write course, lesson or lesson block catalog documents', async () => {
+  const db = testEnv.authenticatedContext(PARENT_UID).firestore();
+  await assertFails(setDoc(doc(db, 'courses', 'COURSE_PARENT_WRITE'), {
+    subjectId: 'SUB_MATH',
+    status: 'ACTIVE'
+  }));
+  await assertFails(setDoc(doc(db, 'lessons', 'LESSON_PARENT_WRITE'), {
+    subjectId: 'SUB_MATH',
+    status: 'DRAFT'
+  }));
+  await assertFails(setDoc(
+    doc(db, 'lessons', 'LESSON_DRAFT', 'blocks', 'BLOCK_PARENT_WRITE'),
+    { order: 2, type: 'TEXT' }
+  ));
 });
 
 test('child can read own profile but not another child profile', async () => {

@@ -3,7 +3,12 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const EXPECTED_PROJECT_ID = "kidlearn-dev-2026";
-const ALLOWED_MODE = "DRY_RUN";
+const DATABASE_ID = "(default)";
+const LOCATION = "asia-southeast1";
+const DRY_RUN_MODE = "DRY_RUN";
+const APPLY_MODE = "APPLY";
+const APPLY_CONFIRMATION = "WRITE_12_DEV_DOCUMENTS";
+const EXPECTED_DOCUMENT_COUNT = 12;
 const FORBIDDEN_KEYS = /password|pin|credential|secret|token|privatekey/i;
 const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -32,11 +37,15 @@ async function loadSeed(relativePath) {
   return parsed;
 }
 
-const mode = process.env.KIDLEARN_SETUP_MODE || ALLOWED_MODE;
-const projectId = process.env.GCLOUD_PROJECT || process.env.FIREBASE_PROJECT || EXPECTED_PROJECT_ID;
+const mode = process.env.KIDLEARN_SETUP_MODE || DRY_RUN_MODE;
+const projectId =
+  process.env.GCLOUD_PROJECT ||
+  process.env.GOOGLE_CLOUD_PROJECT ||
+  process.env.FIREBASE_PROJECT ||
+  EXPECTED_PROJECT_ID;
 
-if (mode !== ALLOWED_MODE) {
-  throw new Error("Phase 5I-B only permits KIDLEARN_SETUP_MODE=DRY_RUN.");
+if (![DRY_RUN_MODE, APPLY_MODE].includes(mode)) {
+  throw new Error("KIDLEARN_SETUP_MODE must be DRY_RUN or APPLY.");
 }
 
 if (projectId !== EXPECTED_PROJECT_ID) {
@@ -60,20 +69,96 @@ if (duplicates.length) {
 }
 
 for (const item of documents) {
-  if (!item.path || item.path.split("/").length % 2 !== 0) {
-    throw new Error(`Invalid Firestore document path: ${item.path || "<empty>"}`);
+  if (
+    !item.path ||
+    item.path.split("/").length % 2 !== 0 ||
+    !item.data ||
+    typeof item.data !== "object" ||
+    Array.isArray(item.data)
+  ) {
+    throw new Error(`Invalid Firestore seed document: ${item.path || "<empty>"}`);
   }
+}
+
+if (documents.length !== EXPECTED_DOCUMENT_COUNT) {
+  throw new Error(
+    `Seed count guard failed: expected ${EXPECTED_DOCUMENT_COUNT}, received ${documents.length}.`
+  );
+}
+
+if (mode === DRY_RUN_MODE) {
+  console.log(JSON.stringify({
+    success: true,
+    phase: "5I-C",
+    mode,
+    projectId,
+    databaseId: DATABASE_ID,
+    location: LOCATION,
+    plannedDocumentCount: documents.length,
+    plannedPaths: paths,
+    actualFirestoreWritePerformed: false,
+    actualAuthenticationWritePerformed: false
+  }, null, 2));
+  process.exit(0);
+}
+
+if (process.env.KIDLEARN_CONFIRM_PROJECT !== EXPECTED_PROJECT_ID) {
+  throw new Error(
+    `Apply guard failed: KIDLEARN_CONFIRM_PROJECT must equal ${EXPECTED_PROJECT_ID}.`
+  );
+}
+
+if (process.env.KIDLEARN_CONFIRM_WRITE !== APPLY_CONFIRMATION) {
+  throw new Error(
+    `Apply guard failed: KIDLEARN_CONFIRM_WRITE must equal ${APPLY_CONFIRMATION}.`
+  );
+}
+
+const { applicationDefault, getApps, initializeApp } = await import("firebase-admin/app");
+const { getFirestore } = await import("firebase-admin/firestore");
+
+const appName = "kidlearn-phase-5i-c-seed";
+const adminApp =
+  getApps().find((app) => app.name === appName) ||
+  initializeApp(
+    {
+      credential: applicationDefault(),
+      projectId: EXPECTED_PROJECT_ID
+    },
+    appName
+  );
+const db = getFirestore(adminApp, DATABASE_ID);
+const refs = documents.map((item) => db.doc(item.path));
+const beforeSnapshots = await db.getAll(...refs);
+const existingDocumentCount = beforeSnapshots.filter((snapshot) => snapshot.exists).length;
+
+const batch = db.batch();
+documents.forEach((item, index) => {
+  batch.set(refs[index], item.data, { merge: true });
+});
+await batch.commit();
+
+const afterSnapshots = await db.getAll(...refs);
+const missingPaths = afterSnapshots
+  .filter((snapshot) => !snapshot.exists)
+  .map((snapshot) => snapshot.ref.path);
+
+if (missingPaths.length) {
+  throw new Error(`Post-write verification failed for: ${missingPaths.join(", ")}`);
 }
 
 console.log(JSON.stringify({
   success: true,
-  phase: "5I-B",
+  phase: "5I-C",
   mode,
   projectId,
-  databaseId: "(default)",
-  location: "asia-southeast1",
+  databaseId: DATABASE_ID,
+  location: LOCATION,
   plannedDocumentCount: documents.length,
-  plannedPaths: paths,
-  actualFirestoreWritePerformed: false,
+  verifiedDocumentCount: afterSnapshots.length,
+  createdDocumentCount: documents.length - existingDocumentCount,
+  mergedExistingDocumentCount: existingDocumentCount,
+  writtenPaths: paths,
+  actualFirestoreWritePerformed: true,
   actualAuthenticationWritePerformed: false
 }, null, 2));

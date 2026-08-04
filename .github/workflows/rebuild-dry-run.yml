@@ -74,7 +74,7 @@ jobs:
           node -e "JSON.parse(require('fs').readFileSync('scripts/seed/lessons.seed.json', 'utf8'))"
           node -e "JSON.parse(require('fs').readFileSync('scripts/seed/lesson-blocks.seed.json', 'utf8'))"
 
-      - name: Validate application and smoke sources
+      - name: Validate application, smoke and seed sources
         run: |
           test -f app/public/index.html
           test -f app/public/styles.css
@@ -90,6 +90,7 @@ jobs:
           node --check app/public/services/firebase.js
           node --check app/public/services/auth-service.js
           node --check app/public/services/profile-service.js
+          node --check scripts/setup-firestore.mjs
           grep -q 'doc(db, "children", appConfig.childId)' app/public/services/profile-service.js
           ! grep -q 'collection(db, "children")' app/public/services/profile-service.js
           grep -q "kidlearn-dev-2026" app/public/firebase-config.js
@@ -98,13 +99,17 @@ jobs:
           ! grep -R -E "addDoc|setDoc|updateDoc|deleteDoc" app/public --include="*.js"
           test -f docs/rebuild/firestore-schema-5i.md
           grep -q "match /courses/{courseId}" firestore.rules
+          grep -q 'WRITE_12_DEV_DOCUMENTS' scripts/setup-firestore.mjs
+          grep -q 'KIDLEARN_CONFIRM_PROJECT' scripts/setup-firestore.mjs
+          grep -q 'KIDLEARN_CONFIRM_WRITE' scripts/setup-firestore.mjs
+          grep -q 'batch.set(refs\[index\], item.data, { merge: true })' scripts/setup-firestore.mjs
 
       - name: Run Firestore setup preview
         run: node scripts/setup-firestore.mjs | tee dry-run-output.json
 
       - name: Verify safety assertions
         run: |
-          node -e "const r=JSON.parse(require('fs').readFileSync('dry-run-output.json','utf8')); if(!r.success || r.mode!=='DRY_RUN' || r.projectId!=='kidlearn-dev-2026' || r.plannedDocumentCount!==12 || r.actualFirestoreWritePerformed!==false || r.actualAuthenticationWritePerformed!==false){console.error(r); process.exit(1)}"
+          node -e "const r=JSON.parse(require('fs').readFileSync('dry-run-output.json','utf8')); if(!r.success || r.phase!=='5I-C' || r.mode!=='DRY_RUN' || r.projectId!=='kidlearn-dev-2026' || r.plannedDocumentCount!==12 || r.actualFirestoreWritePerformed!==false || r.actualAuthenticationWritePerformed!==false){console.error(r); process.exit(1)}"
 
       - name: Test Firestore Security Rules in Emulator
         run: npm run test:rules
@@ -112,15 +117,14 @@ jobs:
       - name: Write workflow summary
         if: always()
         run: |
-          echo "## KIDLEARN Phase 5I-B" >> "$GITHUB_STEP_SUMMARY"
+          echo "## KIDLEARN Phase 5I-C preparation" >> "$GITHUB_STEP_SUMMARY"
           echo "- Project guard: kidlearn-dev-2026" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Setup mode: DRY_RUN" >> "$GITHUB_STEP_SUMMARY"
+          echo "- CI setup mode: DRY_RUN" >> "$GITHUB_STEP_SUMMARY"
           echo "- Planned documents: 12" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Firestore setup write: false" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Authentication setup write: false" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Lesson catalog application writes: false" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Lesson sample: Tiếng Việt lớp 2 · Bảng chữ cái và nguyên âm · 10 phút" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Guarded DEV apply mode: available" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Merge strategy: no deletion, no duplicate document paths" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Firestore write during CI: false" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Authentication write: false" >> "$GITHUB_STEP_SUMMARY"
           echo "- Rules validation: Firebase Emulator" >> "$GITHUB_STEP_SUMMARY"
           echo "- Application shell mode: read-only" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Phase 5G smoke page: preserved at /smoke.html" >> "$GITHUB_STEP_SUMMARY"
           echo "- Firebase Hosting deployment: not performed" >> "$GITHUB_STEP_SUMMARY"

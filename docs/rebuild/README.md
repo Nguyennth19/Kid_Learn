@@ -82,12 +82,17 @@ Verified on the Firebase Hosting preview channel on 2026-08-04.
 
 The temporary preview channel is verification-only and must not be treated as the production app.
 
-## Next checkpoint: Phase 5H
+## Phase 5H application-shell checkpoint
 
-Build the real MVP application shell while preserving the Phase 5G smoke test:
+- The Phase 5G smoke test is preserved at `/smoke.html`.
+- Authentication, Firebase initialization, and profile reads are separated into services.
+- Session persistence is limited to the current browser session.
+- Every authenticated UID must resolve to an ACTIVE `users/{uid}` profile.
+- Only `CHILD` and `PARENT` roles can enter the application shell.
+- CHILD and PARENT receive separate read-only shell content.
+- The four ACTIVE subjects are rendered from Firestore.
+- No application module imports or calls Firestore write functions.
 
-1. Extract authentication into a dedicated service.
-2. Restore an existing session safely.
-3. Resolve the authenticated profile from `users/{uid}`.
-4. Route only to `CHILD` or `PARENT` application shells.
-5. Keep every Firestore write path disabled until a separate write-flow test is approved.
+## Next checkpoint: Phase 5I
+
+Add the lesson catalog read flow and role-specific navigation while keeping write operations disabled.

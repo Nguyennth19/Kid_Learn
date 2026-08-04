@@ -70,7 +70,7 @@ async function findChildForCurrentUser() {
     throw profileError("Không xác định được hồ sơ bé.", "child-link-invalid");
   }
 
-  const item = snapshot.docs[0];
+  const item = activeItems[0];
   return { id: item.id, ...item.data() };
 }
 
@@ -78,12 +78,15 @@ async function findParentAccess() {
   const snapshot = await firestoreRead.getDocs(
     firestoreRead.query(
       firestoreRead.collection(db, "userChildAccess"),
-      firestoreRead.where("userId", "==", auth.currentUser.uid),
-      firestoreRead.where("status", "==", "ACTIVE")
+      firestoreRead.where("userId", "==", auth.currentUser.uid)
     )
   );
 
-  if (snapshot.empty) {
+  const activeItems = snapshot.docs.filter(
+    (item) => item.data().status === "ACTIVE"
+  );
+
+  if (activeItems.length === 0) {
     throw profileError("Không tìm thấy liên kết phụ huynh–bé ACTIVE.", "access-not-found");
   }
 

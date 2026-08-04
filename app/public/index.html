@@ -61,6 +61,30 @@
 
         <div id="subject-grid" class="subject-grid" aria-label="Các môn học"></div>
 
+        <section id="catalog-view" class="catalog-view" hidden aria-live="polite">
+          <div class="catalog-toolbar">
+            <button id="catalog-back" class="secondary compact" type="button">← Quay lại</button>
+            <div>
+              <p class="eyebrow">BÀI HỌC CỦA CON</p>
+              <h3 id="catalog-title">Chọn bài học</h3>
+            </div>
+          </div>
+          <p id="catalog-status" class="status"></p>
+          <div id="course-list" class="catalog-list"></div>
+          <div id="lesson-list" class="catalog-list"></div>
+          <article id="lesson-player" class="card lesson-player" hidden>
+            <div class="lesson-heading">
+              <div>
+                <p id="lesson-meta" class="eyebrow"></p>
+                <h3 id="lesson-title"></h3>
+                <p id="lesson-summary" class="subtitle"></p>
+              </div>
+              <button id="lesson-close" class="secondary compact" type="button">Đóng bài</button>
+            </div>
+            <div id="lesson-blocks" class="lesson-blocks"></div>
+          </article>
+        </section>
+
         <div class="dashboard-grid">
           <article class="card dashboard-card">
             <span class="card-icon">✓</span>

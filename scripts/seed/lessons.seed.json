@@ -1,0 +1,17 @@
+[
+  {
+    "path": "lessons/LESSON_VI_G2_001",
+    "data": {
+      "lessonId": "LESSON_VI_G2_001",
+      "courseId": "COURSE_VI_G2",
+      "subjectId": "SUB_VI",
+      "lessonCode": "VI_G2_001",
+      "title": "Bảng chữ cái và nguyên âm",
+      "summary": "Nhận biết bảng chữ cái tiếng Việt và các nguyên âm cơ bản.",
+      "gradeLevel": 2,
+      "estimatedMinutes": 10,
+      "sortOrder": 1,
+      "status": "PUBLISHED"
+    }
+  }
+]

@@ -129,6 +129,23 @@ Expected result:
 - Existing seed paths are merged; missing seed paths are created.
 - No document is deleted.
 
-## Next checkpoint: Phase 5I-D
+## Phase 5I-C post-seed verification
 
-Verify all seeded documents in Firebase Console, rerun CHILD/PARENT read-only smoke tests, and record the post-seed checkpoint.
+- Firebase DEV contains the expected course, lesson, and four lesson-block documents.
+- The controlled apply reported 12 verified paths: 6 created and 6 merged.
+- Authentication remained unchanged.
+- Cloud Shell write-confirmation variables were unset after the operation.
+
+## Phase 5I-D read-only lesson player
+
+- CHILD subject cards open ACTIVE courses for that subject.
+- Course selection opens PUBLISHED lessons.
+- Lesson selection reads ordered blocks from the lesson subcollection.
+- OBJECTIVE, TEXT, EXAMPLE, and MULTIPLE_CHOICE blocks have distinct rendering.
+- The sample multiple-choice block remains display-only: no answer, score, or progress is written.
+- PARENT remains on the read-only management shell.
+- No application module imports or invokes Firestore write functions.
+
+## Next checkpoint: Phase 5I-E
+
+Validate Phase 5I-D in GitHub Actions, deploy a Firebase Hosting preview channel, and test CHILD navigation from Tiếng Việt to the complete sample lesson.

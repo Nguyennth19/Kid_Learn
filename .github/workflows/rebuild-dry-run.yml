@@ -13,6 +13,7 @@ on:
       - "firebase.json"
       - "firestore.rules"
       - "firestore.indexes.json"
+      - "docs/rebuild/**"
   pull_request:
     branches:
       - main
@@ -25,6 +26,7 @@ on:
       - "firebase.json"
       - "firestore.rules"
       - "firestore.indexes.json"
+      - "docs/rebuild/**"
   workflow_dispatch:
 
 permissions:
@@ -68,6 +70,9 @@ jobs:
           node -e "JSON.parse(require('fs').readFileSync('firestore.indexes.json', 'utf8'))"
           node -e "JSON.parse(require('fs').readFileSync('scripts/seed/system.seed.json', 'utf8'))"
           node -e "JSON.parse(require('fs').readFileSync('scripts/seed/subjects.seed.json', 'utf8'))"
+          node -e "JSON.parse(require('fs').readFileSync('scripts/seed/courses.seed.json', 'utf8'))"
+          node -e "JSON.parse(require('fs').readFileSync('scripts/seed/lessons.seed.json', 'utf8'))"
+          node -e "JSON.parse(require('fs').readFileSync('scripts/seed/lesson-blocks.seed.json', 'utf8'))"
 
       - name: Validate application and smoke sources
         run: |
@@ -91,13 +96,15 @@ jobs:
           grep -q "Không gian học tập gia đình" app/public/index.html
           grep -q "Read-only smoke test" app/public/smoke.html
           ! grep -R -E "addDoc|setDoc|updateDoc|deleteDoc" app/public --include="*.js"
+          test -f docs/rebuild/firestore-schema-5i.md
+          grep -q "match /courses/{courseId}" firestore.rules
 
       - name: Run Firestore setup preview
         run: node scripts/setup-firestore.mjs | tee dry-run-output.json
 
       - name: Verify safety assertions
         run: |
-          node -e "const r=JSON.parse(require('fs').readFileSync('dry-run-output.json','utf8')); if(!r.success || r.mode!=='DRY_RUN' || r.projectId!=='kidlearn-dev-2026' || r.plannedDocumentCount!==6 || r.actualFirestoreWritePerformed!==false || r.actualAuthenticationWritePerformed!==false){console.error(r); process.exit(1)}"
+          node -e "const r=JSON.parse(require('fs').readFileSync('dry-run-output.json','utf8')); if(!r.success || r.mode!=='DRY_RUN' || r.projectId!=='kidlearn-dev-2026' || r.plannedDocumentCount!==12 || r.actualFirestoreWritePerformed!==false || r.actualAuthenticationWritePerformed!==false){console.error(r); process.exit(1)}"
 
       - name: Test Firestore Security Rules in Emulator
         run: npm run test:rules
@@ -105,12 +112,14 @@ jobs:
       - name: Write workflow summary
         if: always()
         run: |
-          echo "## KIDLEARN Phase 5H" >> "$GITHUB_STEP_SUMMARY"
+          echo "## KIDLEARN Phase 5I-B" >> "$GITHUB_STEP_SUMMARY"
           echo "- Project guard: kidlearn-dev-2026" >> "$GITHUB_STEP_SUMMARY"
           echo "- Setup mode: DRY_RUN" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Planned documents: 6" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Planned documents: 12" >> "$GITHUB_STEP_SUMMARY"
           echo "- Firestore setup write: false" >> "$GITHUB_STEP_SUMMARY"
           echo "- Authentication setup write: false" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Lesson catalog application writes: false" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Lesson sample: Tiếng Việt lớp 2 · Bảng chữ cái và nguyên âm · 10 phút" >> "$GITHUB_STEP_SUMMARY"
           echo "- Rules validation: Firebase Emulator" >> "$GITHUB_STEP_SUMMARY"
           echo "- Application shell mode: read-only" >> "$GITHUB_STEP_SUMMARY"
           echo "- Phase 5G smoke page: preserved at /smoke.html" >> "$GITHUB_STEP_SUMMARY"

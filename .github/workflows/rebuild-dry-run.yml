@@ -36,7 +36,7 @@ concurrency:
 
 jobs:
   validate-rebuild:
-    name: Validate DRY_RUN, rules and smoke page
+    name: Validate DRY_RUN, rules and application shell
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
@@ -69,15 +69,26 @@ jobs:
           node -e "JSON.parse(require('fs').readFileSync('scripts/seed/system.seed.json', 'utf8'))"
           node -e "JSON.parse(require('fs').readFileSync('scripts/seed/subjects.seed.json', 'utf8'))"
 
-      - name: Validate smoke test source
+      - name: Validate application and smoke sources
         run: |
           test -f app/public/index.html
           test -f app/public/styles.css
           test -f app/public/firebase-config.js
           node --check app/public/firebase-config.js
+          test -f app/public/smoke.html
+          test -f app/public/smoke.js
+          test -f app/public/services/firebase.js
+          test -f app/public/services/auth-service.js
+          test -f app/public/services/profile-service.js
           node --check app/public/app.js
+          node --check app/public/smoke.js
+          node --check app/public/services/firebase.js
+          node --check app/public/services/auth-service.js
+          node --check app/public/services/profile-service.js
           grep -q "kidlearn-dev-2026" app/public/firebase-config.js
-          grep -q "Read-only smoke test" app/public/index.html
+          grep -q "Không gian học tập gia đình" app/public/index.html
+          grep -q "Read-only smoke test" app/public/smoke.html
+          ! grep -R -E "addDoc|setDoc|updateDoc|deleteDoc" app/public --include="*.js"
 
       - name: Run Firestore setup preview
         run: node scripts/setup-firestore.mjs | tee dry-run-output.json
@@ -92,12 +103,12 @@ jobs:
       - name: Write workflow summary
         if: always()
         run: |
-          echo "## KIDLEARN Phase 5G" >> "$GITHUB_STEP_SUMMARY"
+          echo "## KIDLEARN Phase 5H" >> "$GITHUB_STEP_SUMMARY"
           echo "- Project guard: kidlearn-dev-2026" >> "$GITHUB_STEP_SUMMARY"
           echo "- Setup mode: DRY_RUN" >> "$GITHUB_STEP_SUMMARY"
           echo "- Planned documents: 6" >> "$GITHUB_STEP_SUMMARY"
           echo "- Firestore setup write: false" >> "$GITHUB_STEP_SUMMARY"
           echo "- Authentication setup write: false" >> "$GITHUB_STEP_SUMMARY"
           echo "- Rules validation: Firebase Emulator" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Smoke page mode: read-only" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Application shell mode: read-only\n          echo "- Phase 5G smoke page: preserved at /smoke.html" >> "$GITHUB_STEP_SUMMARY"" >> "$GITHUB_STEP_SUMMARY"
           echo "- Firebase Hosting deployment: not performed" >> "$GITHUB_STEP_SUMMARY"

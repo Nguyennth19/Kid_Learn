@@ -146,6 +146,31 @@ Expected result:
 - PARENT remains on the read-only management shell.
 - No application module imports or invokes Firestore write functions.
 
-## Next checkpoint: Phase 5I-E
+## Phase 5I-E hosted lesson-player validation
 
-Validate Phase 5I-D in GitHub Actions, deploy a Firebase Hosting preview channel, and test CHILD navigation from Tiếng Việt to the complete sample lesson.
+Platform responsibilities:
+
+| Gate | Platform | Expected evidence |
+| --- | --- | --- |
+| Source and rules | GitHub Actions | Latest `Rebuild Firebase MVP dry run` is green |
+| Preview deployment | Google Cloud Shell | A temporary Firebase Hosting channel URL |
+| Functional check | Web browser | CHILD opens Tiếng Việt → Tiếng Việt lớp 2 → Bảng chữ cái và nguyên âm |
+| Safety check | Firebase Console | No unexpected application write and no Authentication change |
+
+Hosted acceptance checklist:
+
+- Deploy only to a temporary preview channel; do not deploy to the live Hosting channel.
+- Sign in with the CHILD family account code and the current private PIN.
+- Open the Tiếng Việt subject card.
+- Open the ACTIVE course “Tiếng Việt lớp 2”.
+- Open the PUBLISHED lesson “Bảng chữ cái và nguyên âm”.
+- Confirm that exactly four ordered blocks are displayed: OBJECTIVE, TEXT, EXAMPLE, and MULTIPLE_CHOICE.
+- Confirm that MULTIPLE_CHOICE is display-only and does not save an answer, score, or progress.
+- Confirm that sign-out returns to the login screen.
+- Do not put a PIN, password, token, or service-account key in screenshots or GitHub.
+
+Status: GitHub validation complete; temporary Firebase Hosting preview and browser acceptance test remain manual approval gates.
+
+## Next checkpoint after Phase 5I-E approval
+
+Design assignments and lesson-progress writes behind new rules and Emulator tests. Do not enable those writes until the hosted read-only lesson-player checkpoint is accepted.

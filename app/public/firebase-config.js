@@ -12,7 +12,11 @@ export const accountDirectory = Object.freeze({
   LICHKHE: "lich-khe@kidlearn.invalid"
 });
 
+export const appConfig = Object.freeze({
+  childId: "CHILD_001"
+});
+
 export const smokeConfig = Object.freeze({
-  childId: "CHILD_001",
+  childId: appConfig.childId,
   accounts: accountDirectory
 });

@@ -110,5 +110,6 @@ jobs:
           echo "- Firestore setup write: false" >> "$GITHUB_STEP_SUMMARY"
           echo "- Authentication setup write: false" >> "$GITHUB_STEP_SUMMARY"
           echo "- Rules validation: Firebase Emulator" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Application shell mode: read-only\n          echo "- Phase 5G smoke page: preserved at /smoke.html" >> "$GITHUB_STEP_SUMMARY"" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Application shell mode: read-only" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Phase 5G smoke page: preserved at /smoke.html" >> "$GITHUB_STEP_SUMMARY"
           echo "- Firebase Hosting deployment: not performed" >> "$GITHUB_STEP_SUMMARY"

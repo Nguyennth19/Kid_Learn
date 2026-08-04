@@ -36,7 +36,7 @@ const mode = process.env.KIDLEARN_SETUP_MODE || ALLOWED_MODE;
 const projectId = process.env.GCLOUD_PROJECT || process.env.FIREBASE_PROJECT || EXPECTED_PROJECT_ID;
 
 if (mode !== ALLOWED_MODE) {
-  throw new Error("Phase 5C only permits KIDLEARN_SETUP_MODE=DRY_RUN.");
+  throw new Error("Phase 5I-B only permits KIDLEARN_SETUP_MODE=DRY_RUN.");
 }
 
 if (projectId !== EXPECTED_PROJECT_ID) {
@@ -45,7 +45,10 @@ if (projectId !== EXPECTED_PROJECT_ID) {
 
 const documents = [
   ...(await loadSeed("scripts/seed/system.seed.json")),
-  ...(await loadSeed("scripts/seed/subjects.seed.json"))
+  ...(await loadSeed("scripts/seed/subjects.seed.json")),
+  ...(await loadSeed("scripts/seed/courses.seed.json")),
+  ...(await loadSeed("scripts/seed/lessons.seed.json")),
+  ...(await loadSeed("scripts/seed/lesson-blocks.seed.json"))
 ];
 
 assertSafeValue(documents);
@@ -64,7 +67,7 @@ for (const item of documents) {
 
 console.log(JSON.stringify({
   success: true,
-  phase: "5C",
+  phase: "5I-B",
   mode,
   projectId,
   databaseId: "(default)",
